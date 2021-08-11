@@ -62,6 +62,7 @@ public class Map_Setup : MonoBehaviour
 
         //initialize both CityMap and CityGraph according to parameters
         MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y);
+        
 
         map_Visual.SetMap(CityMap);
         

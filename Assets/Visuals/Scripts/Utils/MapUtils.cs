@@ -26,6 +26,7 @@ public static class MapUtils
                     
                     for( int d_x=0; d_x<districtImage.GetLength(1); ++d_x){
                        
+                        //cut at the borders of the map
                         if(m_x==0 || m_y==0 || m_x== CityMap.GetWidth()-1 || m_y== CityMap.GetHeight()-1){
                             CityMap.GetMapObject(m_x,m_y).SetTileType(MapTile.TileType.Obstacle);    
                         }else{
@@ -35,25 +36,43 @@ public static class MapUtils
 
                     }
                 }
+                
                 m_y++;
             }
         }
 
+
         //initialize CityGraph
+        
         for(int t=0; t<n_districts_y; ++t){
 
             for(int d_y = 0; d_y<graphDistrictImage.GetLength(0); ++d_y){
                 g_x=0;
 
                 for(int s =0; s<n_districts_x; ++s){
-
+                    
                     for(int d_x=0; d_x<graphDistrictImage.GetLength(1); ++d_x){
-                        bool[] goesTo = graphDistrictImage[d_y, d_x].GetGoesTo();
-                        CityGraph.GetGraphNode(g_x, g_y).SetGoesTo( goesTo);
+                        int[] goesTo = new int[4];
+                        int[] temp1 = new int[]{g_y, g_x, g_y, g_x};
+                        int [] temp2 = new int[]{CityGraph.GetHeight()-1, CityGraph.GetWidth()-1, 0, 0};
+                       
+                       //cut at the borders of the
+                       for(int i =0 ; i< 4; ++i){
+                           if(temp1[i] == temp2[i]){
+                               goesTo[i] = -1;
+                           }else{
+                               goesTo[i] = graphDistrictImage[d_y, d_x].GetGoesTo()[i];
+                           }
+                       }
 
+
+                        CityGraph.GetGraphNode(g_x, g_y).SetGoesTo( goesTo);
+                        
+                        g_x++;
                     }
-                    g_x++;
+                    
                 }
+                
                 g_y++;
             }
         }
@@ -63,19 +82,17 @@ public static class MapUtils
             for(int x =0 ; x<n_districts_x; ++x){
 
                 for(int t=0; t< i_to_n.GetLength(0); ++t){
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]).setGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]).setGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]+1).setGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).setGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]+1).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
                 }
 
                 //same for bus stops
                 for(int t=0; t<bs_to_n.GetLength(0); ++t){
-                    CityMap.GetMapObject(x,y, bs_to_n[t, 0], bs_to_n[t, 1]).setGraphNode(CityGraph.GetGraphNode(x,y,bs_to_n[t, 2], bs_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, bs_to_n[t, 0]+1, bs_to_n[t, 1]).setGraphNode(CityGraph.GetGraphNode(x,y,bs_to_n[t, 2], bs_to_n[t, 3]));
-
+                   
                     //also graphNodes have to be aware that they are "bus stop nodes"
-                    CityGraph.GetGraphNode(x,y, bs_to_n[t,2], bs_to_n[t,3]).SetIsBusStop(true);
+                    CityGraph.GetGraphNode(x,y, bs_to_n[t,0], bs_to_n[t,1]).SetIsBusStop(true);
                 }
 
             }
@@ -115,10 +132,10 @@ public static class MapUtils
                 break;
             case 1:
                 image = new int[,]{
-                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1 },
-                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 5, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
+                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
                     { 2, 0, 1, 3, 0, 2, 2, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
@@ -155,8 +172,8 @@ public static class MapUtils
                 };
 
                 busStopTiles = new int[,]{
-                    {6, 4, 0, 0},
-                    {12, 1, 1, 0}
+                    {2, 0},
+                    
                 };
 
                 break;
@@ -214,37 +231,37 @@ public static class MapUtils
                 ret = new GraphNode[1,1];
                 ret[0,0] = new GraphNode(0,0);
                 
-                ret[0,0].SetGoesTo(new bool[]{true,true,true,true});
+                ret[0,0].SetGoesTo(new int[]{9,11,9,11});
             break;
             case 1:
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
-                ret[0,0].SetGoesTo(new bool[]{false,true,true,true});
+                ret[0,0].SetGoesTo(new int[]{-1,7,5,5});
                 ret[0,1]=new GraphNode(1,0);
-                ret[0,1].SetGoesTo(new bool[]{false,true,false,true});
+                ret[0,1].SetGoesTo(new int[]{-1,5,-1,7});
                 ret[0,2]=new GraphNode(2,0);
-                ret[0,2].SetGoesTo(new bool[]{true,true,true,true});
+                ret[0,2].SetGoesTo(new int[]{7,9,5,5});
                 ret[0,3]=new GraphNode(3,0);
-                ret[0,3].SetGoesTo(new bool[]{true,true,true,true});
+                ret[0,3].SetGoesTo(new int[]{7,5,5,9});
 
                 ret[1,0]=new GraphNode(0,1);
-                ret[1,0].SetGoesTo(new bool[]{true,true,false,true});
+                ret[1,0].SetGoesTo(new int[]{5,7,-1,5});
                 ret[1,1]=new GraphNode(1,1);
-                ret[1,1].SetGoesTo(new bool[]{true,true,false,true});
+                ret[1,1].SetGoesTo(new int[]{5,5,-1,7});
                 ret[1,2]=new GraphNode(2,1);
-                ret[1,2].SetGoesTo(new bool[]{false,true,true,true});
+                ret[1,2].SetGoesTo(new int[]{-1,9,7,5});
                 ret[1,3]=new GraphNode(0,1);
-                ret[1,3].SetGoesTo(new bool[]{true,true,true,true});
+                ret[1,3].SetGoesTo(new int[]{5,5,7,9});
 
                 ret[2,0]=new GraphNode(0,2);
-                ret[2,0].SetGoesTo(new bool[]{true,true,true,true});
+                ret[2,0].SetGoesTo(new int[]{5,7,5,5});
                 ret[2,1]=new GraphNode(1,2);
-                ret[2,1].SetGoesTo(new bool[]{false,true,true,true});
+                ret[2,1].SetGoesTo(new int[]{-1,5,5,7});
                 ret[2,2]=new GraphNode(2,2);
-                ret[2,2].SetGoesTo(new bool[]{true,false,false,true});
+                ret[2,2].SetGoesTo(new int[]{5,-1,-1,5});
                 ret[2,3]=new GraphNode(3,2);
-                ret[2,3].SetGoesTo(new bool[]{true,true,true,false});
+                ret[2,3].SetGoesTo(new int[]{5,5,5,-1});
                 
 
                 break;

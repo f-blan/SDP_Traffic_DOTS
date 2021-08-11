@@ -12,7 +12,7 @@ public class GraphNode
     private bool isBusStop;
 
     //the directions our intersection allows to take (index: 0 = up, 1 = right, 2 = down, 3 = left)
-    private bool[] goesTo;
+    private int[] goesTo;
 
     //might be needed
     private bool isWalkable;
@@ -52,19 +52,19 @@ public class GraphNode
         this.isWalkable = isWalkable;
     }
 
-    public void SetGoesTo(bool[] v){
+    public void SetGoesTo(int[] v){
         
         if(v.Length!=4){
             return;
         }
         
-        goesTo = new bool[v.Length];
+        goesTo = new int[v.Length];
         for(int t=0; t<v.Length; ++t){
             goesTo[t] = v[t];
         }
     }
 
-    public bool[] GetGoesTo(){
+    public int[] GetGoesTo(){
         return goesTo;
     }
     

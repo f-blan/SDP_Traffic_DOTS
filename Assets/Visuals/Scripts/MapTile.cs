@@ -40,14 +40,14 @@ public class MapTile
     }
 
     //only intersections have a grahNode
-    public void setGraphNode(GraphNode g){
+    public void SetGraphNode(GraphNode g){
         if(type == TileType.Intersection){
             this.graphNode = g;
         }else{
             return;
         }
     }
-    public GraphNode getGraphNode(GraphNode g){
+    public GraphNode GetGraphNode(){
         if(type == TileType.Intersection){
             return this.graphNode;
         }else{

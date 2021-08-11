@@ -33,7 +33,14 @@ public class PathFindGraph
             }
         }
     }
+    
+    public int GetWidth(){
+        return width;
+    }
 
+    public int GetHeight(){
+        return height;
+    }
     public void SetGraphNode(int x, int y){
 
     }
