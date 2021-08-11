@@ -9,6 +9,8 @@ public class GraphNode
     private int x;
     private int y;
 
+    private bool isBusStop;
+
     //the directions our intersection allows to take (index: 0 = up, 1 = right, 2 = down, 3 = left)
     private bool[] goesTo;
 
@@ -20,6 +22,7 @@ public class GraphNode
         this.y = y;
 
         isWalkable = true;
+        isBusStop=false;
         goesTo=null;
     }
 
@@ -28,12 +31,21 @@ public class GraphNode
         this.y = y;
         this.index = index;
 
+        isBusStop=false;
         isWalkable = true;
         goesTo=null;
     }
 
     public bool IsWalkable() {
         return isWalkable;
+    }
+
+    public void SetIsBusStop(bool setter){
+        isBusStop=setter;
+    }
+
+    public bool IsBusStop(){
+        return isBusStop;
     }
 
     public void SetIsWalkable(bool isWalkable) {
