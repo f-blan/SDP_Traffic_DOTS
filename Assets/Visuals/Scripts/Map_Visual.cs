@@ -1,18 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Entities;
+using Unity.Rendering;
+using Unity.Transforms;
+using Unity.Collections;
+using Unity.Mathematics;
 
 public class Map_Visual : MonoBehaviour
 {
 
     private Map<MapTile> map;
-    private Mesh mesh;
-    private bool updateMesh;
-
-    private void Awake(){
-        mesh = new Mesh();
-        GetComponent<MeshFilter>().mesh = mesh;
-    }
+    [SerializeField] private Mesh mesh;
+    [SerializeField] private Material Road;
+    [SerializeField] private Material Obstacle;
+    [SerializeField] private Material ParkSpot;
+    [SerializeField] private Material TrafficLight;
+    
+    
+    
+    
 
     public void SetMap(Map<MapTile> map){
         this.map = map;
@@ -24,58 +31,52 @@ public class Map_Visual : MonoBehaviour
     
     // for big maps this does not work, need to improve this piece of code (i was thinking to make one mesh for each district by adding more game object)
     private void UpdateVisual(){
-        MeshUtils.CreateEmptyMeshArrays(map.GetWidth()* map.GetHeight(), out Vector3[] vertices, out Vector2[] uv, out int[] triangles);
-        Transform parent = this.transform;
+        //MeshUtils.CreateEmptyMeshArrays(map.GetWidth()* map.GetHeight(), out Vector3[] vertices, out Vector2[] uv, out int[] triangles);
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds));
+
+        NativeArray<Entity> tiles = new NativeArray<Entity>(map.GetWidth()*map.GetHeight(), Allocator.Temp);
+
+        em.CreateEntity(arch, tiles);
+
         for(int x=0; x< map.GetWidth(); x++){
             for(int y =0; y< map.GetHeight(); y++){
+            int index = x*map.GetHeight()+y;
+            Entity e = tiles[index];
+            Vector3 wp = map.GetWorldPosition(x, y);
 
-                /* 
-                GameObject district = new GameObject();
-                district.transform.SetParent(parent);
-                */
-                
+            
+            Material material;
 
-                int index = x *map.GetHeight()+y;
-                Vector3 quadSize = new Vector3(1,1)*map.GetTileSize();
-
-                MapTile mapTile = map.GetMapObject(x,y);
-
-                Vector2 uv00 = new Vector2(.5f, .5f);
-                Vector2 uv11 = new Vector2(1f,1f);;
-                
-               
-
-                switch (mapTile.GetTileType())
-                {
-                    case MapTile.TileType.Road:
-                        uv00 = new Vector2(.5f, .5f);
-                        uv11 = new Vector2(1f,1f);
+            switch(map.GetMapObject(x,y).GetTileType()){
+                case MapTile.TileType.Road:
+                        material = Road;
                         break;
                     case MapTile.TileType.Obstacle:
-                        uv00 = new Vector2(0f, .5f);
-                        uv11 = new Vector2(.5f,1f);
+                        material = Obstacle;
                         break;
                     case MapTile.TileType.TrafficLight:
-                        uv00 = new Vector2(.5f, 0f);
-                        uv11 = new Vector2(1f,.5f);
+                        material = TrafficLight;
                         break;
                     case MapTile.TileType.ParkSpot:
-                        uv00 = new Vector2(0f, 0f);
-                        uv11 = new Vector2(.5f,.5f);
+                        material = ParkSpot;
                         break;
                     default:
-                        uv00 = new Vector2(.5f, .5f);
-                        uv11 = new Vector2(1f,1f);
+                        material = Road;
                         break;
-                }
+            }
 
-                
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
 
-                MeshUtils.AddToMeshArrays(vertices, uv, triangles, index, map.GetWorldPosition(x, y) + quadSize * .0f, 0f, quadSize, uv00, uv11);
+            em.SetSharedComponentData(e, new RenderMesh{
+                mesh = mesh,
+                material = material,
+                layer = 0
+            });
+                 
             }
         }
-        mesh.vertices = vertices;
-        mesh.uv = uv;
-        mesh.triangles = triangles;
+        tiles.Dispose();
+        
     }
 }

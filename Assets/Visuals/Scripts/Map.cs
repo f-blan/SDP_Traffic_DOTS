@@ -100,4 +100,10 @@ public class Map<TMapObject>
     public int GetNDistrictsY(){
         return n_districts_y;
     }
+    public int GetDistrictWidth(){
+        return district_width;
+    }
+    public int GetDistrictHeight(){
+        return district_height;
+    }
 }
