@@ -22,7 +22,8 @@ public class Map_Spawner : MonoBehaviour
                 return;
             }        
             EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-            EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams));
+            EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
+                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams));
 
             NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
 
@@ -93,19 +94,20 @@ public class Map_Spawner : MonoBehaviour
             walkOffset[3] = new int2(-1,0);
             
             int2 pos = new int2(x, y);
-            
+            int cost = 0;
             
             do{
                 pos.x += walkOffset[direction].x;
                 pos.y += walkOffset[direction].y;
-                
+                cost++;
             }while(CityMap.GetMapObject(pos.x, pos.y).GetTileType() != MapTile.TileType.Intersection);
             
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
             
             int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
 
-            em.SetComponentData(entity, new CarPathParams{direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
+            em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
+            DynamicBuffer<CarPathBuffer> b = em.AddBuffer<CarPathBuffer>(entity);
             
             walkOffset.Dispose();
     }
