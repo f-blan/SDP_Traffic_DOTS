@@ -4,12 +4,18 @@ using UnityEngine;
 using CodeMonkey.Utils;
 using CodeMonkey;
 using Unity.Entities;
+using Unity.Jobs;
+using Unity.Burst;
+using Unity.Rendering;
+using Unity.Transforms;
+using Unity.Collections;
 
 public class Map_Setup : MonoBehaviour
 {
     public static Map_Setup Instance {private set; get; }
 
     private Map_Visual map_Visual;
+    private Map_Spawner map_Spawner;
     
     //map is a sequence of copy-pasted "districts"
     public Map<MapTile> CityMap;
@@ -30,11 +36,12 @@ public class Map_Setup : MonoBehaviour
     [SerializeField] private int map_n_districts_x;
     [SerializeField] int map_n_districts_y;
 
-    
+    [SerializeField] int n_entities;
 
     private void Awake(){
         Instance = this;
-        map_Visual = GameObject.Find ("Map_Visual").GetComponent<Map_Visual> ();
+        map_Visual = GameObject.Find("Map_Visual").GetComponent<Map_Visual> ();
+        map_Spawner = GameObject.Find("Map_Spawner").GetComponent<Map_Spawner>();
 
         int[] districtData = MapUtils.GetDistrictParams(districtTypeIndex);
         District_width = districtData[0];
@@ -61,19 +68,15 @@ public class Map_Setup : MonoBehaviour
         CityGraph = new PathFindGraph( map_n_districts_x, map_n_districts_y,  GraphDistrict_width, GraphDistrict_height);
 
         //initialize both CityMap and CityGraph according to parameters
-        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y);
+        List<MapTile> roadTiles;
+        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles);
         
 
         map_Visual.SetMap(CityMap);
-        
+        map_Spawner.SpawnCarEntities(CityMap,CityGraph, roadTiles, n_entities);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    
     
     
 }

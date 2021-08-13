@@ -19,12 +19,30 @@ public class MapTile
     private TileType type;
     private GraphNode graphNode;
 
+    private bool isWalkable;
+
     public MapTile(Map<MapTile> map, int x, int y) {
         this.map = map;
         this.x = x;
         this.y = y;
         type = TileType.Road;
         graphNode = null;
+        isWalkable = true;
+    }
+
+    public bool IsWalkable(){
+        return isWalkable;
+    }
+
+    public void SetIsWalkable(bool val){
+        isWalkable= val;
+    }
+
+    public int GetX(){
+        return x;
+    }
+    public int GetY(){
+        return y;
     }
 
     public bool isObstacle(){
@@ -36,6 +54,20 @@ public class MapTile
 
     public void SetTileType(TileType t){
         this.type = t;
+        switch(t){
+            case TileType.BusStop:
+                isWalkable = false;
+            break;
+            case TileType.ParkSpot:
+                isWalkable = false;
+            break;
+            case TileType.Obstacle:
+                isWalkable = false;
+            break;
+            default:
+                isWalkable = true;
+            break; 
+        }
         
     }
 

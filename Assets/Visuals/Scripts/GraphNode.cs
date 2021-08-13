@@ -9,6 +9,7 @@ public class GraphNode
     private int x;
     private int y;
 
+    
     private bool isBusStop;
 
     //the directions our intersection allows to take (index: 0 = up, 1 = right, 2 = down, 3 = left)
@@ -67,5 +68,11 @@ public class GraphNode
     public int[] GetGoesTo(){
         return goesTo;
     }
-    
+    public int GetX(){
+        return x;
+    }
+
+    public int GetY(){
+        return y;
+    }
 }

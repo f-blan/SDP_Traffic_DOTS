@@ -4,12 +4,16 @@ using UnityEngine;
 
 public static class MapUtils 
 {
-    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y){
+    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles
+    ){
         int[,] i_to_n;
         int[,] bs_to_n;
-        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n);
+        Dictionary<int, int>[] toDeadEnd;
+        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
+        
 
+        roadTiles = new List<MapTile>();
         int m_x = 0;
         int m_y = 0;
 
@@ -25,12 +29,35 @@ public static class MapUtils
                 for( int s = 0; s<n_districts_x; ++s){
                     
                     for( int d_x=0; d_x<districtImage.GetLength(1); ++d_x){
-                       
+                        MapTile tile = CityMap.GetMapObject(m_x, m_y);
+
+                        bool ok = true;
+
+                        //necessary to avoid spawning cars headed towards a wall (border of the map)
+                        if(t==n_districts_y-1 && toDeadEnd[0].ContainsKey(d_x) && d_y >= toDeadEnd[0][d_x]){
+                            ok = false;
+                        }
+                        if(t == 0 && toDeadEnd[2].ContainsKey(d_x) && d_y <= toDeadEnd[2][d_x]){
+                            ok = false;
+                        }
+                        if(s == n_districts_x-1 && toDeadEnd[1].ContainsKey(d_y) && d_x >= toDeadEnd[1][d_y]){
+                            ok = false;
+                        }
+                        if(s == 0 && toDeadEnd[3].ContainsKey(d_y) && d_x <= toDeadEnd[3][d_y]){
+                            ok = false;
+                        }
+                        
+
                         //cut at the borders of the map
                         if(m_x==0 || m_y==0 || m_x== CityMap.GetWidth()-1 || m_y== CityMap.GetHeight()-1){
-                            CityMap.GetMapObject(m_x,m_y).SetTileType(MapTile.TileType.Obstacle);    
+                            tile.SetTileType(MapTile.TileType.Obstacle);    
                         }else{
-                            CityMap.GetMapObject(m_x,m_y).SetTileType(districtImage[d_y,d_x]);
+                            tile.SetTileType(districtImage[d_y,d_x]);
+                        }
+                        if(tile.GetTileType() == MapTile.TileType.Road && ok){
+                            roadTiles.Add(tile);
+                        }else if(tile.GetTileType()== MapTile.TileType.Road){
+                            tile.SetIsWalkable(false);
                         }
                         m_x++;
 
@@ -82,10 +109,12 @@ public static class MapUtils
             for(int x =0 ; x<n_districts_x; ++x){
 
                 for(int t=0; t< i_to_n.GetLength(0); ++t){
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]+1).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).SetGraphNode(CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]));
+                    GraphNode g = CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]);
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]).SetGraphNode(g);
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]).SetGraphNode(g);
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]+1).SetGraphNode(g);
+                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).SetGraphNode(g);
+                    //Debug.Log("linked "+i_to_n[t,0]+ "-"+i_to_n[t, 1] + "to node " + g.GetX() + "-"+g.GetY());
                 }
 
                 //same for bus stops
@@ -98,12 +127,15 @@ public static class MapUtils
             }
         }
 
-
     }
 
-    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles){
+    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd){
         //define here the map of a district
-
+        toDeadEnd = new Dictionary<int, int>[4];
+        toDeadEnd[0] = new Dictionary<int, int>();
+        toDeadEnd[1] = new Dictionary<int, int>();
+        toDeadEnd[2] = new Dictionary<int, int>();
+        toDeadEnd[3] = new Dictionary<int, int>();
 
         //for brevity write it as int[,] with 0 = obstacle, 1 = road, 2 = parkSpot, 3 = traffic light, 4 = intersection, 5 = busStop
         int[,] image;
@@ -129,6 +161,13 @@ public static class MapUtils
                     { 5, 4, 0, 0 },
                 };
                 busStopTiles = new int[0,0];
+
+                toDeadEnd[0].Add(6, 6);
+                toDeadEnd[1].Add(4, 7);
+                toDeadEnd[2].Add(5, 3);
+                toDeadEnd[3].Add(5, 4);
+                
+                
                 break;
             case 1:
                 image = new int[,]{
@@ -175,6 +214,24 @@ public static class MapUtils
                     {2, 0},
                     
                 };
+
+                toDeadEnd[0].Add(3,18);
+                toDeadEnd[0].Add(17,18);
+                toDeadEnd[0].Add(27, 18);
+
+                toDeadEnd[1].Add(2, 28);
+                toDeadEnd[1].Add(10, 28);
+                toDeadEnd[1].Add(16, 28);
+
+                toDeadEnd[2].Add(2, 1);
+                toDeadEnd[2].Add(16, 1);
+                toDeadEnd[2].Add(26, 1);
+
+                toDeadEnd[3].Add(3, 1);
+                toDeadEnd[3].Add(11, 1);
+                toDeadEnd[3].Add(17, 1);
+
+
 
                 break;
             default:

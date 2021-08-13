@@ -18,6 +18,8 @@ public class Map<TMapObject>
     private Vector3 originPosition;
     private TMapObject[,] mapArray;
 
+    
+
     //constructor
     public Map(int n_districts_x, int n_districts_y, int d_width, int d_height, float tileSize, Vector3 originPosition,Func<Map<TMapObject>, int, int, TMapObject> createMapObject){
         this.n_districts_x=n_districts_x;
@@ -31,6 +33,7 @@ public class Map<TMapObject>
         this.originPosition = originPosition;
 
         mapArray = new TMapObject[height, width];
+        
 
         for (int y = 0; y < mapArray.GetLength(0); y++) {
             for (int x = 0; x < mapArray.GetLength(1); x++) {
@@ -106,4 +109,5 @@ public class Map<TMapObject>
     public int GetDistrictHeight(){
         return district_height;
     }
+    
 }
