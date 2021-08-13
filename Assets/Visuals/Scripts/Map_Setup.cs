@@ -42,9 +42,6 @@ public class Map_Setup : MonoBehaviour
         
         GraphDistrict_width = districtData[2];
         GraphDistrict_height=districtData[3];
-        
-
-        
     }
 
     // Start is called before the first frame update
