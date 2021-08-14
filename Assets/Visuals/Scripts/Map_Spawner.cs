@@ -21,7 +21,7 @@ public class Map_Spawner : MonoBehaviour
             }        
             EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
             EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation));
+                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation), typeof(VehicleMovementData));
 
             NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
 
