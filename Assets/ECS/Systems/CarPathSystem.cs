@@ -16,7 +16,6 @@ public class CarPathSystem : EntityCommandBufferSystem
      private NativeArray<PathNode> PathNodeMap;
 
      private bool isGraphValid;
-
     
     private const int MOVE_X_COST = 8;
     private const int MOVE_Y_COST = 7;
@@ -70,6 +69,9 @@ public class CarPathSystem : EntityCommandBufferSystem
         localPathNodeMap.Dispose();
      }
 
+    protected override void OnDestroy(){
+        PathNodeMap.Dispose();
+    }
      private NativeHashMap<int, PathNode> MapCopy(NativeHashMap<int, PathNode> map, int2 graphSize){
          NativeHashMap<int, PathNode> copy = new NativeHashMap<int, PathNode>(graphSize.x*graphSize.y, Allocator.TempJob);
 
