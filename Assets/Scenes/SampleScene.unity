@@ -180,7 +180,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
-  carMaterial: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
 --- !u!4 &98288714
 Transform:
   m_ObjectHideFlags: 0
@@ -302,6 +302,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10ed5fee2002cf13b968371f572d995f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scrollSpeed: 1
+  dragMultiplier: 0.04
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -437,8 +439,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   districtTypeIndex: 1
-  map_n_districts_x: 1
-  map_n_districts_y: 1
+  map_n_districts_x: 3
+  map_n_districts_y: 3
   n_entities: 1
 --- !u!4 &1651507030
 Transform:

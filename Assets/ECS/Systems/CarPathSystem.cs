@@ -48,10 +48,10 @@ public class CarPathSystem : EntityCommandBufferSystem
         NativeArray<PathNode> localPathNodeMap = new NativeArray<PathNode>(PathNodeMap, Allocator.Temp); //because if it's not local the compiler complains
 
         //compute path
-        Entities.ForEach(( Entity entity, int entityInQueryIndex, CarPathParams carPathParams)=>{
+        Entities.ForEach(( Entity entity, ref CarPathParams carPathParams)=>{
             //make a copy of the graph hashmap exclusive to the job
             NativeArray<PathNode> tmpPathNodeMap = new NativeArray<PathNode>(localPathNodeMap, Allocator.TempJob);
-            
+            int entityInQueryIndex = 2;
             FindPathJob fpj = new FindPathJob{
                 graphSize = graphSize,
                 PathNodeMap = tmpPathNodeMap,
@@ -67,7 +67,7 @@ public class CarPathSystem : EntityCommandBufferSystem
         });
         JobHandle.CompleteAll(jobHandleList);
         jobHandleList.Dispose();
-        PathNodeMap.Dispose();
+        localPathNodeMap.Dispose();
      }
 
      private NativeHashMap<int, PathNode> MapCopy(NativeHashMap<int, PathNode> map, int2 graphSize){
