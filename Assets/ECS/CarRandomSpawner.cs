@@ -73,15 +73,16 @@ public class CarRandomSpawner : MonoBehaviour
 
         foreach(Entity e in entities){
 
-            //TODO: Needs to put the vehicle in its starting position
-            // em.SetComponentData(e, new Translation{
-            //     Value = new float3()
-            // })
+            // TODO: Needs to put the vehicle in its starting position
+            em.SetComponentData(e, new Translation{
+                Value = new float3(0,0,0)
+            });
 
             //Sets the material and the mesh for the given entity
             em.SetSharedComponentData(e, new RenderMesh{
                 material = unitMaterial,
-                mesh = mesh
+                mesh = mesh,
+                layer = 1
             });
         }
     }

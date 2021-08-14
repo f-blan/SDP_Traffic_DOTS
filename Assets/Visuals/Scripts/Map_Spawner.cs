@@ -11,8 +11,6 @@ using Unity.Burst;
 
 public class Map_Spawner : MonoBehaviour
 {
-        [SerializeField] private Mesh mesh;
-
         [SerializeField] private Material carMaterial;
 
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
@@ -23,13 +21,15 @@ public class Map_Spawner : MonoBehaviour
             }        
             EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
             EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams));
+                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation));
 
             NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
 
             em.CreateEntity(arch, cars);
 
             Debug.Log("available places: " + roadTiles.Count);
+
+            Mesh carMesh = CreateMesh(0.47f, 1f);
 
             Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
             for(int t=0; t<n_entities; ++t){
@@ -41,10 +41,12 @@ public class Map_Spawner : MonoBehaviour
 
                 Vector3 wp = CityMap.GetWorldPosition(tile.GetX(), tile.GetY());
 
-                em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+                em.SetName(e, "Vehicle "+t);
+
+                em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], -1)});
 
                 em.SetSharedComponentData(e, new RenderMesh{
-                    mesh = mesh,
+                    mesh = carMesh,
                     material = carMaterial,
                     layer = 1
                 });
@@ -108,11 +110,60 @@ public class Map_Spawner : MonoBehaviour
 
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
             
-            
+            SetCarRotation(em, entity, direction);
+
             walkOffset.Dispose();
     }
+    private Mesh CreateMesh(float width, float height){
 
+        Vector3[] vertices = new Vector3[4];
+        Vector2[] uv = new Vector2[4];
+        int[] triangles = new int[6];
+
+        float halfWidth = width/2f;
+        float halfHeight = height/2f;
+
+        vertices[0] = new Vector3(-halfWidth, -halfHeight);
+        vertices[1] = new Vector3(-halfWidth, +halfHeight);
+        vertices[2] = new Vector3(+halfWidth, +halfHeight);
+        vertices[3] = new Vector3(+halfWidth, -halfHeight);
+
+        uv[0] = new Vector2(0,0);
+        uv[1] = new Vector2(0,1);
+        uv[2] = new Vector2(1,1);
+        uv[3] = new Vector2(1,0);
+
+        triangles[0] = 0;
+        triangles[1] = 1;
+        triangles[2] = 3;
+
+        triangles[3] = 1;
+        triangles[4] = 2;
+        triangles[5] = 3;
+
+        Mesh mesh = new Mesh();
+        mesh.vertices = vertices;
+        mesh.uv = uv;
+        mesh.triangles = triangles;
+
+        mesh.name = "Car Mesh";
+
+        return mesh;
+    }
     
-    
-        
+    private void SetCarRotation(EntityManager entityManager, Entity entity, int direction){
+        int rotationDirection;
+        //Necessary if-else case to correctly rotate the sprite TODO maybe refactor?
+        if(direction == 0){
+            rotationDirection = 2;
+        }
+        else if(direction == 2){
+            rotationDirection = 0;
+        }
+        else{
+            rotationDirection = direction;
+        }
+        entityManager.SetComponentData(entity, new Rotation{Value = Quaternion.Euler(0f, 0f, rotationDirection*90f)});
+    }
+
 }
