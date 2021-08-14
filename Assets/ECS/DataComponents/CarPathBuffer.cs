@@ -7,5 +7,5 @@ public struct CarPathBuffer : IBufferElementData {
     public int x;
     public int y;
     public int cost;
-
+    public int withDirection;
 }

@@ -107,7 +107,7 @@ public class Map_Spawner : MonoBehaviour
             int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
 
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
-            DynamicBuffer<CarPathBuffer> b = em.AddBuffer<CarPathBuffer>(entity);
+            
             
             walkOffset.Dispose();
     }
