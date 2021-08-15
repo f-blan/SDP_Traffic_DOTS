@@ -9,7 +9,7 @@ using Unity.Jobs;
 using Unity.Burst;
 using CodeMonkey.Utils;
 
-public class CarPathSystem : EntityCommandBufferSystem
+public class CarPathSystem : SystemBase
 {
      private EndSimulationEntityCommandBufferSystem ecb_s;
      //this used to be a native hashmap, hence the name, but i later changed it to nativearray
@@ -32,65 +32,35 @@ public class CarPathSystem : EntityCommandBufferSystem
      protected override void OnUpdate(){
         EntityCommandBuffer.ParallelWriter ecb = ecb_s.CreateCommandBuffer().AsParallelWriter();
 
-        int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());
-
-        
-        NativeList<JobHandle> jobHandleList = new NativeList<JobHandle>(Allocator.Temp);
-
-        
+        int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());        
     
-        //get the graph in a format usable by jobs (a native map of local struct PathNode)
+        //get the graph in a format usable by jobs (a native map of local struct PathNode, and do it only once per runtime: Allocator.Persistent used)
         if(isGraphValid==false){
             PathNodeMap = GetPathNodeMap(graphSize);
             isGraphValid=true;
         }
 
-        NativeArray<PathNode> localPathNodeMap = new NativeArray<PathNode>(PathNodeMap, Allocator.Temp); //because if it's not local the compiler complains
+        NativeArray<PathNode> localPathNodeMap; 
+        localPathNodeMap= PathNodeMap; //because if it's not local the compiler complains
 
         //compute path
-        Entities.ForEach(( Entity entity, ref CarPathParams carPathParams)=>{
+        Entities.ForEach(( Entity entity, int entityInQueryIndex, ref CarPathParams carPathParams)=>{
             //make a copy of the graph hashmap exclusive to the job
-            NativeArray<PathNode> tmpPathNodeMap = new NativeArray<PathNode>(localPathNodeMap, Allocator.TempJob);
-            int entityInQueryIndex = 2;
-            FindPathJob fpj = new FindPathJob{
-                graphSize = graphSize,
-                PathNodeMap = tmpPathNodeMap,
-                startPosition = carPathParams.startPosition,
-                endPosition = carPathParams.endPosition,
-                direction = carPathParams.direction,
-                init_cost = carPathParams.init_cost,
-                entity = entity,
-                ecb = ecb,
-                eqi = entityInQueryIndex //i have absolutely no idea of what this is, but it's needed to use the entitycommandbuffer in parallel. Check https://forum.unity.com/threads/what-do-you-use-for-sortkey-in-parallelwriter-command-buffers-in-ijobchunks.1025833/ 
-            };
-            jobHandleList.Add(fpj.Schedule());
-        });
-        JobHandle.CompleteAll(jobHandleList);
-        jobHandleList.Dispose();
-        localPathNodeMap.Dispose();
+            NativeArray<PathNode> tmpPathNodeMap = new NativeArray<PathNode>(localPathNodeMap, Allocator.Temp);
+            PathFindFunction(tmpPathNodeMap, carPathParams.endPosition, carPathParams.startPosition, graphSize, entity, ecb, carPathParams.direction, carPathParams.init_cost, entityInQueryIndex);
+            
+            tmpPathNodeMap.Dispose();
+        }).ScheduleParallel();
+        //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
+        ecb_s.AddJobHandleForProducer(this.Dependency);
+        
      }
 
-     private NativeHashMap<int, PathNode> MapCopy(NativeHashMap<int, PathNode> map, int2 graphSize){
-         NativeHashMap<int, PathNode> copy = new NativeHashMap<int, PathNode>(graphSize.x*graphSize.y, Allocator.TempJob);
-
-         for(int t=0; t<graphSize.x*graphSize.y; ++t){
-            copy[t] = new PathNode();
-            PathNode pn = map[t];
-            PathNode copyNode = copy[t];
-            copyNode.x = pn.x;
-            copyNode.y = pn.y;
-            copyNode.index = pn.index;
-
-            copyNode.goesTo = new int4(pn.goesTo[0], pn.goesTo[1], pn.goesTo[2], pn.goesTo[3]);
-            copyNode.gCost = pn.gCost;
-            copyNode.reachedWithDirection = pn.reachedWithDirection;
-            copyNode.reachedWithCost = pn.reachedWithCost;
-
-            copyNode.cameFromNodeIndex = pn.cameFromNodeIndex;
-            copy[t] = copyNode;
-         }
-         return copy;
+     protected override void OnDestroy(){
+         //dispose PathNodeMap
+         PathNodeMap.Dispose();
      }
+
     
      private NativeArray<PathNode> GetPathNodeMap(int2 graphSize){
         PathFindGraph CityGraph = Map_Setup.Instance.CityGraph;
@@ -149,21 +119,9 @@ public class CarPathSystem : EntityCommandBufferSystem
             this.isWalkable = isWalkable;
         }
     }
-    [BurstCompile]
-    private struct FindPathJob : IJob{
-        public int2 graphSize;
-        [DeallocateOnJobCompletion] public NativeArray<PathNode> PathNodeMap;
-        public int2 startPosition;
-        public int2 endPosition;
-        public Entity entity;
-        public int direction;
-        public int init_cost;
-        public EntityCommandBuffer.ParallelWriter ecb;
-        public int eqi;
-        public void Execute(){
-            
-           
-            //calculate heuristic cost for each node
+
+    private static void PathFindFunction(NativeArray<PathNode> PathNodeMap, int2 endPosition, int2 startPosition, int2 graphSize, Entity entity, EntityCommandBuffer.ParallelWriter ecb, int direction, int init_cost, int eqi){
+        //calculate heuristic cost for each node
             for(int t =0; t<PathNodeMap.Length; ++t){
                 PathNode p = PathNodeMap[t];
                 p.hCost = CalculateHCost(new int2(p.x, p.y), endPosition);
@@ -255,9 +213,8 @@ public class CarPathSystem : EntityCommandBufferSystem
             openList.Dispose();
             closedList.Dispose();
             
-            
-        }
     }
+
 
     private static void AssignPath(Entity entity, NativeArray<PathNode> pathNodeMap,PathNode endNode, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi){
         DynamicBuffer<CarPathBuffer> buf = ecb.AddBuffer<CarPathBuffer>(eqi,entity);
