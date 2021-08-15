@@ -16,7 +16,6 @@ public class CarPathSystem : SystemBase
      private NativeArray<PathNode> PathNodeMap;
 
      private bool isGraphValid;
-
     
     private const int MOVE_X_COST = 8;
     private const int MOVE_Y_COST = 7;
