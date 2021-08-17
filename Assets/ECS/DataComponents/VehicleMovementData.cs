@@ -4,8 +4,11 @@ using UnityEngine;
 
 public struct VehicleMovementData : IComponentData
 {
-    public float2 speed;
-    public int2 direction;
+    public float speed;
+    public float2 velocity; //Execution speed oriented implementation
+    public int direction;
 
-    public int size;
+    public float2 initialPosition;
+    public float2 offset;
+
 }

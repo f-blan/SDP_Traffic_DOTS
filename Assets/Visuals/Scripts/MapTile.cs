@@ -13,6 +13,13 @@ public class MapTile
         BusStop
     }
 
+    public enum Direction{
+        Up,
+        Right,
+        Down,
+        Left
+    }
+
     private Map<MapTile> map;
     private int x;
     private int y;

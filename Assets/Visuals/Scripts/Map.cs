@@ -43,6 +43,10 @@ public class Map<TMapObject>
         }
     }
 
+    public Vector3 GetOriginPosition(){
+        return originPosition;
+    }
+
     public int GetWidth() {
         return width;
     }

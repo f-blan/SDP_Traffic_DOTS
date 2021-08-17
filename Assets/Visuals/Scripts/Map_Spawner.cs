@@ -12,6 +12,7 @@ using Unity.Burst;
 public class Map_Spawner : MonoBehaviour
 {
         [SerializeField] private Material carMaterial;
+        [SerializeField] private float maxCarSpeed;
 
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
 
@@ -27,15 +28,18 @@ public class Map_Spawner : MonoBehaviour
 
             em.CreateEntity(arch, cars);
 
-            Debug.Log("available places: " + roadTiles.Count);
-
             Mesh carMesh = CreateMesh(0.47f, 1f);
 
             Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
             for(int t=0; t<n_entities; ++t){
                
                 int index = UnityEngine.Random.Range(0, roadTiles.Count);
-                MapTile tile = roadTiles[index];
+                
+                // Debug
+                MapTile tile = roadTiles[1000]; //100 u turn
+                // End debug
+
+                // MapTile tile = roadTiles[index];
                 Entity e = cars[t];
                 roadTiles.RemoveAt(index);
 
@@ -50,6 +54,8 @@ public class Map_Spawner : MonoBehaviour
                     material = carMaterial,
                     layer = 1
                 });
+
+                // SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em,r);
                 SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em,r);
             }
             cars.Dispose();
@@ -106,11 +112,14 @@ public class Map_Spawner : MonoBehaviour
             
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
             
-            int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
+            // int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
+            // Debug
+            int2 endPos = new int2(0, 0);
+            // End Debug
 
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
             
-            SetCarRotation(em, entity, direction);
+            InitializeCarData(em, entity, direction);
 
             walkOffset.Dispose();
     }
@@ -150,20 +159,17 @@ public class Map_Spawner : MonoBehaviour
 
         return mesh;
     }
-    
-    private void SetCarRotation(EntityManager entityManager, Entity entity, int direction){
-        int rotationDirection;
-        //Necessary if-else case to correctly rotate the sprite TODO maybe refactor?
-        if(direction == 0){
-            rotationDirection = 2;
-        }
-        else if(direction == 2){
-            rotationDirection = 0;
-        }
-        else{
-            rotationDirection = direction;
-        }
-        entityManager.SetComponentData(entity, new Rotation{Value = Quaternion.Euler(0f, 0f, rotationDirection*90f)});
-    }
 
+    private void InitializeCarData(EntityManager entityManager, Entity entity, int direction){
+
+        entityManager.SetComponentData(entity, new Rotation{Value = Quaternion.Euler(0f, 0f, CarUtils.ComputeRotation(direction))});
+
+        entityManager.SetComponentData(entity, new VehicleMovementData{
+            speed = maxCarSpeed,
+            direction = direction,
+            velocity = CarUtils.ComputeVelocity(maxCarSpeed, direction),
+            initialPosition = new float2(float.NaN, float.NaN),
+            offset = new float2(float.NaN, float.NaN)
+        });
+    }
 }
