@@ -32,7 +32,6 @@ public static class CarUtils{
 
     public static float ComputeRotation(int direction){
 
-
         return -((direction + 2) % 4)*90f; //Changed after Francesco's suggestion
     }
 
@@ -47,6 +46,7 @@ public static class CarUtils{
         // Debug.Log("Prev direction: " + prevDirection + " Current direction: " + direction + " Next direction: " + nextDirection);
         // Debug.Log("Current cost: " + offset);
         // Debug.Log("Next offset: " + nextOffset);
+        // Debug.Log("Prev offset: " + prevOffset);
         // End Debug
 
         switch(direction){
@@ -72,10 +72,10 @@ public static class CarUtils{
 
         if(curDirection != nextDirection && curDirection % 2 == 0 && nextDirection % 2 == 0){
             if(curDirection == (int)CarUtils.DirectionEnum.Up){
-                uTurnFloat2.x = 1;
+                uTurnFloat2.x = -1;
             }
             else{
-                uTurnFloat2.x = -1;
+                uTurnFloat2.x = 1;
             }
         }
         else if(curDirection != nextDirection && curDirection % 2 == 1 && nextDirection % 2 == 1){
@@ -85,7 +85,6 @@ public static class CarUtils{
             else{
                 uTurnFloat2.y = -1;
             }
-
         }
 
         return uTurnFloat2;

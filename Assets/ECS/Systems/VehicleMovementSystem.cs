@@ -24,7 +24,7 @@ public class VehicleMovementSystem : SystemBase
         float dt = Time.DeltaTime;
         //Unsure about WithBurst, found on a tutorial https://www.youtube.com/watch?v=2IYa1jDGTFs
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
-        Entities.WithBurst().WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
+        Entities.WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
             
             // rotation.Value = Quaternion.Euler(0f, 0f, math.PI * dt);
 
@@ -94,7 +94,7 @@ public class VehicleMovementSystem : SystemBase
                     vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, carPathBuffer[carPathBuffer.Length - 2].withDirection);
                 }
                 else{
-                    vehicleMovementData.offset = CarUtils.ComputeOffset(lastCarPathBuffer.cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, -1);
+                    vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, -1);
                 }
 
                 lastCarPathBuffer = carPathBuffer[carPathBuffer.Length - 1];
@@ -106,10 +106,8 @@ public class VehicleMovementSystem : SystemBase
                 //Update rotation
                 rotation.Value = Quaternion.Euler(0f,0f,CarUtils.ComputeRotation(lastCarPathBuffer.withDirection));
             }
-        // Missing parallel scheduling
         }).ScheduleParallel();
 
         return;
     }
-
 }

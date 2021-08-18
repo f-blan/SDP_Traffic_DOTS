@@ -72,8 +72,4 @@ public class Map_Setup : MonoBehaviour
         map_Visual.SetMap(CityMap);
         map_Spawner.SpawnCarEntities(CityMap,CityGraph, roadTiles, n_entities);
     }
-
-    
-    
-    
 }
