@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 // [AlwaysSynchronizeSystem] Unsure if this should be here
+[UpdateAfter(typeof(CarPathSystem))]
 public class VehicleMovementSystem : SystemBase
 {
     private Map<MapTile> map;
@@ -107,6 +108,8 @@ public class VehicleMovementSystem : SystemBase
                 rotation.Value = Quaternion.Euler(0f,0f,CarUtils.ComputeRotation(lastCarPathBuffer.withDirection));
             }
         }).ScheduleParallel();
+
+        
 
         return;
     }
