@@ -24,13 +24,15 @@ public class VehicleMovementSystem : SystemBase
         float dt = Time.DeltaTime;
         //Unsure about WithBurst, found on a tutorial https://www.youtube.com/watch?v=2IYa1jDGTFs
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
-        Entities.WithoutBurst().WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
+        Entities.WithBurst().WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
+            
+            // rotation.Value = Quaternion.Euler(0f, 0f, math.PI * dt);
 
             CarPathBuffer lastCarPathBuffer; //Temporary variable for accessing the currently used carPathBuffer
 
-            //Debug
-            Camera.main.transform.position = new Vector3(translation.Value.x, translation.Value.y, Camera.main.transform.position.z);
-            //End Debug
+            // //Debug
+            // Camera.main.transform.position = new Vector3(translation.Value.x, translation.Value.y, Camera.main.transform.position.z);
+            // //End Debug
             
             if(carPathBuffer.IsEmpty){
                 //Check if the CarPathBuffer Component contains anything just for a safety measure
@@ -105,7 +107,7 @@ public class VehicleMovementSystem : SystemBase
                 rotation.Value = Quaternion.Euler(0f,0f,CarUtils.ComputeRotation(lastCarPathBuffer.withDirection));
             }
         // Missing parallel scheduling
-        }).Run();
+        }).ScheduleParallel();
 
         return;
     }

@@ -4,7 +4,7 @@ using Unity.Entities;
 using UnityEngine;
 
 public static class CarUtils{
-
+    
     public enum DirectionEnum{
         Up,
         Right,
@@ -31,15 +31,9 @@ public static class CarUtils{
     }
 
     public static float ComputeRotation(int direction){
-        if(direction == (int)DirectionEnum.Up){
-            return 2*90f;
-        }
-        else if(direction == (int)DirectionEnum.Down){
-            return 0;
-        }
-        else{
-            return direction*90f;
-        }
+
+
+        return -((direction + 2) % 4)*90f; //Changed after Francesco's suggestion
     }
 
     public static float2 ComputeOffset(float offset, int direction, int prevDirection, int nextDirection){
