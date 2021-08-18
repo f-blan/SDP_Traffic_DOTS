@@ -107,9 +107,10 @@ public class Map_Spawner : MonoBehaviour
             }while(CityMap.GetMapObject(pos.x, pos.y).GetTileType() != MapTile.TileType.Intersection);
             
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
-            
-            int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
-
+            int2 endPos;
+            do{
+                endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
+            }while(endPos.x == g.GetX() && endPos.y == g.GetY());
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
             
             InitializeCarData(em, entity, direction);
