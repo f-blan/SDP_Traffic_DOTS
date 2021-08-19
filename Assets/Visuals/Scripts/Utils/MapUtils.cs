@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class MapUtils 
 {
-    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles
+    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles,out List<GraphNode> busStopNodes
     ){
         int[,] i_to_n;
         int[,] bs_to_n;
@@ -12,7 +12,7 @@ public static class MapUtils
         MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
-
+        busStopNodes = new List<GraphNode>();
         roadTiles = new List<MapTile>();
         int m_x = 0;
         int m_y = 0;
@@ -103,8 +103,9 @@ public static class MapUtils
                 g_y++;
             }
         }
-
+        
         //link intersections to graphnodes (so that given your position you can know what node you're in)
+        CityGraph.SetBusStopRelativeCoords(bs_to_n[0,0], bs_to_n[0,1]);
         for(int y=0; y<n_districts_y; ++y){
             for(int x =0 ; x<n_districts_x; ++x){
 
@@ -122,6 +123,7 @@ public static class MapUtils
                    
                     //also graphNodes have to be aware that they are "bus stop nodes"
                     CityGraph.GetGraphNode(x,y, bs_to_n[t,0], bs_to_n[t,1]).SetIsBusStop(true);
+                    busStopNodes.Add(CityGraph.GetGraphNode(x,y,bs_to_n[t,0], bs_to_n[t,1]));
                 }
 
             }
@@ -171,9 +173,9 @@ public static class MapUtils
                 break;
             case 1:
                 image = new int[,]{
-                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 5, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
                     { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
                     { 2, 0, 1, 3, 0, 2, 2, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
@@ -183,13 +185,13 @@ public static class MapUtils
                     { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
                     { 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 2, 2, 2, 2, 0, 0, 1, 3, 0, 0 },
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 3, 1, 0, 0, 5, 5, 0, 0, 0, 0, 3, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 3, 1, 0, 0, 5, 6, 0, 0, 0, 0, 3, 1, 0, 0 },
                     { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
                     { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
-                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 1, 3, 0, 0, 2, 2, 2, 2, 2, 0, 1, 3, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 0, 0, 1, 3, 0, 0, 2, 2, 2, 2, 2, 0, 1, 3, 0, 0 },
                     { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                 };
 
@@ -268,6 +270,9 @@ public static class MapUtils
                         break;
                     case 5:
                         ret[r_y, x] = MapTile.TileType.BusStop;
+                        break;
+                    case 6:
+                        ret[r_y, x] = MapTile.TileType.Other;
                         break;
                     default:
                         break;

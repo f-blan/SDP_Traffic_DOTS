@@ -10,7 +10,8 @@ public class MapTile
         ParkSpot,
         TrafficLight,
         Intersection,
-        BusStop
+        BusStop,
+        Other
     }
 
     public enum Direction{
@@ -69,6 +70,9 @@ public class MapTile
                 isWalkable = false;
             break;
             case TileType.Obstacle:
+                isWalkable = false;
+            break;
+            case TileType.Other:
                 isWalkable = false;
             break;
             default:

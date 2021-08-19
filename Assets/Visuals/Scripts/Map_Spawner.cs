@@ -12,8 +12,82 @@ using Unity.Burst;
 public class Map_Spawner : MonoBehaviour
 {
         [SerializeField] private Material carMaterial;
+        [SerializeField] private Material busMaterial;
         [SerializeField] private float maxCarSpeed;
+        
 
+        //used by BusPathSystem
+        public static void SpawnBusEntities(){
+            //todo
+        }
+        public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
+            
+            if(busStopNodes.Count < n_buses){
+                Debug.Log("Too many buses for the map to handle!");
+                return;   
+            }
+            if(CityMap.GetNDistrictsX()<=1 && CityMap.GetNDistrictsY()<=1){
+                Debug.Log("map is too small to allow buses to run!");
+                return;
+            }
+            EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            EntityArchetype arch = em.CreateArchetype( typeof(BusPathParams));
+
+             NativeArray<Entity> busStops = new NativeArray<Entity>(n_buses, Allocator.Temp);
+            
+            Mesh busMesh = CreateMesh(0.47f, 1f);
+            em.CreateEntity(arch, busStops);
+                 
+             Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
+
+             for(int t=0; t< n_buses; ++t){
+                 int index = UnityEngine.Random.Range(0, busStopNodes.Count);
+
+                 GraphNode node = busStopNodes[index];
+                 //one bus stop per district, i find the district coords
+                 int d_x = (node.GetX()-CityGraph.GetBusStopRelativeCoords().x)/CityMap.GetNDistrictsX();
+                 int d_y = (node.GetY()-CityGraph.GetBusStopRelativeCoords().y)/CityMap.GetNDistrictsY();
+                 Entity e = busStops[t];
+                 busStopNodes.RemoveAt(index);
+
+                 Vector3 wp = CityMap.GetWorldPosition(node.GetX(), node.GetY());
+
+                em.SetName(e, "BusStop "+t);
+                SetUpBusPathFind(d_x, d_y, e, CityMap.GetNDistrictsX(), CityMap.GetNDistrictsY(), CityMap, em,r);
+             }
+        }
+        private void SetUpBusPathFind(int d_x, int d_y, Entity entity, int n_district_x, int n_district_y, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r){
+            
+            
+            NativeArray<int2> walkOffset = new NativeArray<int2>(4, Allocator.Temp);
+            walkOffset[0] = new int2(0,1);
+            walkOffset[1] = new int2(1,0);
+            walkOffset[2] = new int2(0, -1);
+            walkOffset[3] = new int2(-1,0);
+        
+            int2 pos1 = new int2(d_x, d_y);
+            
+            int2 pos2 = new int2(-1, -1);
+
+            //select a district different from the current one ( each district has only one busStop node)
+            do{
+                pos2.x =  r.NextInt(0, n_district_x);
+                pos2.y = r.NextInt(0, n_district_y);
+            }while(pos2.x == pos1.x && pos2.y == pos1.y);
+
+            int2 pos3 = new int2(-1,-1);
+
+            //select a third one
+            do{
+                pos3.x =  r.NextInt(0, n_district_x);
+                pos3.y = r.NextInt(0, n_district_y);
+            }while((pos3.x == pos1.x && pos3.y == pos1.y)||(pos3.x == pos2.x && pos3.y == pos2.y));
+            
+            em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3});
+            
+
+            walkOffset.Dispose();
+    }
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
 
             if(roadTiles.Count < n_entities){
@@ -104,12 +178,15 @@ public class Map_Spawner : MonoBehaviour
                 pos.x += walkOffset[direction].x;
                 pos.y += walkOffset[direction].y;
                 cost++;
+                
+                CityMap.GetMapObject(pos.x, pos.y).GetTileType();
             }while(CityMap.GetMapObject(pos.x, pos.y).GetTileType() != MapTile.TileType.Intersection);
             
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
             int2 endPos;
             do{
                 endPos = new int2(UnityEngine.Random.Range(0, graph_width), UnityEngine.Random.Range(0, graph_height));
+                
             }while(endPos.x == g.GetX() && endPos.y == g.GetY());
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
             //Debug.Log(endPos.x + " " + endPos.y);

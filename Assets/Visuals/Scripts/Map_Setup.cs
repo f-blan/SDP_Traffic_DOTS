@@ -37,6 +37,7 @@ public class Map_Setup : MonoBehaviour
     [SerializeField] int map_n_districts_y;
 
     [SerializeField] int n_entities;
+    [SerializeField] int n_bus_lines;
 
     private void Awake(){
         Instance = this;
@@ -66,7 +67,8 @@ public class Map_Setup : MonoBehaviour
 
         //initialize both CityMap and CityGraph according to parameters
         List<MapTile> roadTiles;
-        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles);
+        List<GraphNode> busStopNodes;
+        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles,out busStopNodes);
         
 
         map_Visual.SetMap(CityMap);
