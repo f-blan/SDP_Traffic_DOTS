@@ -30,7 +30,7 @@ public class Map_Spawner : MonoBehaviour
 
             Mesh carMesh = CreateMesh(0.47f, 1f);
 
-            Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
+            //Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
             for(int t=0; t<n_entities; ++t){
                
                 int index = UnityEngine.Random.Range(0, roadTiles.Count);
@@ -52,12 +52,12 @@ public class Map_Spawner : MonoBehaviour
                     layer = 1
                 });
 
-                SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em,r);
+                SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em);
             }
             cars.Dispose();
         }
     
-    private void SetUpPathFind(int x, int y, Entity entity, int graph_width, int graph_height, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r){
+    private void SetUpPathFind(int x, int y, Entity entity, int graph_width, int graph_height, Map<MapTile> CityMap, EntityManager em){
             int direction=0;
             
             int verse=0;
@@ -109,10 +109,10 @@ public class Map_Spawner : MonoBehaviour
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
             int2 endPos;
             do{
-                endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
+                endPos = new int2(UnityEngine.Random.Range(0, graph_width), UnityEngine.Random.Range(0, graph_height));
             }while(endPos.x == g.GetX() && endPos.y == g.GetY());
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
-            
+            //Debug.Log(endPos.x + " " + endPos.y);
             InitializeCarData(em, entity, direction);
 
             walkOffset.Dispose();
