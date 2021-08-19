@@ -11,16 +11,16 @@ using CodeMonkey.Utils;
 
 public class CarPathSystem : SystemBase
 {
-     private EndSimulationEntityCommandBufferSystem ecb_s;
-     //this used to be a native hashmap, hence the name, but i later changed it to nativearray
-     private NativeArray<PathNode> PathNodeMap;
+    private EndSimulationEntityCommandBufferSystem ecb_s;
+    //this used to be a native hashmap, hence the name, but i later changed it to nativearray
+    private NativeArray<PathNode> PathNodeMap;
 
-     private bool isGraphValid;
+    private bool isGraphValid;
     
     private const int MOVE_X_COST = 8;
     private const int MOVE_Y_COST = 7;
-    
-     protected override void OnCreate(){
+
+    protected override void OnCreate(){
         base.OnCreate();
         // Find the ECB system once and store it for later usage
         ecb_s = World
@@ -28,11 +28,11 @@ public class CarPathSystem : SystemBase
         isGraphValid=false;
     }
     
-     protected override void OnUpdate(){
+    protected override void OnUpdate(){
         EntityCommandBuffer.ParallelWriter ecb = ecb_s.CreateCommandBuffer().AsParallelWriter();
-
+        
         int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());        
-    
+        
         //get the graph in a format usable by jobs (a native map of local struct PathNode, and do it only once per runtime: Allocator.Persistent used)
         if(isGraphValid==false){
             PathNodeMap = GetPathNodeMap(graphSize);
@@ -89,7 +89,7 @@ public class CarPathSystem : SystemBase
     private static int CalculateIndex(int x, int y, int graphWidth) {
         return x + y * graphWidth;
     }
-     private struct PathNode {
+    private struct PathNode {
         public int x;
         public int y;
 

@@ -11,8 +11,9 @@ using Unity.Burst;
 
 public class Map_Spawner : MonoBehaviour
 {
+        [SerializeField] private Mesh mesh;
+
         [SerializeField] private Material carMaterial;
-        [SerializeField] private float maxCarSpeed;
 
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
 
@@ -22,27 +23,25 @@ public class Map_Spawner : MonoBehaviour
             }        
             EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
             EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation), typeof(VehicleMovementData));
+                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation));
 
             NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
 
             em.CreateEntity(arch, cars);
 
-            Mesh carMesh = CreateMesh(0.47f, 1f);
+            Debug.Log("available places: " + roadTiles.Count);
+
+            Mesh carMesh = CreateMesh(0.47f, 1f); //0.47 is the ratio of the height over the width
 
             Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
             for(int t=0; t<n_entities; ++t){
                
                 int index = UnityEngine.Random.Range(0, roadTiles.Count);
-                
                 MapTile tile = roadTiles[index];
-
                 Entity e = cars[t];
                 roadTiles.RemoveAt(index);
 
                 Vector3 wp = CityMap.GetWorldPosition(tile.GetX(), tile.GetY());
-
-                em.SetName(e, "Vehicle "+t);
 
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], -1)});
 
@@ -51,7 +50,6 @@ public class Map_Spawner : MonoBehaviour
                     material = carMaterial,
                     layer = 1
                 });
-
                 SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em,r);
             }
             cars.Dispose();
@@ -107,16 +105,31 @@ public class Map_Spawner : MonoBehaviour
             }while(CityMap.GetMapObject(pos.x, pos.y).GetTileType() != MapTile.TileType.Intersection);
             
             GraphNode g = CityMap.GetMapObject(pos.x, pos.y).GetGraphNode();
-            int2 endPos;
-            do{
-                endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
-            }while(endPos.x == g.GetX() && endPos.y == g.GetY());
+            
+            int2 endPos = new int2(r.NextInt(0, graph_width), r.NextInt(0, graph_height));
+
             em.SetComponentData(entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = new int2(g.GetX(), g.GetY()), endPosition = new int2(endPos.x, endPos.y)});
             
-            InitializeCarData(em, entity, direction);
-
+            int rotationDirection;
+            //Necessary if-else case to correctly rotate the sprite TODO maybe refactor?
+            if(direction == 0){
+                rotationDirection = 2;
+            }
+            else if(direction == 2){
+                rotationDirection = 0;
+            }
+            else{
+                rotationDirection = direction;
+            }
+            
+            em.SetComponentData(entity, new Rotation{Value = Quaternion.Euler(0f, 0f, rotationDirection*90f)});
+            
+            
+            DynamicBuffer<CarPathBuffer> b = em.AddBuffer<CarPathBuffer>(entity);
+            
             walkOffset.Dispose();
     }
+
     private Mesh CreateMesh(float width, float height){
 
         Vector3[] vertices = new Vector3[4];
@@ -152,18 +165,5 @@ public class Map_Spawner : MonoBehaviour
         mesh.name = "Car Mesh";
 
         return mesh;
-    }
-
-    private void InitializeCarData(EntityManager entityManager, Entity entity, int direction){
-
-        entityManager.SetComponentData(entity, new Rotation{Value = Quaternion.Euler(0f, 0f, CarUtils.ComputeRotation(direction))});
-
-        entityManager.SetComponentData(entity, new VehicleMovementData{
-            speed = maxCarSpeed,
-            direction = direction,
-            velocity = CarUtils.ComputeVelocity(maxCarSpeed, direction),
-            initialPosition = new float2(float.NaN, float.NaN),
-            offset = new float2(float.NaN, float.NaN)
-        });
     }
 }
