@@ -8,8 +8,9 @@ public static class MapUtils
     ){
         int[,] i_to_n;
         int[,] bs_to_n;
+        int[] refBusTile;
         Dictionary<int, int>[] toDeadEnd;
-        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd);
+        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd, out refBusTile);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
         busStopNodes = new List<GraphNode>();
@@ -106,6 +107,7 @@ public static class MapUtils
         
         //link intersections to graphnodes (so that given your position you can know what node you're in)
         CityGraph.SetBusStopRelativeCoords(bs_to_n[0,0], bs_to_n[0,1]);
+        CityGraph.SetBusStopRelativePosition(refBusTile[0], refBusTile[1]);
         for(int y=0; y<n_districts_y; ++y){
             for(int x =0 ; x<n_districts_x; ++x){
 
@@ -131,7 +133,7 @@ public static class MapUtils
 
     }
 
-    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd){
+    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition){
         //define here the map of a district
         toDeadEnd = new Dictionary<int, int>[4];
         toDeadEnd[0] = new Dictionary<int, int>();
@@ -163,6 +165,7 @@ public static class MapUtils
                     { 5, 4, 0, 0 },
                 };
                 busStopTiles = new int[0,0];
+                busStopReferencePosition = new int[2];
 
                 toDeadEnd[0].Add(6, 6);
                 toDeadEnd[1].Add(4, 7);
@@ -216,6 +219,8 @@ public static class MapUtils
                     {2, 0},
                     
                 };
+                busStopReferencePosition = new int[]{17,2};
+
 
                 toDeadEnd[0].Add(3,18);
                 toDeadEnd[0].Add(17,18);
@@ -240,6 +245,7 @@ public static class MapUtils
                 image = null;
                 intersectionTiles = null;
                 busStopTiles=null;
+                busStopReferencePosition = null;
                 break;
         }
 

@@ -15,10 +15,58 @@ public class Map_Spawner : MonoBehaviour
         [SerializeField] private Material busMaterial;
         [SerializeField] private float maxCarSpeed;
         
-
+        
         //used by BusPathSystem
-        public static void SpawnBusEntities(){
-            //todo
+        public static void SpawnBusEntities(NativeList<PathElement> pathList, Vector3 referenceWorldPosition,
+                 EntityCommandBuffer.ParallelWriter ecb, int eqi){
+            
+            /*
+            BlobAssetReference<BusPathBlobArray> pathReference;
+            
+            
+            //create the blob array 
+            using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp)){
+                ref BusPathBlobArray blobAsset = ref blobBuilder.ConstructRoot<BusPathBlobArray>();
+                BlobBuilderArray<PathElement> blobPathArray = blobBuilder.Allocate<PathElement>(ref blobAsset.pathArray, pathList.Length);
+
+                for(int t=0; t<pathList.Length; ++t){
+                    PathElement p = pathList[t];
+                    blobPathArray[t] = new PathElement{x = p.x, y = p.y, cost = new int2(p.cost.x, p.cost.y), 
+                        withDirection = new int2(p.withDirection.x, p.withDirection.y), costToStop = new int2(p.costToStop.x,p.costToStop.y)};
+                }
+                pathReference = blobBuilder.CreateBlobAssetReference<BusPathBlobArray>(Allocator.Persistent);
+            }
+
+
+            //for now i spawn only two buses
+            Entity busVerseA = ecb.CreateEntity(eqi, busArchetype);
+            Entity busVerseB = ecb.CreateEntity(eqi, busArchetype);
+            
+            //typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(BusPathComponent)
+            //ecb.AddComponent(eqi, busVerseA, busArchetype);
+            
+            ecb.SetComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
+            ecb.SetComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
+
+            Mesh carMesh = CreateMesh(0.47f, 1f);
+
+            ecb.SetSharedComponent<RenderMesh>(eqi, busVerseA, new RenderMesh{
+                mesh = carMesh,
+                    material = carMaterial,
+                    layer = 1
+            });
+            ecb.SetSharedComponent<RenderMesh>(eqi, busVerseB, new RenderMesh{
+                mesh = carMesh,
+                    material = carMaterial,
+                    layer = 1
+            });
+
+            ecb.SetComponent<BusPathComponent>(eqi, busVerseA, new BusPathComponent{pathIndex = 1, direction = pathList[1].withDirection.x, 
+                                pathLength = pathList.Length, verse = -1, pathArrayReference = pathReference});
+            ecb.SetComponent<BusPathComponent>(eqi, busVerseB, new BusPathComponent{pathIndex = pathList.Length, direction = pathList[pathList.Length].withDirection.y, 
+                                pathLength = pathList.Length, verse = 1, pathArrayReference = pathReference});
+            
+            */
         }
         public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
             

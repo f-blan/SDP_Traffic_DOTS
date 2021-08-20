@@ -3,7 +3,8 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
-
+using Unity.Transforms;
+using UnityEngine;
 
 public class BusPathSystem : SystemBase
 {
@@ -53,7 +54,10 @@ public class BusPathSystem : SystemBase
         int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());  
         int2 graphSizeDistrict = new int2(Map_Setup.Instance.CityMap.GetNDistrictsX(),Map_Setup.Instance.CityMap.GetNDistrictsY());    
         int2 busStopRelativeCoords = Map_Setup.Instance.CityGraph.GetBusStopRelativeCoords();
-        int2 districtSize = new int2(Map_Setup.Instance.CityMap.GetDistrictWidth(), Map_Setup.Instance.CityMap.GetDistrictHeight());
+        int2 busStopRelativePosition = Map_Setup.Instance.CityGraph.GetBusStopRelativePosition();
+        int2 districtSizeTiles = new int2(Map_Setup.Instance.CityMap.GetDistrictWidth(), Map_Setup.Instance.CityMap.GetDistrictHeight());
+        int2 districtSizeNodes = Map_Setup.Instance.CityGraph.GetDistrictSize();
+        Vector3 originPosition = Map_Setup.Instance.CityMap.GetOriginPosition();
 
         NativeArray<PathUtils.PathNode> localPathNodeArray; 
         localPathNodeArray= PathNodeArray; //because if it's not local the compiler complains
@@ -62,13 +66,20 @@ public class BusPathSystem : SystemBase
 
         //compute path
         Entities.ForEach(( Entity entity, int entityInQueryIndex, ref BusPathParams busPathParams)=>{
-
+            
+            //compute the busStop path
             NativeArray<int2> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
             NativeArray<PathUtils.PathNode> tmpPathNodeArray=new NativeArray<PathUtils.PathNode>(localPathNodeArray, Allocator.Temp);
 
-            ComputeNodePath(DistrictPathIndexes, tmpPathNodeArray, graphSize, districtSize, busStopRelativeCoords);
+            //compute the actual node path
+            ComputeNodePath(DistrictPathIndexes, tmpPathNodeArray, graphSize, districtSizeNodes, busStopRelativeCoords);
 
-            Map_Spawner.SpawnBusEntities();
+            //get a struct to put into blobArray
+            NativeList<PathElement> blobArray = GetPathElementArray(tmpPathNodeArray, PathUtils.CalculateIndex(busPathParams.pos1.x, busPathParams.pos1.y, graphSize.x));
+
+            //get a reference world position and spawn the bus with their path as a blob array
+            Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords,  busStopRelativePosition, originPosition);
+            Map_Spawner.SpawnBusEntities(blobArray, referenceWorldPosition, ecb, entityInQueryIndex);
             
             DistrictPathIndexes.Dispose();
             tmpPathNodeArray.Dispose();
@@ -104,7 +115,7 @@ public class BusPathSystem : SystemBase
         return toInt2;
     }
     
-    private static void ComputeNodePath(NativeArray<int2> districtPath, NativeArray<PathUtils.PathNode> PathNodeArray,int2 graphSize, int2 districtSize, int2 busStopRelativeCoords){
+    private static void ComputeNodePath(NativeArray<int2> districtPath, NativeArray<PathUtils.PathNode> PathNodeArray,int2 graphSize, int2 districtSizeNodes, int2 busStopRelativeCoords){
         //if bottleneck this can be done as jobs, but it's done only in the first frame for the whole duration so it's not critical for framerate
         //also this whole system is already executed in parallel between the entities, so using a job might not bring to an improvement
         
@@ -117,10 +128,10 @@ public class BusPathSystem : SystemBase
         PathUtils.InitPartialData(PathNodeArray, out neighbourOffsetArray, out openList, out closedList);
 
 
-        int2 curNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSize, busStopRelativeCoords );
+        int2 curNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
         int2 nextNodePos;
         for(int t=1; t<districtPath.Length; ++t){
-            nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSize, busStopRelativeCoords );    
+            nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords );    
 
             PathUtils.PathFindPartial(PathNodeArray, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), openList,closedList,neighbourOffsetArray );
 
@@ -131,5 +142,46 @@ public class BusPathSystem : SystemBase
         return;
     }
 
+    private static NativeList<PathElement> GetPathElementArray(NativeArray<PathUtils.PathNode> PathNodeArray, int startNodeIndex){
+        NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
+
+        PathUtils.PathNode curNode = PathNodeArray[startNodeIndex];
+        PathUtils.PathNode nextNode = PathNodeArray[curNode.cameFromNodeIndex];
+
+        PathElement curElement = new PathElement();
+        PathElement nextElement = new PathElement();
+
+        
+
+        do{
+            curElement.x = curNode.x;
+            curElement.y = curNode.y;
+            curElement.cost.x = curNode.reachedWithCost;
+            curElement.withDirection.x = curNode.reachedWithDirection;
+            if(curNode.isBusStop){
+                curElement.costToStop.x=curNode.reachedWithCost - 4;
+            }else{
+                curElement.costToStop.x = -1;
+            }
+
+            nextElement.cost.y = curNode.reachedWithCost;
+            nextElement.withDirection.y = (curNode.reachedWithDirection+2)%4;
+            if(nextNode.isBusStop){
+                nextElement.costToStop.y = nextNode.reachedWithCost -4;
+            }else{
+                nextElement.costToStop.y = -1;
+            }
+
+            pathList.Add(curElement);
+            curElement = nextElement;
+            curNode = nextNode;
+
+            nextElement=new PathElement();
+            nextNode = PathNodeArray[nextNode.cameFromNodeIndex];
+
+        }while(nextNode.index != startNodeIndex);
+
+        return pathList;
+    }
     
 }

@@ -12,7 +12,10 @@ public class PathFindGraph
     private int district_width;
     private int district_height;
     private GraphNode[,] GraphArray;
+    //coordinate of the bus stops in CityGraph wrt to their district
     private int2 busStopRelativeCoords;
+    //position in CityMap of reference tile of bus stop
+    private int2 busStopRelativePosition;
 
     public PathFindGraph(int n_districts_x, int n_districts_y, int d_width, int d_height){
         this.n_districts_x=n_districts_x;
@@ -65,5 +68,16 @@ public class PathFindGraph
     }
     public int2 GetBusStopRelativeCoords(){
         return busStopRelativeCoords;
+    }
+    public void SetBusStopRelativePosition(int x, int y){
+        busStopRelativePosition.x = x;
+        busStopRelativePosition.y = y;
+    }
+    public int2 GetBusStopRelativePosition(){
+        return busStopRelativePosition;
+    }
+
+    public int2 GetDistrictSize(){
+        return new int2(district_width, district_height);
     }
 }

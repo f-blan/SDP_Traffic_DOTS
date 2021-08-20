@@ -20,6 +20,7 @@ public static class PathUtils
                 pn.goesTo = new int4(goesTo[0], goesTo[1], goesTo[2], goesTo[3]);
                 pn.gCost = int.MaxValue;
 
+                pn.isBusStop=false;
                 pn.cameFromNodeIndex = -1;
                 pn.reachedWithDirection = -1;
                 pn.reachedWithCost = -1;
@@ -39,6 +40,16 @@ public static class PathUtils
         
         return new int2(x, y);
     }
+    public static Vector3 GetWorldPosition(int x, int y, Vector3 originPosition) {
+        return new Vector3(x, y, 0) * 1f + originPosition;
+    }
+
+    public static Vector3 CalculateStopWorldPosition(int d_x, int d_y, int2 districtSizeTiles, int2 busStopRelativeCoords, int2 busStopRelativePosition, Vector3 originPosition){
+        int2 busStopCoords = CalculateBusStopCoords(d_x,d_y,districtSizeTiles,busStopRelativePosition);
+        
+
+        return GetWorldPosition(busStopCoords.x, busStopCoords.y, originPosition);
+    }
     public struct PathNode {
         public int x;
         public int y;
@@ -54,7 +65,8 @@ public static class PathUtils
 
         public int4 goesTo;
 
-        public bool isWalkable;
+        //public bool isWalkable;
+        public bool isBusStop;
 
         public int cameFromNodeIndex;
         public int reachedWithDirection;
@@ -64,9 +76,7 @@ public static class PathUtils
             fCost = gCost + hCost;
         }
 
-        public void SetIsWalkable(bool isWalkable) {
-            this.isWalkable = isWalkable;
-        }
+        
     }
     public static int GetLowestCostFNodeIndex(NativeList<int> openlist,NativeArray<PathNode> pathNodeMap ){
         
@@ -106,6 +116,7 @@ public static class PathUtils
                 pn.goesTo = new int4(move_x_cost, move_y_cost, move_x_cost, move_y_cost);
                 pn.gCost = int.MaxValue;
 
+                pn.isBusStop=false;
                 pn.cameFromNodeIndex = -1;
                 pn.reachedWithDirection = -1;
                 pn.reachedWithCost = -1;
@@ -228,6 +239,7 @@ public static class PathUtils
 
             //set start's gCost to 0
             PathUtils.PathNode startNode = graphArray[startNodeIndex];
+            startNode.isBusStop=true;
             startNode.gCost=0;
             startNode.CalculateFCost();
             graphArray[startNodeIndex] = startNode;
@@ -326,5 +338,6 @@ public static class PathUtils
         return pathList;
     }
 
+    
     
 }

@@ -1,9 +1,12 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-[InternalBufferCapacity(60)]
-public struct BusPathBuffer : IBufferElementData {
+public struct BusPathBlobArray 
+{
+    public BlobArray<PathElement> pathArray;
+}
 
+public struct PathElement{
     public int x;
     public int y;
 
@@ -16,4 +19,3 @@ public struct BusPathBuffer : IBufferElementData {
     //-1 if the node is not a bus stop node, cost-3 otherwise for now
     public int2 costToStop;
 }
-
