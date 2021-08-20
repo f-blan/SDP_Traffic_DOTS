@@ -1,36 +1,130 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class CameraUtils : MonoBehaviour
 {
-    private const byte PRIMARYMOUSEBUTTON = 0;
+
+    struct PositionVehicleCameraJob: IJobParallelFor
+    {
+        [ReadOnly,NativeDisableParallelForRestriction]
+        public NativeArray<Translation> vehicleTranslations;
+        [ReadOnly]
+        public Vector3 worldClickPosition;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> vehicleIndex;
+        
+        public void Execute(int i)
+        {
+            Translation translation = vehicleTranslations[i];
+
+            if(System.Math.Truncate(translation.Value.x) == System.Math.Truncate(worldClickPosition.x) && System.Math.Truncate(translation.Value.y) == System.Math.Truncate(worldClickPosition.y)){
+                Debug.Log("Before " + vehicleIndex[0]);
+                vehicleIndex[0] = i;
+                Debug.Log("After "+ vehicleIndex[0]);
+            }
+        }
+    }
+
+    private const int INNERLOOP_BATCH_COUNT = 64;
+    private const byte PRIMARY_MOUSE_BUTTON = 0;
+    private const byte SECONDARY_MOUSE_BUTTON = 1;
+    private Translation cameraFollowsVehicleTranslation = new Translation{Value = new float3(0,0,-5)};
     private bool naturalScroll = true;
     private bool dragging = false;
     private Vector3 initPos;
+    EntityQuery query;
+    private int cameraFollowsVehicleTranslationIndex = -1;
     [SerializeField] private float scrollSpeed = 1.0f;
     [SerializeField] private float dragMultiplier = 0.04f;
+    void Start(){
+        query = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<VehicleMovementData>(), ComponentType.ReadOnly<Translation>()); //Could need an update once different vehicle types are added
+    }
 
     // Update is called once per frame
     void Update()
     {
-        //Allows to scroll in and out the camera
+
+        //Allows to scroll in and out the camera using the mouse wheel
+        ScrollingInAndOutUsingMouseWheel();
+
+        //Follows the vehicle that is clicked
+        FollowSelectedVehicle();
+
+        //Allows to drag the camera around the map
+        DragCameraAroundMap();
+        
+    } 
+
+    private void ScrollingInAndOutUsingMouseWheel(){
         if(Input.mouseScrollDelta.y != 0){
             float valToAdd = (naturalScroll ? -1 : 1) * Mathf.Sign(Input.mouseScrollDelta.y) * scrollSpeed;
-            //If the cmaer
+
             Camera.main.orthographicSize += Camera.main.orthographicSize + valToAdd < 1 ? 0 : valToAdd;
         }
+    }
 
-        if(Input.GetMouseButtonDown(PRIMARYMOUSEBUTTON)){
+    private void DragCameraAroundMap(){
+        //Check if the mouse button was pressed
+        if(Input.GetMouseButtonDown(PRIMARY_MOUSE_BUTTON)){
            dragging = true;
-           initPos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0);
+           initPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         }
         else if(dragging){
-            transform.position = new Vector3(transform.position.x - (Input.mousePosition.x - initPos.x)*dragMultiplier, transform.position.y - (Input.mousePosition.y - initPos.y)*dragMultiplier, transform.position.z);
-            initPos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0);
+            Vector3 curPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            transform.position = new Vector3(transform.position.x - (curPosition.x - initPos.x)*dragMultiplier, transform.position.y - (curPosition.y - initPos.y)*dragMultiplier, transform.position.z);
+            initPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         }
-        if(Input.GetMouseButtonUp(PRIMARYMOUSEBUTTON)){
+        if(Input.GetMouseButtonUp(PRIMARY_MOUSE_BUTTON)){
             dragging = false;
         }
+    }
+
+    private void FollowSelectedVehicle(){
+        //Unlock the camera from following the vehicle by resetting the index
+
+        if(Input.GetMouseButton(SECONDARY_MOUSE_BUTTON) && cameraFollowsVehicleTranslationIndex != -1){
+            cameraFollowsVehicleTranslationIndex = -1;
+            return;
+        }
+
+        if(cameraFollowsVehicleTranslationIndex != -1){
+            NativeArray<Translation> vehicleTranslations = query.ToComponentDataArray<Translation>(Allocator.TempJob);
+            transform.position = new Vector3(vehicleTranslations[cameraFollowsVehicleTranslationIndex].Value.x, vehicleTranslations[cameraFollowsVehicleTranslationIndex].Value.y, transform.position.z);
+            vehicleTranslations.Dispose();
+            return;
+        }
+
+        if(Input.GetMouseButton(PRIMARY_MOUSE_BUTTON)){
+            //Code repetition is necessary due to 
+            NativeArray<Translation> vehicleTranslations = query.ToComponentDataArray<Translation>(Allocator.TempJob);
+            NativeArray<int> vehicleIndex = new NativeArray<int>(1,Allocator.TempJob);
+            vehicleIndex[0] = -1;
+
+            var job = new PositionVehicleCameraJob()
+            {
+                vehicleIndex = vehicleIndex,
+                worldClickPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition),
+                vehicleTranslations = vehicleTranslations
+            };
+            
+            //Scheduling of the job and waiting until it has completed
+            JobHandle jobHandle = job.Schedule(vehicleTranslations.Length, INNERLOOP_BATCH_COUNT);
+            jobHandle.Complete();
+
+            if(vehicleIndex[0] != -1){
+                cameraFollowsVehicleTranslationIndex = vehicleIndex[0];
+                cameraFollowsVehicleTranslation = vehicleTranslations[vehicleIndex[0]];
+                transform.position = new Vector3(cameraFollowsVehicleTranslation.Value.x, cameraFollowsVehicleTranslation.Value.y, transform.position.z);
+            }
+            //Dispose of Nativearrays
+            vehicleTranslations.Dispose();
+            vehicleIndex.Dispose();
+        }
+
+        
     }
 }

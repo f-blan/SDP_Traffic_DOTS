@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
-  maxCarSpeed: 200
+  maxCarSpeed: 5
 --- !u!4 &98288714
 Transform:
   m_ObjectHideFlags: 0

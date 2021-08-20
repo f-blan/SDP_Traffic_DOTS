@@ -8,26 +8,25 @@ using UnityEngine;
 [UpdateAfter(typeof(CarPathSystem))]
 public class VehicleMovementSystem : SystemBase
 {
-    private Map<MapTile> map;
-    private float tileSize;
-    private float3 originPosition;
+    // private Map<MapTile> map;
+    // private float tileSize;
+    // private float3 originPosition;
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
 
-        map = Map_Setup.Instance.CityMap;
-        tileSize = map.GetTileSize();
-        originPosition = new float3(map.GetOriginPosition().x, map.GetOriginPosition().y, map.GetOriginPosition().z);
+        // map = Map_Setup.Instance.CityMap;
+        // tileSize = map.GetTileSize();
+        // originPosition = new float3(map.GetOriginPosition().x, map.GetOriginPosition().y, map.GetOriginPosition().z);
     }
 
     protected override void OnUpdate(){
 
         float dt = Time.DeltaTime;
+
         //Unsure about WithBurst, found on a tutorial https://www.youtube.com/watch?v=2IYa1jDGTFs
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
         Entities.WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
-            
-            // rotation.Value = Quaternion.Euler(0f, 0f, math.PI * dt);
 
             CarPathBuffer lastCarPathBuffer; //Temporary variable for accessing the currently used carPathBuffer
 
@@ -59,7 +58,7 @@ public class VehicleMovementSystem : SystemBase
                 //Removing last element from the buffer
                 carPathBuffer.RemoveAt(carPathBuffer.Length - 1);
 
-                 if(carPathBuffer.IsEmpty){
+                if(carPathBuffer.IsEmpty){
                     // Final resting position
                     translation.Value.x = vehicleMovementData.initialPosition.x + vehicleMovementData.offset.x;
                     translation.Value.y = vehicleMovementData.initialPosition.y + vehicleMovementData.offset.y;
@@ -108,8 +107,6 @@ public class VehicleMovementSystem : SystemBase
                 rotation.Value = Quaternion.Euler(0f,0f,CarUtils.ComputeRotation(lastCarPathBuffer.withDirection));
             }
         }).ScheduleParallel();
-
-        
 
         return;
     }

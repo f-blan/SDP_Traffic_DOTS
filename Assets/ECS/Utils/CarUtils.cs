@@ -10,25 +10,21 @@ public static class CarUtils{
     }
 
     public static float2 ComputeVelocity(float maxSpeed, int direction){
-        float2 velocity = new float2();
 
-        if(direction == ((int)DirectionEnum.Up)){
-            velocity = new float2(0f, maxSpeed);
+        switch(direction){
+            case (int)DirectionEnum.Up:
+                return new float2(0f, maxSpeed);
+            case (int)DirectionEnum.Down:
+                return new float2(0f, -maxSpeed);
+            case (int)DirectionEnum.Right:
+                return new float2(maxSpeed, 0f);
+            default:
+                return new float2(-maxSpeed, 0f);
         }
-        else if(direction == ((int)DirectionEnum.Down)){
-            velocity = new float2(0f, -maxSpeed);
-        }
-        else if(direction == ((int)DirectionEnum.Right)){
-            velocity = new float2(maxSpeed, 0f);
-        }
-        else{
-            velocity = new float2(-maxSpeed, 0f);
-        }
-        return velocity;
+
     }
 
     public static float ComputeRotation(int direction){
-
         return -((direction + 2) % 4)*90f; //Changed after Francesco's suggestion
     }
 
@@ -88,16 +84,17 @@ public static class CarUtils{
     }
 
     public static bool ComputeReachedDestination(int direction, float2 initialPosition, float2 offset, float3 currentPosition){
+
         switch(direction){
-                case ((int)CarUtils.DirectionEnum.Up):
-                    return initialPosition.y + offset.y <= currentPosition.y;
-                case ((int)CarUtils.DirectionEnum.Right):
-                    return initialPosition.x + offset.x <= currentPosition.x;
-                case ((int)CarUtils.DirectionEnum.Down):
-                    return initialPosition.y + offset.y >= currentPosition.y;
-                default:
-                    return initialPosition.x + offset.x >= currentPosition.x;
-            }
+            case ((int)CarUtils.DirectionEnum.Up):
+                return initialPosition.y + offset.y <= currentPosition.y;
+            case ((int)CarUtils.DirectionEnum.Right):
+                return initialPosition.x + offset.x <= currentPosition.x;
+            case ((int)CarUtils.DirectionEnum.Down):
+                return initialPosition.y + offset.y >= currentPosition.y;
+            default:
+                return initialPosition.x + offset.x >= currentPosition.x;
+        }
     }
 
 }
