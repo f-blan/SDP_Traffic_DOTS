@@ -19,6 +19,7 @@ public static class PathUtils
                 int[] goesTo = CityGraph.GetGraphNode(x,y).GetGoesTo();
                 pn.goesTo = new int4(goesTo[0], goesTo[1], goesTo[2], goesTo[3]);
                 pn.gCost = int.MaxValue;
+                pn.lastIteration=0;
 
                 pn.isBusStop=false;
                 pn.cameFromNodeIndex = -1;
@@ -62,6 +63,9 @@ public static class PathUtils
         public int hCost;
         //sum of the two
         public int fCost;
+        
+        //needed to tell how i have to consider this node during the current partial pathfind iteration (blank or traversed) 
+        public int lastIteration;
 
         public int4 goesTo;
 
@@ -112,9 +116,22 @@ public static class PathUtils
                 pn.x = x;
                 pn.y = y;
                 pn.index = CalculateIndex(x,y, graphSize.x);
-                
+                pn.lastIteration=0;
                 pn.goesTo = new int4(move_x_cost, move_y_cost, move_x_cost, move_y_cost);
                 pn.gCost = int.MaxValue;
+
+                if(x == 0){
+                    pn.goesTo[3]=-1;
+                }
+                if(x == graphSize.x-1){
+                    pn.goesTo[1]=-1;
+                }
+                if(y == 0){
+                    pn.goesTo[2]=-1;
+                }
+                if(y == graphSize.y-1){
+                    pn.goesTo[0]=-1;
+                }
 
                 pn.isBusStop=false;
                 pn.cameFromNodeIndex = -1;
@@ -125,6 +142,12 @@ public static class PathUtils
 
             }
         }
+
+        
+
+        
+
+        
         return DistrictNodeArray;
     }
 
@@ -134,7 +157,11 @@ public static class PathUtils
                 PathUtils.PathNode p = graphArray[t];
                 p.hCost = PathUtils.CalculateHCost(new int2(p.x, p.y), endPosition, Hcosts.x, Hcosts.y);
                 p.cameFromNodeIndex=-1;
-
+               
+                p.reachedWithCost=-1;
+                p.reachedWithDirection=-1;
+            
+                p.gCost = int.MaxValue;
                 //reassign since p is a reference
                 graphArray[t] = p;
             }
@@ -183,6 +210,7 @@ public static class PathUtils
                     if(currentNode.goesTo[t] == -1){
                         continue;
                     }
+
                     //get the neighboring node
                     int2 neighbourPosition = new int2(currentNode.x + neighbourOffsetArray[t].x, + currentNode.y + neighbourOffsetArray[t].y);
                     int neighBourNodeIndex = PathUtils.CalculateIndex(neighbourPosition.x, neighbourPosition.y, graphSize.x);
@@ -222,20 +250,26 @@ public static class PathUtils
     }
 
     //variant of function PathFind but meant to be used for paths with multiple destination points (eg. BusPathFind)
-    public static void PathFindPartial(NativeArray<PathUtils.PathNode> graphArray, int2 endPosition, int2 startPosition, int2 graphSize,  int2 Hcosts, NativeList<int> openList, NativeList<int> closedList,NativeArray<int2> neighbourOffsetArray){
+    public static void PathFindPartial(NativeArray<PathUtils.PathNode> graphArray, int2 endPosition, int2 startPosition, int2 graphSize,  int2 Hcosts, NativeArray<int2> neighbourOffsetArray){
             
-            //calculate heuristic cost for each node
+            //reset the map
             for(int t =0; t< graphArray.Length; ++t){
                 PathUtils.PathNode p = graphArray[t];
                 p.hCost = PathUtils.CalculateHCost(new int2(p.x, p.y), endPosition, Hcosts.x, Hcosts.y);
-                
+                p.reachedWithCost=-1;
+                p.reachedWithDirection=-1;
+                p.cameFromNodeIndex=-1;
+                p.gCost = int.MaxValue;
 
                 //reassign since p is a reference
                 graphArray[t] = p;
             }
 
+            NativeList<int> openList = new NativeList<int>(Allocator.Temp);
+            NativeList<int> closedList = new NativeList<int>(Allocator.Temp);
             int startNodeIndex = PathUtils.CalculateIndex(startPosition.x, startPosition.y, graphSize.x); 
             int endNodeIndex = PathUtils.CalculateIndex(endPosition.x, endPosition.y, graphSize.x);
+            //int firstStartIndex = PathUtils.CalculateIndex(firstStartPosition.x, firstStartPosition.y, graphSize.x);
 
             //set start's gCost to 0
             PathUtils.PathNode startNode = graphArray[startNodeIndex];
@@ -255,6 +289,7 @@ public static class PathUtils
 
                 if(currentNodeIndex==endNodeIndex){
                     //pathfinding completed!
+                    
                     break;
                 }
                 //remove current node from open list and add to closed one
@@ -264,6 +299,9 @@ public static class PathUtils
                         break;
                     }
                 }
+
+                
+                
                 closedList.Add(currentNodeIndex);
 
                 for(int t =0; t<neighbourOffsetArray.Length; ++t){
@@ -271,12 +309,23 @@ public static class PathUtils
                     if(currentNode.goesTo[t] == -1){
                         continue;
                     }
+                    if(t == (currentNode.reachedWithDirection+2)%4){
+                        //for buses we avoid U turns
+                        
+                        continue;
+                    }
                     //get the neighboring node
                     int2 neighbourPosition = new int2(currentNode.x + neighbourOffsetArray[t].x, + currentNode.y + neighbourOffsetArray[t].y);
                     int neighBourNodeIndex = PathUtils.CalculateIndex(neighbourPosition.x, neighbourPosition.y, graphSize.x);
 
-                    if(closedList.Contains(neighBourNodeIndex)){
+                    
+
+                    if(closedList.Contains(neighBourNodeIndex) && !(endNodeIndex == neighBourNodeIndex)){
                         //that node was already processed
+                        //Debug.Log("continued");
+                        
+                        
+                        
                         continue;
                     }
 
@@ -301,11 +350,17 @@ public static class PathUtils
 
                 }
             }
+            openList.Dispose();
+            closedList.Dispose();
+            if(graphArray[endNodeIndex].cameFromNodeIndex==-1){
+                Debug.Log("ALERT PATH NOT FOUND. THIS SHOULD NOT BE POSSIBLE");
+            }
+
             return;
 
     }
 
-    public static void InitPartialData(NativeArray<PathUtils.PathNode> graphArray,out NativeArray<int2> neighbourOffsetArray,out NativeList<int> openList, out NativeList<int> closedList){
+    public static void InitPartialData(out NativeArray<int2> neighbourOffsetArray){
             
             neighbourOffsetArray = new NativeArray<int2>(4, Allocator.Temp);
             neighbourOffsetArray[3] = new int2(-1, 0); // Left
@@ -313,31 +368,42 @@ public static class PathUtils
             neighbourOffsetArray[0] = new int2(0, +1); // Up
             neighbourOffsetArray[2] = new int2(0, -1); // Down
 
-            //list of discovered (but unporcessed) indexNodes
-            openList = new NativeList<int>(Allocator.Temp);
-            //list of processed indexNodes
-            closedList = new NativeList<int>(Allocator.Temp);
+            
     }
 
-    public static NativeList<int2> turnPathToInt2List(NativeArray<PathNode> graphArray, int2 graphSize, int2 pos){
-        int index = CalculateIndex(pos.x, pos.y, graphSize.x);
-        NativeList<int2> pathList = new NativeList<int2>(Allocator.Temp);
+    public static void addPathToInt2List(NativeList<int2> pathList,NativeArray<PathNode> graphArray, int2 graphSize, int2 endPos){
+        
+        
+        /*
+        Debug.Log("array");
+        Debug.Log(graphArray[0].cameFromNodeIndex);
+        Debug.Log(graphArray[1].cameFromNodeIndex);
+        Debug.Log(graphArray[2].cameFromNodeIndex);
+        Debug.Log(graphArray[3].cameFromNodeIndex);
+        */
+       
+        NativeList<int2> supportList = new NativeList<int2>(Allocator.Temp);
+
+        int curIndex = CalculateIndex(endPos.x,endPos.y, graphSize.x);
+        
+        PathNode curNode = graphArray[curIndex];
         
 
-        int2 curPos = new int2(pos.x, pos.y);
-        int curIndex = CalculateIndex(curPos.x,curPos.y, graphSize.x);
-        PathNode curNode = graphArray[curIndex];
-        do{
-            pathList.Add(new int2(curPos.x, curPos.y));
+        //curNode = graphArray[curNode.cameFromNodeIDndex];
+        while(curNode.cameFromNodeIndex != -1){
             curNode = graphArray[curNode.cameFromNodeIndex];
-            curPos.x = curNode.x;
-            curPos.y = curNode.y;
+            supportList.Add(new int2(curNode.x, curNode.y));
+        }
 
-        }while(curPos.x != pos.x && curPos.y != pos.y);
+        //supportList.Add(new int2(cameFromNode.x, cameFromNode.y));
+        
+        for(int t=supportList.Length-1; t>=0; --t){
+            pathList.Add(supportList[t]);
+        }
 
-        return pathList;
+        supportList.Dispose();
+        
     }
 
-    
     
 }

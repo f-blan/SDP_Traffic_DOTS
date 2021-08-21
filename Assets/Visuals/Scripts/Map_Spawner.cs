@@ -18,11 +18,11 @@ public class Map_Spawner : MonoBehaviour
         
         //used by BusPathSystem
         public static void SpawnBusEntities(NativeList<PathElement> pathList, Vector3 referenceWorldPosition,
-                 EntityCommandBuffer.ParallelWriter ecb, int eqi){
+            EntityCommandBuffer.ParallelWriter ecb, int eqi, Entity entityToSpawn){
             
-            /*
+            
             BlobAssetReference<BusPathBlobArray> pathReference;
-            
+           
             
             //create the blob array 
             using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp)){
@@ -36,37 +36,28 @@ public class Map_Spawner : MonoBehaviour
                 }
                 pathReference = blobBuilder.CreateBlobAssetReference<BusPathBlobArray>(Allocator.Persistent);
             }
-
-
+            ref BlobArray<PathElement> v = ref pathReference.Value.pathArray;
+            
+            
+            
             //for now i spawn only two buses
-            Entity busVerseA = ecb.CreateEntity(eqi, busArchetype);
-            Entity busVerseB = ecb.CreateEntity(eqi, busArchetype);
+            Entity busVerseA = ecb.Instantiate(eqi, entityToSpawn);
+            Entity busVerseB = ecb.Instantiate(eqi, entityToSpawn);
+            
             
             //typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(BusPathComponent)
             //ecb.AddComponent(eqi, busVerseA, busArchetype);
             
-            ecb.SetComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
-            ecb.SetComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
-
-            Mesh carMesh = CreateMesh(0.47f, 1f);
-
-            ecb.SetSharedComponent<RenderMesh>(eqi, busVerseA, new RenderMesh{
-                mesh = carMesh,
-                    material = carMaterial,
-                    layer = 1
-            });
-            ecb.SetSharedComponent<RenderMesh>(eqi, busVerseB, new RenderMesh{
-                mesh = carMesh,
-                    material = carMaterial,
-                    layer = 1
-            });
-
-            ecb.SetComponent<BusPathComponent>(eqi, busVerseA, new BusPathComponent{pathIndex = 1, direction = pathList[1].withDirection.x, 
+            ecb.AddComponent<BusPathComponent>(eqi, busVerseA,  new BusPathComponent{pathIndex = 1, direction = pathList[1].withDirection.x, 
                                 pathLength = pathList.Length, verse = -1, pathArrayReference = pathReference});
-            ecb.SetComponent<BusPathComponent>(eqi, busVerseB, new BusPathComponent{pathIndex = pathList.Length, direction = pathList[pathList.Length].withDirection.y, 
+            ecb.AddComponent<BusPathComponent>(eqi, busVerseB,  new BusPathComponent{pathIndex = pathList.Length-1, direction = pathList[pathList.Length-1].withDirection.y, 
                                 pathLength = pathList.Length, verse = 1, pathArrayReference = pathReference});
+
+            //ecb.SetComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
+            //ecb.SetComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
+            ecb.AddComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
+            ecb.AddComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
             
-            */
         }
         public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
             
@@ -80,10 +71,20 @@ public class Map_Spawner : MonoBehaviour
             }
             EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
             EntityArchetype arch = em.CreateArchetype( typeof(BusPathParams));
+            EntityArchetype busArchetype = em.CreateArchetype( typeof(RenderMesh), 
+                                typeof(LocalToWorld), typeof(RenderBounds));
 
-             NativeArray<Entity> busStops = new NativeArray<Entity>(n_buses, Allocator.Temp);
+            NativeArray<Entity> busStops = new NativeArray<Entity>(n_buses, Allocator.Temp);
             
             Mesh busMesh = CreateMesh(0.47f, 1f);
+            Entity defaultBusEntity = em.CreateEntity(busArchetype);
+            //em.SetComponentData(defaultBusEntity, new BusPathComponent{pathIndex = 10000});
+            em.SetSharedComponentData(defaultBusEntity, new RenderMesh{
+                mesh = busMesh,
+                material = busMaterial,
+                layer = 1
+            });
+
             em.CreateEntity(arch, busStops);
                  
              Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
@@ -93,26 +94,21 @@ public class Map_Spawner : MonoBehaviour
 
                  GraphNode node = busStopNodes[index];
                  //one bus stop per district, i find the district coords
-                 int d_x = (node.GetX()-CityGraph.GetBusStopRelativeCoords().x)/CityMap.GetNDistrictsX();
-                 int d_y = (node.GetY()-CityGraph.GetBusStopRelativeCoords().y)/CityMap.GetNDistrictsY();
+                 int d_x = (node.GetX()-CityGraph.GetBusStopRelativeCoords().x)/CityGraph.GetDistrictSize().x;
+                 int d_y = (node.GetY()-CityGraph.GetBusStopRelativeCoords().y)/CityGraph.GetDistrictSize().y;
                  Entity e = busStops[t];
                  busStopNodes.RemoveAt(index);
 
                  Vector3 wp = CityMap.GetWorldPosition(node.GetX(), node.GetY());
 
                 em.SetName(e, "BusStop "+t);
-                SetUpBusPathFind(d_x, d_y, e, CityMap.GetNDistrictsX(), CityMap.GetNDistrictsY(), CityMap, em,r);
+                SetUpBusPathFind(d_x, d_y, e, CityMap.GetNDistrictsX(), CityMap.GetNDistrictsY(), CityMap, em,r, defaultBusEntity);
              }
         }
-        private void SetUpBusPathFind(int d_x, int d_y, Entity entity, int n_district_x, int n_district_y, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r){
+        private void SetUpBusPathFind(int d_x, int d_y, Entity entity, int n_district_x, int n_district_y, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r, Entity defaultBusEntity){
             
             
-            NativeArray<int2> walkOffset = new NativeArray<int2>(4, Allocator.Temp);
-            walkOffset[0] = new int2(0,1);
-            walkOffset[1] = new int2(1,0);
-            walkOffset[2] = new int2(0, -1);
-            walkOffset[3] = new int2(-1,0);
-        
+
             int2 pos1 = new int2(d_x, d_y);
             
             int2 pos2 = new int2(-1, -1);
@@ -131,11 +127,9 @@ public class Map_Spawner : MonoBehaviour
                 pos3.y = r.NextInt(0, n_district_y);
             }while((pos3.x == pos1.x && pos3.y == pos1.y)||(pos3.x == pos2.x && pos3.y == pos2.y));
             
-            em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3});
-            
+            em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3, entityToSpawn = defaultBusEntity});
 
-            walkOffset.Dispose();
-    }
+        }
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
 
             if(roadTiles.Count < n_entities){
@@ -179,7 +173,7 @@ public class Map_Spawner : MonoBehaviour
             cars.Dispose();
         }
     
-    private void SetUpPathFind(int x, int y, Entity entity, int graph_width, int graph_height, Map<MapTile> CityMap, EntityManager em){
+        private void SetUpPathFind(int x, int y, Entity entity, int graph_width, int graph_height, Map<MapTile> CityMap, EntityManager em){
             int direction=0;
             
             int verse=0;
@@ -241,7 +235,7 @@ public class Map_Spawner : MonoBehaviour
             InitializeCarData(em, entity, direction);
 
             walkOffset.Dispose();
-    }
+        }
     private Mesh CreateMesh(float width, float height){
 
         Vector3[] vertices = new Vector3[4];
@@ -291,4 +285,26 @@ public class Map_Spawner : MonoBehaviour
             offset = new float2(float.NaN, float.NaN)
         });
     }
+    public void BlobTest(){
+        BlobAssetReference<BusPathBlobArray> pathReference;
+            Debug.Log("blobbing");
+            
+            //create the blob array 
+            using (BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp)){
+                ref BusPathBlobArray blobAsset = ref blobBuilder.ConstructRoot<BusPathBlobArray>();
+                BlobBuilderArray<PathElement> blobPathArray = blobBuilder.Allocate<PathElement>(ref blobAsset.pathArray, 3);
+
+                
+                    blobPathArray[0] = new PathElement{x = 1, y = 1, cost = new int2(1, 1), 
+                        withDirection = new int2(1, 1), costToStop = new int2(1,1)};
+                
+                pathReference = blobBuilder.CreateBlobAssetReference<BusPathBlobArray>(Allocator.Persistent);
+            }
+
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        Entity e = em.CreateEntity(typeof(BusPathComponent));
+        em.SetName(e, "asdasd ");
+        em.AddComponentData(e, new BusPathComponent{pathArrayReference = pathReference});
+    }
 }
+

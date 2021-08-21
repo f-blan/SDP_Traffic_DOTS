@@ -68,21 +68,40 @@ public class BusPathSystem : SystemBase
         Entities.ForEach(( Entity entity, int entityInQueryIndex, ref BusPathParams busPathParams)=>{
             
             //compute the busStop path
-            NativeArray<int2> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
+            NativeList<int2> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
             NativeArray<PathUtils.PathNode> tmpPathNodeArray=new NativeArray<PathUtils.PathNode>(localPathNodeArray, Allocator.Temp);
 
-            //compute the actual node path
-            ComputeNodePath(DistrictPathIndexes, tmpPathNodeArray, graphSize, districtSizeNodes, busStopRelativeCoords);
+            //compute the actual node path and transform into an array of PathElements
+            NativeList<PathElement> pathList = ComputeNodePath(DistrictPathIndexes, tmpPathNodeArray, graphSize, districtSizeNodes, busStopRelativeCoords);
 
-            //get a struct to put into blobArray
-            NativeList<PathElement> blobArray = GetPathElementArray(tmpPathNodeArray, PathUtils.CalculateIndex(busPathParams.pos1.x, busPathParams.pos1.y, graphSize.x));
+            /*
+            for(int t=0; t<pathList.Length; ++t){
+                Debug.Log("------------COORDS-------------");
+                Debug.Log(pathList[t].x);
+                Debug.Log(pathList[t].y);
+                
+                Debug.Log("costs");
+                Debug.Log(pathList[t].cost.x);
+                Debug.Log(pathList[t].cost.y);
 
-            //get a reference world position and spawn the bus with their path as a blob array
+                Debug.Log("directions");
+                Debug.Log(pathList[t].withDirection.x);
+                Debug.Log(pathList[t].withDirection.y);
+                
+                Debug.Log("stopCost");
+                Debug.Log(pathList[t].costToStop.x);
+                Debug.Log(pathList[t].costToStop.y);
+            }*/
+            //get a reference world position and spawn the bus with their path as a blob array 
             Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords,  busStopRelativePosition, originPosition);
-            Map_Spawner.SpawnBusEntities(blobArray, referenceWorldPosition, ecb, entityInQueryIndex);
+            Map_Spawner.SpawnBusEntities(pathList, referenceWorldPosition, ecb, entityInQueryIndex, busPathParams.entityToSpawn);
+
             
+
+            //get rid of support structures and destroy the busLine entity
             DistrictPathIndexes.Dispose();
             tmpPathNodeArray.Dispose();
+            ecb.DestroyEntity(entityInQueryIndex, entity);
         }).ScheduleParallel();
         //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
         ecb_s.AddJobHandleForProducer(this.Dependency);
@@ -93,95 +112,141 @@ public class BusPathSystem : SystemBase
         
         
         NativeArray<PathUtils.PathNode> graphArray = new NativeArray<PathUtils.PathNode>(districtNodeArray, Allocator.Temp);
-        NativeList<int> openList;
-        NativeList<int> closedList;
+        
         NativeArray<int2> neighbourOffsetArray;
         int2 moveCosts = new int2(D_MOVE_X_COST, D_MOVE_Y_COST);
+        NativeList<int2> toInt2 = new NativeList<int2>(Allocator.Temp);
 
-        PathUtils.InitPartialData(graphArray,out neighbourOffsetArray, out openList, out closedList);
-
+        PathUtils.InitPartialData(out neighbourOffsetArray);
+        
         //i compute the circular path on three points separately (this should be rather fast since district graph is very small compared to actual graph)
-        PathUtils.PathFindPartial(graphArray, pos2, pos1, graphSizeDistrict, moveCosts, openList,closedList, neighbourOffsetArray);
-        PathUtils.PathFindPartial(graphArray, pos3, pos2, graphSizeDistrict, moveCosts, openList,closedList, neighbourOffsetArray);
-        PathUtils.PathFindPartial(graphArray, pos1, pos3, graphSizeDistrict, moveCosts, openList,closedList, neighbourOffsetArray);
-
-        NativeList<int2> toInt2 = PathUtils.turnPathToInt2List(graphArray, graphSizeDistrict, pos1);
+        
+        PathUtils.PathFindPartial(graphArray, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray);
+        PathUtils.addPathToInt2List(toInt2, graphArray, graphSizeDistrict, pos2);
+        
+        PathUtils.PathFindPartial(graphArray, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray);
+        PathUtils.addPathToInt2List(toInt2,graphArray, graphSizeDistrict, pos3);
+        
+        PathUtils.PathFindPartial(graphArray, pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray);
+        PathUtils.addPathToInt2List(toInt2, graphArray, graphSizeDistrict, pos1);
+       
 
         graphArray.Dispose();
         neighbourOffsetArray.Dispose();
-        openList.Dispose();
-        closedList.Dispose();
+        
 
         return toInt2;
     }
     
-    private static void ComputeNodePath(NativeArray<int2> districtPath, NativeArray<PathUtils.PathNode> PathNodeArray,int2 graphSize, int2 districtSizeNodes, int2 busStopRelativeCoords){
+    private static NativeList<PathElement> ComputeNodePath(NativeList<int2> districtPath, NativeArray<PathUtils.PathNode> PathNodeArray,int2 graphSize, int2 districtSizeNodes, int2 busStopRelativeCoords){
         //if bottleneck this can be done as jobs, but it's done only in the first frame for the whole duration so it's not critical for framerate
         //also this whole system is already executed in parallel between the entities, so using a job might not bring to an improvement
         
         
-        NativeList<int> openList;
-        NativeList<int> closedList;
+        
         NativeArray<int2> neighbourOffsetArray;
         int2 moveCosts = new int2(N_MOVE_X_COST, N_MOVE_Y_COST);
 
-        PathUtils.InitPartialData(PathNodeArray, out neighbourOffsetArray, out openList, out closedList);
+        PathUtils.InitPartialData( out neighbourOffsetArray);
 
-
-        int2 curNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
+        NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
+        
+        int2 firstNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
+        int2 curNodePos = firstNodePos;
         int2 nextNodePos;
         for(int t=1; t<districtPath.Length; ++t){
             nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords );    
-
-            PathUtils.PathFindPartial(PathNodeArray, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), openList,closedList,neighbourOffsetArray );
-
+            
+            PathUtils.PathFindPartial(PathNodeArray, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray);
+            
+            
+            
+            addPathToElementList(pathList, PathNodeArray, nextNodePos, graphSize);
+            
             curNodePos = nextNodePos;
         }
+        //last iteration: link path end with path beginning 
+        nextNodePos = nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
+        PathUtils.PathFindPartial(PathNodeArray, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray);
+            
+        addPathToElementList(pathList, PathNodeArray, nextNodePos, graphSize);
 
+        //add .x values also for the very first element (a bus stop)
+        PathElement startElement = pathList[0];
+        PathElement lastElement = pathList[pathList.Length-1];
+        startElement.cost.x = lastElement.cost.y;
+        startElement.withDirection.x = (lastElement.withDirection.y+2)%4;
+        startElement.costToStop.x = startElement.cost.x-4;
 
-        return;
+        pathList[0] = startElement;
+
+        neighbourOffsetArray.Dispose();
+        
+        return pathList;
     }
 
-    private static NativeList<PathElement> GetPathElementArray(NativeArray<PathUtils.PathNode> PathNodeArray, int startNodeIndex){
-        NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
-
-        PathUtils.PathNode curNode = PathNodeArray[startNodeIndex];
-        PathUtils.PathNode nextNode = PathNodeArray[curNode.cameFromNodeIndex];
+    private static void addPathToElementList(NativeList<PathElement> pathList,
+                                            NativeArray<PathUtils.PathNode> PathNodeArray, int2 endNodePos, int2 graphSize){
+        //NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
+        //Debug.Log("attempting addition to pathList");
 
         PathElement curElement = new PathElement();
-        PathElement nextElement = new PathElement();
+        
+
+        int initialListLength = pathList.Length;
+        
+
+        int endNodeIndex = PathUtils.CalculateIndex(endNodePos.x, endNodePos.y, graphSize.x);
+        NativeList<int> supportList = new NativeList<int>(Allocator.Temp);
+
+        PathUtils.PathNode curNode = PathNodeArray[endNodeIndex];
+        PathUtils.PathNode nextNode;
+        while(curNode.cameFromNodeIndex != -1){
+            curNode = PathNodeArray[curNode.cameFromNodeIndex];
+            supportList.Add(curNode.index);
+        }
 
         
 
-        do{
+        for(int t= supportList.Length-1; t>=0; --t){
+            curNode = PathNodeArray[supportList[t]];
+
+            if(t==0){
+                nextNode = PathNodeArray[endNodeIndex];
+            }else{
+                nextNode = PathNodeArray[supportList[t-1]];
+            }
+            curElement = new PathElement();
             curElement.x = curNode.x;
             curElement.y = curNode.y;
-            curElement.cost.x = curNode.reachedWithCost;
-            curElement.withDirection.x = curNode.reachedWithDirection;
+
+            //if this is not the very first node and is the first node we're adding
+            if(initialListLength > 0 && t == supportList.Length-1){
+                //we have no knowledge of .x values in PathNodeArray so we get them from previous pathlist element
+                curElement.cost.x = pathList[initialListLength-1].cost.y;
+                curElement.withDirection.x = (pathList[initialListLength-1].withDirection.y+2)%4;
+            }else{
+                curElement.cost.x = curNode.reachedWithCost;
+                curElement.withDirection.x = curNode.reachedWithDirection;
+            }
+            curElement.cost.y = nextNode.reachedWithCost;
+            curElement.withDirection.y = (nextNode.reachedWithDirection+2)%4;
+
             if(curNode.isBusStop){
                 curElement.costToStop.x=curNode.reachedWithCost - 4;
+                curElement.costToStop.y=nextNode.reachedWithCost - 4;
             }else{
                 curElement.costToStop.x = -1;
-            }
-
-            nextElement.cost.y = curNode.reachedWithCost;
-            nextElement.withDirection.y = (curNode.reachedWithDirection+2)%4;
-            if(nextNode.isBusStop){
-                nextElement.costToStop.y = nextNode.reachedWithCost -4;
-            }else{
-                nextElement.costToStop.y = -1;
+                curElement.costToStop.y = -1;
             }
 
             pathList.Add(curElement);
-            curElement = nextElement;
-            curNode = nextNode;
+            
+        }
+        
+        supportList.Dispose();
 
-            nextElement=new PathElement();
-            nextNode = PathNodeArray[nextNode.cameFromNodeIndex];
-
-        }while(nextNode.index != startNodeIndex);
-
-        return pathList;
+        return;
     }
     
 }
