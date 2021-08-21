@@ -62,6 +62,13 @@ public class Map<TMapObject>
     public Vector3 GetWorldPosition(int x, int y) {
         return new Vector3(x, y, 0) * tileSize + originPosition;
     }
+    public Vector3 GetDistrictWorldPosition(int d_x, int d_y){
+        int r_x = d_x*district_width;
+        int r_y = d_y * district_height;
+        float offset_x = district_width/2f;
+        float offset_y = district_height/2f;
+        return new Vector3(r_x + offset_x - .5f, r_y+ offset_y - .5f, 0) *tileSize + originPosition;
+    }
     //given the world position (x,y,z) it returns the x and y of the corresponding tile in the map
     public void GetXY(Vector3 worldPosition, out int x, out int y) {
         x = Mathf.FloorToInt((worldPosition - originPosition).x / tileSize);

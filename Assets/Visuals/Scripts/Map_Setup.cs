@@ -69,9 +69,9 @@ public class Map_Setup : MonoBehaviour
         List<MapTile> roadTiles;
         List<GraphNode> busStopNodes;
         MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles,out busStopNodes);
-        
+        Debug.Log(CityMap.GetOriginPosition().x + " " + CityMap.GetOriginPosition().y + " " + CityMap.GetOriginPosition().z);
 
-        map_Visual.SetMap(CityMap);
+        map_Visual.SetMap(CityMap, districtTypeIndex);
         map_Spawner.SpawnCarEntities(CityMap,CityGraph, roadTiles, n_entities);
         map_Spawner.SpawnBusLine(CityMap,CityGraph,busStopNodes, n_bus_lines);
         

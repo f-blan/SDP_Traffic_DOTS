@@ -17,13 +17,14 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
     
-    
+    [SerializeField] private Material DistrictMaterial0;
+    [SerializeField] private Material DistrictMaterial1;
     
     
 
-    public void SetMap(Map<MapTile> map){
+    public void SetMap(Map<MapTile> map, int districtIndex){
         this.map = map;
-        UpdateVisual();
+        UpdateVisual2(districtIndex);
 
         
     }
@@ -78,5 +79,53 @@ public class Map_Visual : MonoBehaviour
         }
         tiles.Dispose();
         
+    }
+
+    private void UpdateVisual2(int districtIndex){
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(NonUniformScale));
+
+        NativeArray<Entity> districts = new NativeArray<Entity>(map.GetNDistrictsX()*map.GetNDistrictsY(), Allocator.Temp);
+
+        em.CreateEntity(arch, districts);
+
+        Material material;
+
+        switch(districtIndex){
+            case 0:
+                material = DistrictMaterial0;
+                break;
+            case 1:
+                material = DistrictMaterial1;
+                break;
+            default:
+                material = DistrictMaterial0;
+                break;
+        }
+
+        for(int d_x=0; d_x<map.GetNDistrictsX(); ++d_x){
+            for(int d_y = 0; d_y< map.GetNDistrictsY(); ++d_y){
+                int index = d_x*map.GetNDistrictsY()+d_y;
+                Entity e = districts[index];
+                Vector3 wp = map.GetDistrictWorldPosition(d_x, d_y);
+                
+
+                
+                em.SetName(e, "district" + d_x + "-" + d_y);
+                em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 1)});
+                em.SetComponentData(e, new NonUniformScale{ Value = {
+                    x = map.GetDistrictWidth(),
+                    y = map.GetDistrictHeight(),
+                    z = 0}
+                });
+
+                em.SetSharedComponentData(e, new RenderMesh{
+                    mesh = mesh,
+                    material = material,
+                    layer = 0
+                });
+            }
+        }
+        districts.Dispose();
     }
 }

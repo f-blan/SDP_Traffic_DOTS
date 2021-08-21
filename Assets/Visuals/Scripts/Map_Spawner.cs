@@ -305,6 +305,7 @@ public class Map_Spawner : MonoBehaviour
         Entity e = em.CreateEntity(typeof(BusPathComponent));
         em.SetName(e, "asdasd ");
         em.AddComponentData(e, new BusPathComponent{pathArrayReference = pathReference});
+        
     }
 }
 
