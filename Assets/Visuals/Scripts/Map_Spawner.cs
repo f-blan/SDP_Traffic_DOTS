@@ -307,5 +307,47 @@ public class Map_Spawner : MonoBehaviour
         em.AddComponentData(e, new BusPathComponent{pathArrayReference = pathReference});
         
     }
+
+    public void SpawnTrafficLights(Map<MapTile> CityMap, List<MapTile> trafficLightTiles){
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation));
+
+        NativeArray<Entity> tiles = new NativeArray<Entity>(trafficLightTiles.Count, Allocator.Temp);
+
+        em.CreateEntity(arch, tiles);
+
+        for(int t=0; t<trafficLightTiles.Count; ++t){
+            MapTile curTile = trafficLightTiles[t]; 
+            Entity e = tiles[t];
+            Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
+
+            em.SetName(e, "Traffic Light " + t);
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+
+            
+        }
+        tiles.Dispose();
+    }
+
+    public void SpawnParkSpots(Map<MapTile> CityMap, List<MapTile> parkSpotTiles){
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation));
+
+        NativeArray<Entity> tiles = new NativeArray<Entity>(parkSpotTiles.Count, Allocator.Temp);
+
+        em.CreateEntity(arch, tiles);
+
+        for(int t=0; t<parkSpotTiles.Count; ++t){
+            MapTile curTile = parkSpotTiles[t]; 
+            Entity e = tiles[t];
+            Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
+
+            em.SetName(e, "ParkSpot " + t);
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+
+            
+        }
+        tiles.Dispose();
+    }
 }
 

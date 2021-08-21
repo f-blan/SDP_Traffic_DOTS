@@ -4,17 +4,22 @@ using UnityEngine;
 
 public static class MapUtils 
 {
-    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles,out List<GraphNode> busStopNodes
-    ){
+    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles,out List<GraphNode> busStopNodes,
+            out List<MapTile> trafficLightTiles, out List<MapTile> parkSpotTiles)
+    {
         int[,] i_to_n;
         int[,] bs_to_n;
         int[] refBusTile;
+        
         Dictionary<int, int>[] toDeadEnd;
         MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd, out refBusTile);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
         busStopNodes = new List<GraphNode>();
         roadTiles = new List<MapTile>();
+        trafficLightTiles = new List<MapTile>();
+        parkSpotTiles = new List<MapTile>();
+
         int m_x = 0;
         int m_y = 0;
 
@@ -55,10 +60,16 @@ public static class MapUtils
                         }else{
                             tile.SetTileType(districtImage[d_y,d_x]);
                         }
+
+                        //support data structures for spawning
                         if(tile.GetTileType() == MapTile.TileType.Road && ok){
                             roadTiles.Add(tile);
                         }else if(tile.GetTileType()== MapTile.TileType.Road){
                             tile.SetIsWalkable(false);
+                        }else if(tile.GetTileType() == MapTile.TileType.TrafficLight ){
+                            trafficLightTiles.Add(tile);
+                        }else if(tile.GetTileType() == MapTile.TileType.ParkSpot){
+                            parkSpotTiles.Add(tile);
                         }
                         m_x++;
 
@@ -133,7 +144,8 @@ public static class MapUtils
 
     }
 
-    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition){
+    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition
+            ){
         //define here the map of a district
         toDeadEnd = new Dictionary<int, int>[4];
         toDeadEnd[0] = new Dictionary<int, int>();
@@ -197,6 +209,8 @@ public static class MapUtils
                     { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 0, 0, 1, 3, 0, 0, 2, 2, 2, 2, 2, 0, 1, 3, 0, 0 },
                     { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                 };
+                
+                
 
                 intersectionTiles= new int[,]{
                     {2, 2, 0, 0},
@@ -246,6 +260,7 @@ public static class MapUtils
                 intersectionTiles = null;
                 busStopTiles=null;
                 busStopReferencePosition = null;
+                
                 break;
         }
 
