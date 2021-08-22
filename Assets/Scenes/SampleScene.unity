@@ -155,6 +155,9 @@ MonoBehaviour:
   carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   busMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   maxCarSpeed: 5
+  VerticalTrafficLightMaterial: {fileID: 0}
+  HorizontalTrafficLightMaterial: {fileID: 0}
+  Quad: {fileID: 0}
 --- !u!4 &98288714
 Transform:
   m_ObjectHideFlags: 0
@@ -209,7 +212,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scrollSpeed: 1
-  dragMultiplier: 0.04
+  dragMultiplier: 1
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -347,9 +350,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   districtTypeIndex: 1
-  map_n_districts_x: 10
-  map_n_districts_y: 10
-  n_entities: 5000
+  map_n_districts_x: 1
+  map_n_districts_y: 1
+  n_entities: 10
   n_bus_lines: 50
 --- !u!4 &1651507030
 Transform:
