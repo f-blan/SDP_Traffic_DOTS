@@ -9,6 +9,7 @@ using Unity.Burst;
 using Unity.Rendering;
 using Unity.Transforms;
 using Unity.Collections;
+using System;
 
 public class Map_Setup : MonoBehaviour
 {
@@ -55,6 +56,13 @@ public class Map_Setup : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Material HorizontalMaterial = Resources.Load<Material>("TrafficLightHorizontal");
+        Material VerticalMaterial = Resources.Load<Material>("TrafficLightVertical");
+        
+        Debug.Log(HorizontalMaterial);
+        Debug.Log(VerticalMaterial);
+        
+
         int width,height;
         width = District_width * map_n_districts_x;
         height = District_height * map_n_districts_y;
@@ -68,7 +76,7 @@ public class Map_Setup : MonoBehaviour
         //initialize both CityMap and CityGraph according to parameters
         List<MapTile> roadTiles;
         List<GraphNode> busStopNodes;
-        List<MapTile> trafficLightTiles;
+        List<Tuple<bool, MapTile>> trafficLightTiles;
         List<MapTile> parkSpotTiles;
 
         MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles,out busStopNodes,

@@ -1,23 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public static class MapUtils 
 {
     public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles,out List<GraphNode> busStopNodes,
-            out List<MapTile> trafficLightTiles, out List<MapTile> parkSpotTiles)
+            out List<Tuple<bool,MapTile>> trafficLightTiles, out List<MapTile> parkSpotTiles)
     {
         int[,] i_to_n;
         int[,] bs_to_n;
         int[] refBusTile;
+        int[,] tlTiles;
         
         Dictionary<int, int>[] toDeadEnd;
-        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd, out refBusTile);
+        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd, out refBusTile, out tlTiles);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
         busStopNodes = new List<GraphNode>();
         roadTiles = new List<MapTile>();
-        trafficLightTiles = new List<MapTile>();
+        trafficLightTiles = new List<Tuple<bool,MapTile>>();
         parkSpotTiles = new List<MapTile>();
 
         int m_x = 0;
@@ -66,9 +68,8 @@ public static class MapUtils
                             roadTiles.Add(tile);
                         }else if(tile.GetTileType()== MapTile.TileType.Road){
                             tile.SetIsWalkable(false);
-                        }else if(tile.GetTileType() == MapTile.TileType.TrafficLight ){
-                            trafficLightTiles.Add(tile);
-                        }else if(tile.GetTileType() == MapTile.TileType.ParkSpot){
+                        }
+                        else if(tile.GetTileType() == MapTile.TileType.ParkSpot){
                             parkSpotTiles.Add(tile);
                         }
                         m_x++;
@@ -138,14 +139,23 @@ public static class MapUtils
                     CityGraph.GetGraphNode(x,y, bs_to_n[t,0], bs_to_n[t,1]).SetIsBusStop(true);
                     busStopNodes.Add(CityGraph.GetGraphNode(x,y,bs_to_n[t,0], bs_to_n[t,1]));
                 }
+                //initialize trafficLightTiles
+                for(int t=0; t<tlTiles.GetLength(0); ++t){
+                    int r_x = tlTiles[t,0];
+                    int r_y = tlTiles[t,1];
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(x,y,r_x,r_y)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(x,y, r_x-1, r_y + 3)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(x,y, r_x+1, r_y + 2)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(x,y, r_x-2, r_y + 1))); 
+                }
 
             }
         }
 
     }
 
-    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition
-            ){
+    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition,
+            out int[,] tlTiles){
         //define here the map of a district
         toDeadEnd = new Dictionary<int, int>[4];
         toDeadEnd[0] = new Dictionary<int, int>();
@@ -179,6 +189,10 @@ public static class MapUtils
                 busStopTiles = new int[0,0];
                 busStopReferencePosition = new int[2];
 
+                tlTiles = new int[,]{
+                    {6,3}
+                };
+
                 toDeadEnd[0].Add(6, 6);
                 toDeadEnd[1].Add(4, 7);
                 toDeadEnd[2].Add(5, 3);
@@ -210,7 +224,12 @@ public static class MapUtils
                     { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                 };
                 
-                
+                tlTiles = new int[,]{
+                    {17,1},
+                    {27, 1},
+                    {27, 9},
+                    {3, 15}
+                };
 
                 intersectionTiles= new int[,]{
                     {2, 2, 0, 0},
@@ -260,7 +279,7 @@ public static class MapUtils
                 intersectionTiles = null;
                 busStopTiles=null;
                 busStopReferencePosition = null;
-                
+                tlTiles=null;
                 break;
         }
 
