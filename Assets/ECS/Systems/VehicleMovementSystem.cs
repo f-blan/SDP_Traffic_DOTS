@@ -46,8 +46,11 @@ public class VehicleMovementSystem : SystemBase
                 vehicleMovementData.initialPosition.y = translation.Value.y;
 
                 vehicleMovementData.offset = CarUtils.ComputeOffset(lastCarPathBuffer.cost, vehicleMovementData.direction, -1, carPathBuffer[carPathBuffer.Length - 2].withDirection); //Compoutes offset
+                vehicleMovementData.stop = false;
             }
-
+            if(vehicleMovementData.stop == true){
+                return;
+            }
             translation.Value.x += vehicleMovementData.velocity.x * dt;
             translation.Value.y += vehicleMovementData.velocity.y * dt;
             

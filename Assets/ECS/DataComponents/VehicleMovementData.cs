@@ -11,4 +11,5 @@ public struct VehicleMovementData : IComponentData
     public float2 initialPosition;
     public float2 offset;
 
+    public bool stop;
 }
