@@ -90,7 +90,7 @@ public class VehicleMovementSystem : SystemBase
                 translation.Value.y = vehicleMovementData.initialPosition.y;
 
                 //If there are enough CarPathBuffers remaining, then, compute new offset
-                if(carPathBuffer.Length >= 3){
+                if(carPathBuffer.Length >= 2){
                     vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, carPathBuffer[carPathBuffer.Length - 2].withDirection);
                 }
                 else{

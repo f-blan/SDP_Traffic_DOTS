@@ -40,7 +40,7 @@ public class CarPathSystem : SystemBase
 
     protected override void OnDestroy(){
         if(isGraphValid){
-            Debug.Log("destroying");
+           
             PathNodeMap.Dispose();
             
             
