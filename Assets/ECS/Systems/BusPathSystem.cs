@@ -74,24 +74,7 @@ public class BusPathSystem : SystemBase
             //compute the actual node path and transform into an array of PathElements
             NativeList<PathElement> pathList = ComputeNodePath(DistrictPathIndexes, tmpPathNodeArray, graphSize, districtSizeNodes, busStopRelativeCoords);
 
-            /*
-            for(int t=0; t<pathList.Length; ++t){
-                Debug.Log("------------COORDS-------------");
-                Debug.Log(pathList[t].x);
-                Debug.Log(pathList[t].y);
-                
-                Debug.Log("costs");
-                Debug.Log(pathList[t].cost.x);
-                Debug.Log(pathList[t].cost.y);
-
-                Debug.Log("directions");
-                Debug.Log(pathList[t].withDirection.x);
-                Debug.Log(pathList[t].withDirection.y);
-                
-                Debug.Log("stopCost");
-                Debug.Log(pathList[t].costToStop.x);
-                Debug.Log(pathList[t].costToStop.y);
-            }*/
+            
             //get a reference world position and spawn the bus with their path as a blob array 
             Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords,  busStopRelativePosition, originPosition);
             Map_Spawner.SpawnBusEntities(pathList, referenceWorldPosition, ecb, entityInQueryIndex, busPathParams.entityToSpawn);

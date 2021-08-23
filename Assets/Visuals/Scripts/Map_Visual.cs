@@ -16,15 +16,16 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material Obstacle;
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
+    [SerializeField] private Material CarMaterial;
     
     [SerializeField] private Material DistrictMaterial0;
     [SerializeField] private Material DistrictMaterial1;
     
-    
+    [SerializeField] private float delayAddition;
 
-    public void SetMap(Map<MapTile> map, int districtIndex){
+    public void SetMap(Map<MapTile> map, int districtIndex, int n_cars){
         this.map = map;
-        UpdateVisual2(districtIndex);
+        UpdateVisual2(districtIndex, n_cars);
 
         
     }
@@ -81,15 +82,34 @@ public class Map_Visual : MonoBehaviour
         
     }
 
-    private void UpdateVisual2(int districtIndex){
+    private void UpdateVisual2(int districtIndex, int n_cars){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(NonUniformScale));
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(NonUniformScale),
+                        typeof(CarSpawnerComponent));
 
         NativeArray<Entity> districts = new NativeArray<Entity>(map.GetNDistrictsX()*map.GetNDistrictsY(), Allocator.Temp);
+        EntityArchetype defaultCarArchetype = em.CreateArchetype( typeof(RenderMesh), 
+                                typeof(LocalToWorld), typeof(RenderBounds), typeof(VehicleMovementData));
+        Entity defaultCarEntity = em.CreateEntity(defaultCarArchetype);
+
+        Mesh carMesh = MeshUtils.CreateMesh(0.47f, 1f);
+
+        em.SetSharedComponentData(defaultCarEntity, new RenderMesh{
+            mesh = carMesh,
+            material = CarMaterial,
+            layer = 1
+        });
 
         em.CreateEntity(arch, districts);
 
         Material material;
+        int left_cars = n_cars;
+        int n_cars_each = n_cars/districts.Length;
+        if(n_cars_each==0 && n_cars!=0){
+            n_cars_each=1;
+        }
+        float curDelay = 0f;
+        
 
         switch(districtIndex){
             case 0:
@@ -109,10 +129,17 @@ public class Map_Visual : MonoBehaviour
                 Entity e = districts[index];
                 Vector3 wp = map.GetDistrictWorldPosition(d_x, d_y);
                 
-
+                int carsToSpawn;
+                if(left_cars>=n_cars_each){
+                    carsToSpawn = n_cars_each;
+                }else{
+                    carsToSpawn = left_cars;
+                }
+                left_cars-= carsToSpawn;
                 
                 em.SetName(e, "district" + d_x + "-" + d_y);
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 1)});
+                em.SetComponentData(e, new CarSpawnerComponent{d_x = d_x, d_y = d_y, timer = 0, delay = curDelay,n_cars = carsToSpawn, entityToSpawn = defaultCarEntity });
                 em.SetComponentData(e, new NonUniformScale{ Value = {
                     x = map.GetDistrictWidth(),
                     y = map.GetDistrictHeight(),
@@ -124,6 +151,7 @@ public class Map_Visual : MonoBehaviour
                     material = material,
                     layer = 0
                 });
+                curDelay+=delayAddition;
             }
         }
         districts.Dispose();

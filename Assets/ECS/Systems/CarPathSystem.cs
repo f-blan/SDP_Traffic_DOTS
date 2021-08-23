@@ -32,14 +32,17 @@ public class CarPathSystem : SystemBase
     {
         base.OnStartRunning();
         //get the graph in a format usable by jobs (a native map of struct PathNode, and do it only once per runtime: Allocator.Persistent used)
-        
-        PathNodeMap = PathUtils.GetPathNodeArray();
-        isGraphValid=true;
+        if(isGraphValid!=true){
+            PathNodeMap = PathUtils.GetPathNodeArray();
+            isGraphValid=true;
+        }
     }
 
     protected override void OnDestroy(){
         if(isGraphValid){
+            Debug.Log("destroying");
             PathNodeMap.Dispose();
+            
             
         }
      }

@@ -154,7 +154,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   busMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
-  maxCarSpeed: 5
+  maxCarSpeed: 3
+  VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
+  HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
+  Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &98288714
 Transform:
   m_ObjectHideFlags: 0
@@ -349,8 +352,8 @@ MonoBehaviour:
   districtTypeIndex: 1
   map_n_districts_x: 10
   map_n_districts_y: 10
-  n_entities: 5000
-  n_bus_lines: 50
+  n_entities: 0
+  n_bus_lines: 0
 --- !u!4 &1651507030
 Transform:
   m_ObjectHideFlags: 0

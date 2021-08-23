@@ -9,15 +9,17 @@ using System;
 
 public class Map_Spawner : MonoBehaviour
 {
+        public static Map_Spawner Instance {private set; get; }
         [SerializeField] private Material carMaterial;
         [SerializeField] private Material busMaterial;
-        [SerializeField] private float maxCarSpeed;
+        [SerializeField] public float maxCarSpeed;
         
         [SerializeField] private Material VerticalTrafficLightMaterial;
 
         [SerializeField] private Material HorizontalTrafficLightMaterial;
         [SerializeField] private Mesh Quad;
         
+
         //used by BusPathSystem
         public static void SpawnBusEntities(NativeList<PathElement> pathList, Vector3 referenceWorldPosition,
             EntityCommandBuffer.ParallelWriter ecb, int eqi, Entity entityToSpawn){
@@ -238,7 +240,7 @@ public class Map_Spawner : MonoBehaviour
 
             walkOffset.Dispose();
         }
-    private Mesh CreateMesh(float width, float height){
+    public Mesh CreateMesh(float width, float height){
 
         Vector3[] vertices = new Vector3[4];
         Vector2[] uv = new Vector2[4];

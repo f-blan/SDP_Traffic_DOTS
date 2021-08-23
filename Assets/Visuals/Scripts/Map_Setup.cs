@@ -59,8 +59,7 @@ public class Map_Setup : MonoBehaviour
         Material HorizontalMaterial = Resources.Load<Material>("TrafficLightHorizontal");
         Material VerticalMaterial = Resources.Load<Material>("TrafficLightVertical");
         
-        Debug.Log(HorizontalMaterial);
-        Debug.Log(VerticalMaterial);
+        
         
 
         int width,height;
@@ -83,8 +82,10 @@ public class Map_Setup : MonoBehaviour
             out trafficLightTiles, out parkSpotTiles);
         
 
-        map_Visual.SetMap(CityMap, districtTypeIndex);
-        map_Spawner.SpawnCarEntities(CityMap,CityGraph, roadTiles, n_entities);
+        map_Visual.SetMap(CityMap, districtTypeIndex, n_entities);
+
+        //map_Spawner.SpawnCarEntities(CityMap,CityGraph, roadTiles, n_entities); Spawning of cars is dealt by a system (initialized in SetMap)
+        
         map_Spawner.SpawnBusLine(CityMap,CityGraph,busStopNodes, n_bus_lines);
         map_Spawner.SpawnTrafficLights(CityMap, trafficLightTiles);
         map_Spawner.SpawnParkSpots(CityMap, parkSpotTiles);
