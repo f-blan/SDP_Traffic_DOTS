@@ -10,7 +10,10 @@ public class QuadrantSystem : SystemBase
     private static NativeMultiHashMap<int, QuadrantVehicleData> nativeMultiHashMapQuadrant;
     private const int quadrantYMultiplier = 1000; //Offset in Y
     private const int quadrantCellSize = 10; //Size of the quadrant
-    private const float minimumDistance = 1.0f; //Minimum distance to be considered as close
+    private const float minimumDistance = 32.0f; //Minimum distance to be considered as close
+
+    private const float epsilonDistance = 0.5f;
+
     //Function that maps position into an index
     private static int GetPositionHashMapKey(float3 position){
         return (int) (math.floor(position.x / quadrantCellSize) + (quadrantYMultiplier * math.floor(position.y / quadrantCellSize)));
@@ -64,27 +67,28 @@ public class QuadrantSystem : SystemBase
 
         NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantVehicleData quadrantData;
+        //Iterate through all of the elements in the current bucket
         if(nativeMultiHashMap.TryGetFirstValue(hashMapKey, out quadrantData, out nativeMultiHashMapIterator)){
             do{
-                // Debug.Log(inputQuadrantVehicleData.entity);
-                // Debug.Log(inputQuadrantVehicleData.position.x + "," +inputQuadrantVehicleData.position.y);
-                // Debug.Log(inputQuadrantVehicleData.direction);
-                //TODO: Missing check in front of the vehicle
-                if((inputQuadrantVehicleData.direction % 2 == 0 ? inputQuadrantVehicleData.position.x == quadrantData.position.x : inputQuadrantVehicleData.position.y == quadrantData.position.y)
+                //Comprehensive check that, depending on the direction the vehicle currently is, it will check if there are vehicles directly in front of it 
+                if((inputQuadrantVehicleData.direction % 2 == 0 ? (math.abs(inputQuadrantVehicleData.position.x - quadrantData.position.x) < epsilonDistance) && ((inputQuadrantVehicleData.unitaryVector.y)*quadrantData.position.y > (inputQuadrantVehicleData.unitaryVector.y)*inputQuadrantVehicleData.position.y) : math.abs(inputQuadrantVehicleData.position.y - quadrantData.position.y) < epsilonDistance && ((inputQuadrantVehicleData.unitaryVector.x)*quadrantData.position.x > (inputQuadrantVehicleData.unitaryVector.x)*inputQuadrantVehicleData.position.x))
                     && quadrantData.entity != inputQuadrantVehicleData.entity){
-                    if(closest.entity == Entity.Null){
+                    float currentComputedDistance = math.distancesq(inputQuadrantVehicleData.position, quadrantData.position);
+                    //Stores the entity if there's no closest entity yet and if the distance to the following vehicle is smaller than the minimum distance
+                    if(closest.entity == Entity.Null && currentComputedDistance < minimumDistance){
                         closest.entity = quadrantData.entity;
                         closest.position = quadrantData.position;
                         closest.direction = quadrantData.direction;
                         closest.unitaryVector = quadrantData.unitaryVector;
-                        curMinDistance = math.distancesq(inputQuadrantVehicleData.position, quadrantData.position);
+                        curMinDistance = currentComputedDistance;
                     }
-                    else if(math.distancesq(inputQuadrantVehicleData.position, quadrantData.position) < curMinDistance){
+                    //If the computed distance is smaller than the previously stored distance then store the new closest entity
+                    else if(currentComputedDistance < curMinDistance){
                         closest.entity = quadrantData.entity;
                         closest.position = quadrantData.position;
                         closest.direction = quadrantData.direction;
                         closest.unitaryVector = quadrantData.unitaryVector;
-                        curMinDistance = math.distancesq(inputQuadrantVehicleData.position, quadrantData.position);
+                        curMinDistance = currentComputedDistance; 
                     }
                 } 
             }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
