@@ -22,9 +22,7 @@ public class CameraUtils : MonoBehaviour
             Translation translation = vehicleTranslations[i];
 
             if(System.Math.Truncate(translation.Value.x) == System.Math.Truncate(worldClickPosition.x) && System.Math.Truncate(translation.Value.y) == System.Math.Truncate(worldClickPosition.y)){
-                Debug.Log("Before " + vehicleIndex[0]);
                 vehicleIndex[0] = i;
-                Debug.Log("After "+ vehicleIndex[0]);
             }
         }
     }
@@ -36,8 +34,9 @@ public class CameraUtils : MonoBehaviour
     private bool naturalScroll = true;
     private bool dragging = false;
     private Vector3 initPos;
-    EntityQuery query;
+    private EntityQuery query;
     private int cameraFollowsVehicleTranslationIndex = -1;
+    private Entity followEntity;
     [SerializeField] private float scrollSpeed = 1.0f;
     [SerializeField] private float dragMultiplier = 0.04f;
     void Start(){
@@ -86,21 +85,23 @@ public class CameraUtils : MonoBehaviour
     private void FollowSelectedVehicle(){
         //Unlock the camera from following the vehicle by resetting the index
 
-        if(Input.GetMouseButton(SECONDARY_MOUSE_BUTTON) && cameraFollowsVehicleTranslationIndex != -1){
+        if(Input.GetMouseButton(SECONDARY_MOUSE_BUTTON) && (cameraFollowsVehicleTranslationIndex != -1 || followEntity != Entity.Null)){
             cameraFollowsVehicleTranslationIndex = -1;
+            followEntity = Entity.Null;
             return;
         }
 
-        if(cameraFollowsVehicleTranslationIndex != -1){
-            NativeArray<Translation> vehicleTranslations = query.ToComponentDataArray<Translation>(Allocator.TempJob);
-            transform.position = new Vector3(vehicleTranslations[cameraFollowsVehicleTranslationIndex].Value.x, vehicleTranslations[cameraFollowsVehicleTranslationIndex].Value.y, transform.position.z);
-            vehicleTranslations.Dispose();
+        if(cameraFollowsVehicleTranslationIndex != -1 || followEntity != Entity.Null){            
+            Vector3 tmpPosition = World.DefaultGameObjectInjectionWorld.EntityManager.GetComponentData<Translation>(followEntity).Value;
+            tmpPosition.z = -10;
+            transform.position = tmpPosition; 
             return;
         }
 
-        if(Input.GetMouseButton(PRIMARY_MOUSE_BUTTON)){
+        if(Input.GetMouseButtonDown(PRIMARY_MOUSE_BUTTON)){
             //Code repetition is necessary due to 
             NativeArray<Translation> vehicleTranslations = query.ToComponentDataArray<Translation>(Allocator.TempJob);
+            NativeArray<Entity> vehicleEntities = query.ToEntityArray(Allocator.Persistent);
             NativeArray<int> vehicleIndex = new NativeArray<int>(1,Allocator.TempJob);
             vehicleIndex[0] = -1;
 
@@ -118,10 +119,12 @@ public class CameraUtils : MonoBehaviour
             if(vehicleIndex[0] != -1){
                 cameraFollowsVehicleTranslationIndex = vehicleIndex[0];
                 cameraFollowsVehicleTranslation = vehicleTranslations[vehicleIndex[0]];
+                followEntity = vehicleEntities[vehicleIndex[0]];
                 transform.position = new Vector3(cameraFollowsVehicleTranslation.Value.x, cameraFollowsVehicleTranslation.Value.y, transform.position.z);
             }
             //Dispose of Nativearrays
             vehicleTranslations.Dispose();
+            vehicleEntities.Dispose();
             vehicleIndex.Dispose();
         }
 

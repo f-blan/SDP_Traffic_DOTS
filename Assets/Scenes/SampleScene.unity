@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
-  busMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
+  busMaterial: {fileID: 2100000, guid: c85d2ab9e3aeeb9ba9aa7222c3f0b72c, type: 2}
   maxCarSpeed: 3
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
@@ -304,8 +304,10 @@ MonoBehaviour:
   Obstacle: {fileID: 2100000, guid: ebad6eabd1171c046865c72449dce896, type: 2}
   ParkSpot: {fileID: 2100000, guid: 2b6e3a70fdc7cb64b86b879cb30ddfa0, type: 2}
   TrafficLight: {fileID: 2100000, guid: d9f3ee9f6a53b36409a5477920951fb5, type: 2}
+  CarMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   DistrictMaterial0: {fileID: 0}
   DistrictMaterial1: {fileID: 2100000, guid: 279a0bd2b0600f24c94d77c33e175d78, type: 2}
+  delayAddition: 0
 --- !u!4 &1175394636
 Transform:
   m_ObjectHideFlags: 0
@@ -352,8 +354,8 @@ MonoBehaviour:
   districtTypeIndex: 1
   map_n_districts_x: 10
   map_n_districts_y: 10
-  n_entities: 0
-  n_bus_lines: 0
+  n_entities: 100000
+  n_bus_lines: 10
 --- !u!4 &1651507030
 Transform:
   m_ObjectHideFlags: 0

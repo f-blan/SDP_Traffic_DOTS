@@ -11,22 +11,22 @@ public class VehicleMovementSystem : SystemBase
     // private Map<MapTile> map;
     // private float tileSize;
     // private float3 originPosition;
+
+    private EndSimulationEntityCommandBufferSystem esEcbs;
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-
-        // map = Map_Setup.Instance.CityMap;
-        // tileSize = map.GetTileSize();
-        // originPosition = new float3(map.GetOriginPosition().x, map.GetOriginPosition().y, map.GetOriginPosition().z);
+        esEcbs = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
     protected override void OnUpdate(){
 
         float dt = Time.DeltaTime;
 
-        //Unsure about WithBurst, found on a tutorial https://www.youtube.com/watch?v=2IYa1jDGTFs
+        EntityCommandBuffer.ParallelWriter ecbpw = esEcbs.CreateCommandBuffer().AsParallelWriter();
+
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
-        Entities.WithAll<CarPathBuffer>().ForEach((ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
+        Entities.WithAll<CarPathBuffer>().ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
 
             CarPathBuffer lastCarPathBuffer; //Temporary variable for accessing the currently used carPathBuffer
 
@@ -35,6 +35,8 @@ public class VehicleMovementSystem : SystemBase
             // //End Debug
             
             if(carPathBuffer.IsEmpty){
+                //Temporary solution until it finds a parking spot
+                ecbpw.DestroyEntity(entityInQueryIndex,entity);
                 //Check if the CarPathBuffer Component contains anything just for a safety measure
                 return;
             }
@@ -110,6 +112,16 @@ public class VehicleMovementSystem : SystemBase
                 rotation.Value = Quaternion.Euler(0f,0f,CarUtils.ComputeRotation(lastCarPathBuffer.withDirection));
             }
         }).ScheduleParallel();
+
+
+        Entities.WithAll<BusPathComponent>().ForEach((Entity entity) => {
+            
+            
+
+            return;
+        });
+
+        esEcbs.AddJobHandleForProducer(this.Dependency);
 
         return;
     }
