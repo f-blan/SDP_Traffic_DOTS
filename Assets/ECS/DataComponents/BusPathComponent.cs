@@ -6,6 +6,7 @@ public struct BusPathComponent : IComponentData
 
     //0 = up, 1 = right, 2 = down, 3 = left
     public int direction;
+    
 
     //might be unnecessary since probably this can be accessed through pathArrayReference
     public int pathLength;

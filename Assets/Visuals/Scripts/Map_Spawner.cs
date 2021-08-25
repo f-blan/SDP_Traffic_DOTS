@@ -351,12 +351,12 @@ public class Map_Spawner : MonoBehaviour
 
     public void SpawnParkSpots(Map<MapTile> CityMap, List<MapTile> parkSpotTiles){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        EntityArchetype arch = em.CreateArchetype(typeof(Translation));
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(ParkSpotTag));
 
         NativeArray<Entity> tiles = new NativeArray<Entity>(parkSpotTiles.Count, Allocator.Temp);
 
         em.CreateEntity(arch, tiles);
-
+        
         for(int t=0; t<parkSpotTiles.Count; ++t){
             MapTile curTile = parkSpotTiles[t]; 
             Entity e = tiles[t];

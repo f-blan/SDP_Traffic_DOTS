@@ -12,4 +12,9 @@ public struct VehicleMovementData : IComponentData
     public float2 offset;
 
     public bool stop;
+
+    //franco: parameters needed for parking system
+    public bool isParking;
+    public bool hasParkSpotToTheRight;
+    public int2 graphPosition;
 }

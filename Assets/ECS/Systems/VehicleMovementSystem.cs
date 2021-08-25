@@ -26,7 +26,7 @@ public class VehicleMovementSystem : SystemBase
         EntityCommandBuffer.ParallelWriter ecbpw = esEcbs.CreateCommandBuffer().AsParallelWriter();
 
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
-        Entities.WithAll<CarPathBuffer>().ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
+        Entities.WithAll<CarPathBuffer>().WithNone<ParkingCarComponent>().ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
 
             CarPathBuffer lastCarPathBuffer; //Temporary variable for accessing the currently used carPathBuffer
 
@@ -49,6 +49,7 @@ public class VehicleMovementSystem : SystemBase
 
                 vehicleMovementData.offset = CarUtils.ComputeOffset(lastCarPathBuffer.cost, vehicleMovementData.direction, -1, carPathBuffer[carPathBuffer.Length - 2].withDirection); //Compoutes offset
                 vehicleMovementData.stop = false;
+                
             }
             if(vehicleMovementData.stop == true){
                 return;
@@ -61,9 +62,13 @@ public class VehicleMovementSystem : SystemBase
 
             if(checker){
                 //Removing last element from the buffer
-                carPathBuffer.RemoveAt(carPathBuffer.Length - 1);
+                vehicleMovementData.graphPosition = new int2(lastCarPathBuffer.x, lastCarPathBuffer.y);
+                
+                if(!vehicleMovementData.isParking){
+                    carPathBuffer.RemoveAt(carPathBuffer.Length - 1);
+                }
 
-                if(carPathBuffer.IsEmpty){
+                if(carPathBuffer.IsEmpty && !vehicleMovementData.isParking){
                     // Final resting position
                     translation.Value.x = vehicleMovementData.initialPosition.x + vehicleMovementData.offset.x;
                     translation.Value.y = vehicleMovementData.initialPosition.y + vehicleMovementData.offset.y;
@@ -72,6 +77,7 @@ public class VehicleMovementSystem : SystemBase
                     vehicleMovementData.initialPosition.y = float.NaN;
                     vehicleMovementData.offset.x = float.NaN;
                     vehicleMovementData.offset.y = float.NaN;
+                    vehicleMovementData.isParking = true;
                     //There's no need to remove the carPathBuffer as Unity removes it automatically once it's empty
                     return;
                 }
@@ -119,7 +125,7 @@ public class VehicleMovementSystem : SystemBase
             
 
             return;
-        });
+        }).ScheduleParallel();
 
         esEcbs.AddJobHandleForProducer(this.Dependency);
 

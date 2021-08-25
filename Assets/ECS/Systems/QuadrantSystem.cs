@@ -9,20 +9,31 @@ public class QuadrantSystem : SystemBase
 {
     public enum VehicleTrafficLightType{
         VehicleType,
-        TrafficLight
+        TrafficLight,
+        ParkSpot
     };
 
     private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrant;
+    //franco: i'm creating another one since looking for a car spot is an operation relevant only to parking cars
+    private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrantParkSpots;
     private const int quadrantYMultiplier = 1000; //Offset in Y
     private const int quadrantCellSize = 10; //Size of the quadrant
     private const float minimumDistance = 8.0f; //Minimum distance to be considered as close
     private const float minimumStopDistance = 2.5f;
 
     private const float epsilonDistance = 0.5f;
+
+    private bool isParkSpotMapValid;
     private EntityQueryDesc entityQueryDesc = new EntityQueryDesc{
         Any = new ComponentType[]{
             ComponentType.ReadOnly<VehicleMovementData>(), 
             ComponentType.ReadOnly<TrafficLightComponent>()
+        }
+    };
+
+    private EntityQueryDesc entityQueryDescParkSpots = new EntityQueryDesc{
+        Any = new ComponentType[]{
+            ComponentType.ReadOnly<ParkSpotTag>()
         }
     };
 
@@ -96,7 +107,7 @@ public class QuadrantSystem : SystemBase
     }
     //Checks whether there is a vehicle close in the quadrant
     public static void ComputeDistance(NativeMultiHashMap<int, QuadrantData> nativeMultiHashMap, int hashMapKey, QuadrantData inputQuadrantData, ref NativeArray<QuadrantData> closestEntitiesNativeArray, ref float curMinDistance){
-
+        
         NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantData quadrantData;
         //Iterate through all of the elements in the current bucket
@@ -130,23 +141,36 @@ public class QuadrantSystem : SystemBase
     //Creates the NativeMultiHashMap
     protected override void OnCreate(){
         nativeMultiHashMapQuadrant = new NativeMultiHashMap<int, QuadrantData>(0, Allocator.Persistent);
+        
         return;
     }
     //Disposes
     protected override void OnDestroy(){
         nativeMultiHashMapQuadrant.Dispose();
-    }
+        nativeMultiHashMapQuadrantParkSpots.Dispose();
+        
+    }   
 
     protected override void OnUpdate(){ 
         //Query that gets all elements with a Translation
         EntityQuery query = GetEntityQuery(entityQueryDesc);
         //Deletes all elements currently inside of the hash map
         nativeMultiHashMapQuadrant.Clear();
+        //franco: reset operation is not needed for parkSpot hashmap: They don't move and spawn all together. 
+        //This looks like a heavy operation, maybe we can avoid it too for TrafficLights
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
         }
 
-        NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriter = nativeMultiHashMapQuadrant.AsParallelWriter(); 
+        if(isParkSpotMapValid == false){
+            //couldn't do thin in OnCreate (race condition)
+            
+            nativeMultiHashMapQuadrantParkSpots = new NativeMultiHashMap<int, QuadrantData>(
+                    GetEntityQuery(entityQueryDescParkSpots).CalculateEntityCount(), Allocator.Persistent);
+        }
+
+        NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriter = nativeMultiHashMapQuadrant.AsParallelWriter();
+        NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriterParkSpots = nativeMultiHashMapQuadrantParkSpots.AsParallelWriter();
         //Adds all elements with VehicleMovementData component to the hashmap 
         Entities.WithAny<VehicleMovementData, TrafficLightComponent>().ForEach((Entity entity, in Translation translation) => {
             if(HasComponent<VehicleMovementData>(entity)){
@@ -174,12 +198,25 @@ public class QuadrantSystem : SystemBase
             }
         }).ScheduleParallel();
 
+        //franco: we do the same for parkSpots (only once)
+        if(isParkSpotMapValid == false){
+            isParkSpotMapValid=true;
+            Entities.WithAll<ParkSpotTag, Translation>().ForEach((Entity entity, in Translation translation) => {
+                quadrantParallelWriterParkSpots.Add(GetPositionHashMapKey(translation.Value), new QuadrantData{
+                    entity = entity,
+                    type = VehicleTrafficLightType.ParkSpot,
+                    position = translation.Value
+                });
+            }).ScheduleParallel();
+        }
+
         NativeMultiHashMap<int, QuadrantData> localQuadrant = nativeMultiHashMapQuadrant;
+        NativeMultiHashMap<int, QuadrantData> localQuadrantParkSpots = nativeMultiHashMapQuadrantParkSpots;
         //Iterates through the VehicleMovementData having components and checks for a closer vehicle
-        Entities.WithAll<VehicleMovementData>().ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
+        Entities.WithAll<VehicleMovementData>().WithReadOnly(localQuadrantParkSpots).ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
 
             NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
-
+            bool hasCarToRight = false;
             ComputeClosestInDirection(localQuadrant,
                 GetPositionHashMapKey(translation.Value),
                 new QuadrantData(){
@@ -202,6 +239,9 @@ public class QuadrantSystem : SystemBase
             // if(closestNativeArray[0].entity != Entity.Null){
             //     Debug.DrawLine(translation.Value, closestNativeArray[0].position);
             // }
+            if(vehicleMovementData.isParking && !hasCarToRight){
+                vehicleMovementData.hasParkSpotToTheRight = QuadrantUtils.GetHasParkSpotToTheRight(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction);
+            }
             if(closestNativeArray[0].entity == Entity.Null){
                 vehicleMovementData.stop = false;
             }
