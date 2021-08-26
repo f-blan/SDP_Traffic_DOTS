@@ -25,7 +25,8 @@ public class CarPathSystem : SystemBase
         // Find the ECB system once and store it for later usage
         ecb_s = World
             .GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-        isGraphValid=false;
+        
+        
     }
 
     protected override void OnStartRunning()
@@ -74,13 +75,17 @@ public class CarPathSystem : SystemBase
 
 
     private static void AssignPath(Entity entity, NativeArray<PathUtils.PathNode> pathNodeMap,int endNodeIndex, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi){
+        
+        
         DynamicBuffer<CarPathBuffer> buf = ecb.AddBuffer<CarPathBuffer>(eqi,entity);
+
+        
         
         PathUtils.PathNode endNode = pathNodeMap[endNodeIndex];
         
         //add end node to buffer
         buf.Add(new CarPathBuffer{x = endNode.x, y = endNode.y, cost = endNode.reachedWithCost, withDirection = endNode.reachedWithDirection});
-
+        
         //add intermediate nodes
         PathUtils.PathNode cameFromNode = pathNodeMap[endNode.cameFromNodeIndex];
         PathUtils.PathNode currentNode = endNode;

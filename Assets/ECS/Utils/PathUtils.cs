@@ -360,6 +360,7 @@ public static class PathUtils
 
     }
 
+
     public static void InitPartialData(out NativeArray<int2> neighbourOffsetArray){
             
             neighbourOffsetArray = new NativeArray<int2>(4, Allocator.Temp);

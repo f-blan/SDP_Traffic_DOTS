@@ -157,7 +157,8 @@ public class QuadrantSystem : SystemBase
         //Deletes all elements currently inside of the hash map
         nativeMultiHashMapQuadrant.Clear();
         //franco: reset operation is not needed for parkSpot hashmap: They don't move and spawn all together. 
-        //This looks like a heavy operation, maybe we can avoid it too for TrafficLights
+        //As an improvement we can avoid it too for
+        
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
         }
@@ -217,6 +218,7 @@ public class QuadrantSystem : SystemBase
 
             NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
             bool hasCarToRight = false;
+            
             ComputeClosestInDirection(localQuadrant,
                 GetPositionHashMapKey(translation.Value),
                 new QuadrantData(){
@@ -239,8 +241,16 @@ public class QuadrantSystem : SystemBase
             // if(closestNativeArray[0].entity != Entity.Null){
             //     Debug.DrawLine(translation.Value, closestNativeArray[0].position);
             // }
-            if(vehicleMovementData.isParking && !hasCarToRight){
-                vehicleMovementData.hasParkSpotToTheRight = QuadrantUtils.GetHasParkSpotToTheRight(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction);
+            if(vehicleMovementData.state == 1 && !hasCarToRight){
+                float3 parkPos;
+                
+                bool parkFound = QuadrantUtils.GetHasParkSpotToTheRight(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction, out parkPos);
+                
+                if(parkFound){
+                    vehicleMovementData.state = 2;
+                    translation.Value = parkPos;
+                    vehicleMovementData.parkingTimer = 0;
+                }
             }
             if(closestNativeArray[0].entity == Entity.Null){
                 vehicleMovementData.stop = false;
@@ -256,7 +266,7 @@ public class QuadrantSystem : SystemBase
             }
 
             closestNativeArray.Dispose();
-        }).WithReadOnly(localQuadrant).ScheduleParallel();
+        }).WithReadOnly(localQuadrant).WithoutBurst().Run();//ScheduleParallel();
         // }).WithoutBurst().Run();
 
         // DebugDrawQuadrant(Camera.main.ScreenToWorldPoint(Input.mousePosition));

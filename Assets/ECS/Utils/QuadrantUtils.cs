@@ -1,6 +1,6 @@
 using Unity.Collections;
 using Unity.Mathematics;
-
+using UnityEngine;
 public static class QuadrantUtils  
 {
     private const int quadrantYMultiplier = 1000; //Offset in Y
@@ -11,15 +11,15 @@ public static class QuadrantUtils
 
     private const float epsilonDistance = 0.5f;
     // Start is called before the first frame update
-    public static bool GetHasParkSpotToTheRight(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMapParkSpots, float3 carPosition, int carDirection){
+    public static bool GetHasParkSpotToTheRight(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMapParkSpots, float3 carPosition, int carDirection, out float3 parkPos){
         int hashMapKey = GetPositionHashMapKey(carPosition);
 
         NativeArray<float2> directionVector = new NativeArray<float2>(4, Allocator.Temp);
 
-        directionVector[0] = new float2(0, quadrantCellSize);
-        directionVector[1] = new float2(quadrantCellSize, 0);
-        directionVector[2] = new float2(0, -quadrantCellSize);
-        directionVector[3] = new float2(-quadrantCellSize, 0);
+        directionVector[0] = new float2(0, 1);
+        directionVector[1] = new float2(1, 0);
+        directionVector[2] = new float2(0, -1);
+        directionVector[3] = new float2(-1, 0);
 
         int relativeRight = (carDirection + 1)%4; 
         
@@ -29,12 +29,12 @@ public static class QuadrantUtils
 
         
 
-        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots, GetPositionHashMapKey(carPosition),targetPosition, carDirection)){
+        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots, GetPositionHashMapKey(carPosition),targetPosition, carDirection, out parkPos)){
             directionVector.Dispose();
             return true;
         }
 
-        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots,relativeRightQuadrantKey, targetPosition,carDirection)){
+        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots,relativeRightQuadrantKey, targetPosition,carDirection, out parkPos)){
             directionVector.Dispose();
             return true;
         }
@@ -47,7 +47,7 @@ public static class QuadrantUtils
         return (int) (math.floor(position.x / quadrantCellSize) + (quadrantYMultiplier * math.floor(position.y / quadrantCellSize)));
     }
     private static bool GetHasParkSpotToTheRightInQuadrant(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, 
-                    float2 targetPosition, int carDirection){
+                    float2 targetPosition, int carDirection, out float3 parkPos){
                         
         NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantSystem.QuadrantData quadrantData;
@@ -55,22 +55,24 @@ public static class QuadrantUtils
         if(nativeMultiHashMap.TryGetFirstValue(hashMapKey, out quadrantData, out nativeMultiHashMapIterator)){
             do{
                 //if this elemenet (a parkSpot since this is the parkSpot hashmap) is in the position to the relative right of the car, return true
-                if(isWithinTarget(targetPosition, quadrantData.position, carDirection))
+                if(isWithinTarget(targetPosition, quadrantData.position, carDirection)){
+                    parkPos = new float3(quadrantData.position.x, quadrantData.position.y, quadrantData.position.z);
                     return true;
+                }
 
             }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
         }
-
+        parkPos = new float3(0,0,0);
         return false;
     }
 
     private static bool isWithinTarget(float2 targetPosition, float3 checkedPosition, int direction){
-
+        
         if(direction%2 == 0){
-            if(math.abs(targetPosition.y - checkedPosition.y)<tileSize/2 && math.abs(targetPosition.x - checkedPosition.x) <= tileSize)
+            if(math.abs(targetPosition.y - checkedPosition.y)<tileSize/2 && math.abs(targetPosition.x - checkedPosition.x) <= tileSize/2)
                 return true;
         }else{
-            if(math.abs(targetPosition.x - checkedPosition.x)<tileSize/2 && math.abs(targetPosition.y - checkedPosition.y) <= tileSize)
+            if(math.abs(targetPosition.x - checkedPosition.x)<tileSize/2 && math.abs(targetPosition.y - checkedPosition.y) <= tileSize/2)
                 return true;
         }
         return false;

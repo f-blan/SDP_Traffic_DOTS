@@ -14,7 +14,10 @@ public struct VehicleMovementData : IComponentData
     public bool stop;
 
     //franco: parameters needed for parking system
-    public bool isParking;
-    public bool hasParkSpotToTheRight;
-    public int2 graphPosition;
+    public int state; //0 = following path, 1 = looking for parkSpot, 2 = parked, 3 = ready to restart
+    //public bool hasParkSpotToTheRight;
+    public int startGraphIndex;
+    public int curGraphIndex;
+    public int targetDirection;
+    public float parkingTimer;
 }
