@@ -16,7 +16,7 @@ public class VehicleMovementSystem : SystemBase
     private bool isGraphValid;
     private EndSimulationEntityCommandBufferSystem esEcbs;
 
-    private const float ParkingTime = 3f;
+    private const float ParkingTime = 5f;
 
     protected override void OnCreate()
     {
@@ -59,11 +59,16 @@ public class VehicleMovementSystem : SystemBase
             // Camera.main.transform.position = new Vector3(translation.Value.x, translation.Value.y, Camera.main.transform.position.z);
             // //End Debug
 
-            if(vehicleMovementData.state == 3){
+            if(vehicleMovementData.state == 4){
                 ecbpw.RemoveComponent<CarPathBuffer>(entityInQueryIndex, entity);
                 ResumeRunning(localGraphArray,ref translation, ref vehicleMovementData, ecbpw,entity,entityInQueryIndex, graphWidth);
                 return;
             }
+            //state 3 is handled by quadrant system
+            if(vehicleMovementData.state == 3){
+                return;
+            }
+
 
             if(vehicleMovementData.state == 2){
                 //car is parked
@@ -81,6 +86,7 @@ public class VehicleMovementSystem : SystemBase
                 return;
             }
 
+            //everything below is state 0 (car following a path)
             lastCarPathBuffer = carPathBuffer[carPathBuffer.Length - 1]; //Path list is inverted
             //If not yet initialized, then, initialize
             if(float.IsNaN(vehicleMovementData.initialPosition.x)){
@@ -253,23 +259,10 @@ public class VehicleMovementSystem : SystemBase
     }
 
     private static void ResumeRunning(NativeArray<PathUtils.PathNode> graphArray,ref Translation translation, ref VehicleMovementData vehicleMovementData, EntityCommandBuffer.ParallelWriter ecb, Entity entity, int eqi, int graphWidth){
-        NativeArray<int2> translationMoveOffset = new NativeArray<int2>(4, Allocator.Temp);
-
-
-        translationMoveOffset[0] = new int2(-1, 0);
-        translationMoveOffset[1] = new int2(0, 1);
-        translationMoveOffset[2] = new int2(1, 0);
-        translationMoveOffset[3] = new int2(0, -1);
-
-        //move the car from the parkSpot to the road
-        translation.Value.x += translationMoveOffset[vehicleMovementData.direction].x;
-        translation.Value.y += translationMoveOffset[vehicleMovementData.direction].y;
-
-         
-
+        
         PathUtils.PathNode startNode = graphArray[vehicleMovementData.curGraphIndex];
         int offsetIndex = (vehicleMovementData.direction +3)%4;
-        int prevNodeIndex = PathUtils.CalculateIndex(startNode.x + translationMoveOffset[offsetIndex].x, startNode.y + translationMoveOffset[offsetIndex].y, graphWidth);
+        int prevNodeIndex = PathUtils.CalculatePrevNodeIndex(startNode.x, startNode.y,vehicleMovementData.direction,graphWidth);//(startNode.x + translationMoveOffset[offsetIndex].x, startNode.y + translationMoveOffset[offsetIndex].y, graphWidth);
         PathUtils.PathNode prevNode = graphArray[prevNodeIndex];
 
         int leftoverCost = CarUtils.GetLeftoverCost(vehicleMovementData.direction, vehicleMovementData.initialPosition,prevNode.goesTo[vehicleMovementData.direction] , translation.Value);

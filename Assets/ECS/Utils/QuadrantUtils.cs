@@ -10,63 +10,80 @@ public static class QuadrantUtils
     private const float tileSize = 1f;
 
     private const float epsilonDistance = 0.5f;
-    // Start is called before the first frame update
-    public static bool GetHasParkSpotToTheRight(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMapParkSpots, float3 carPosition, int carDirection, out float3 parkPos){
-        int hashMapKey = GetPositionHashMapKey(carPosition);
+    //checks if the position identified by carPosition has an entity of the given type to its relative direction specified by the parameter
+    //if true it returns the exact translation component of the found entity inside of foundPosition
+    //this function deals automatically with the quadrant conversion of the positions
+    public static bool GetHasEntityToRelativeDirection(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, float3 carPosition, int carDirection, int relativeDirection, 
+        QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out float3 foundPosition){
 
-        NativeArray<float2> directionVector = new NativeArray<float2>(4, Allocator.Temp);
-
-        directionVector[0] = new float2(0, 1);
-        directionVector[1] = new float2(1, 0);
-        directionVector[2] = new float2(0, -1);
-        directionVector[3] = new float2(-1, 0);
-
-        int relativeRight = (carDirection + 1)%4; 
+        //eg. car is facing down and relative direction is 1 (right) this becomes 3 (absolute left, relative right)
+        int absoluteDirection = (carDirection + relativeDirection)%4; 
         
-        float2 targetPosition = new float2(carPosition.x + directionVector[relativeRight].x*tileSize, carPosition.y + directionVector[relativeRight].y*tileSize);
+        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, relativeDirection);
 
-        int relativeRightQuadrantKey = GetPositionHashMapKey(new float3(carPosition.x + directionVector[relativeRight].x*quadrantCellSize, carPosition.y + directionVector[relativeRight].y*quadrantCellSize, 0));
 
-        
+        int hashMapKey = GetPositionHashMapKey(targetPosition);
 
-        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots, GetPositionHashMapKey(carPosition),targetPosition, carDirection, out parkPos)){
-            directionVector.Dispose();
+        /* I'm pretty sure that checking more than one quadrant is not useful, just check the one where targetPosition is
+        NativeArray<int2> directionVector = new NativeArray<int2>(4, Allocator.Temp);
+
+
+        directionVector[0] = new int2(0, 1);
+        directionVector[1] = new int2(1, 0);
+        directionVector[2] = new int2(0, -1);
+        directionVector[3] = new int2(1, 0);
+
+        int absoluteDirectionQuadrantKey = GetPositionHashMapKey(new float3(carPosition.x + directionVector[absoluteDirection].x*quadrantCellSize, carPosition.y + directionVector[absoluteDirection].y*quadrantCellSize, 0));
+
+        if(IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundPosition))
             return true;
-        }
+        */
 
-        if(GetHasParkSpotToTheRightInQuadrant(nativeMultiHashMapParkSpots,relativeRightQuadrantKey, targetPosition,carDirection, out parkPos)){
-            directionVector.Dispose();
-            return true;
-        }
+        return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundPosition);
+    }
+    
 
-        directionVector.Dispose();
-        return false;
-        
+    public static float3 GetNearTranslationInRelativeDirection(float3 pos, int direction, int relativeDirection){
+        int absoluteDirection = (direction + relativeDirection)%4;
+        switch(absoluteDirection){
+            case 0:
+                return new float3(pos.x +0, pos.y +tileSize, pos.z);
+            case 1:
+                return new float3(pos.x +tileSize, pos.y +0, pos.z);
+            case 2:
+                return new float3(pos.x +0, pos.y -tileSize, pos.z);
+            case 3:
+                return new float3(pos.x -tileSize, pos.y +0, pos.z);
+            default:
+                return new float3(0, 0, 0);
+        }
     }
     private static int GetPositionHashMapKey(float3 position){
         return (int) (math.floor(position.x / quadrantCellSize) + (quadrantYMultiplier * math.floor(position.y / quadrantCellSize)));
     }
-    private static bool GetHasParkSpotToTheRightInQuadrant(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, 
-                    float2 targetPosition, int carDirection, out float3 parkPos){
-                        
-        NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
+    
+    private static bool IsEntityInTargetPosition(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, 
+                    float3 targetPosition, int carDirection, QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out float3 foundPosition){
+    
+    NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantSystem.QuadrantData quadrantData;
         //Iterate through all of the elements in the current bucket
         if(nativeMultiHashMap.TryGetFirstValue(hashMapKey, out quadrantData, out nativeMultiHashMapIterator)){
             do{
+
                 //if this elemenet (a parkSpot since this is the parkSpot hashmap) is in the position to the relative right of the car, return true
-                if(isWithinTarget(targetPosition, quadrantData.position, carDirection)){
-                    parkPos = new float3(quadrantData.position.x, quadrantData.position.y, quadrantData.position.z);
+                if(quadrantData.type == vehicleTrafficLightType && isWithinTarget(targetPosition, quadrantData.position, carDirection)){
+                    foundPosition = new float3(quadrantData.position.x, quadrantData.position.y, quadrantData.position.z);
                     return true;
                 }
 
             }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
         }
-        parkPos = new float3(0,0,0);
+        foundPosition = new float3(0,0,0);
         return false;
-    }
 
-    private static bool isWithinTarget(float2 targetPosition, float3 checkedPosition, int direction){
+    }
+    private static bool isWithinTarget(float3 targetPosition, float3 checkedPosition, int direction){
         
         if(direction%2 == 0){
             if(math.abs(targetPosition.y - checkedPosition.y)<tileSize/2 && math.abs(targetPosition.x - checkedPosition.x) <= tileSize/2)

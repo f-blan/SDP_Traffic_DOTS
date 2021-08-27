@@ -406,5 +406,18 @@ public static class PathUtils
         
     }
 
-    
+    public static int CalculatePrevNodeIndex(int x, int y, int curDirection, int graphWidth){
+        switch(curDirection){
+            case 0:
+                return CalculateIndex(x, y-1, graphWidth);
+            case 1:
+                return CalculateIndex(x-1,y,graphWidth);
+            case 2:
+                return CalculateIndex(x,y+1,graphWidth);
+            case 3:
+                return CalculateIndex(x+1,y,graphWidth);
+            default:
+                return -1;
+        }
+    }
 }

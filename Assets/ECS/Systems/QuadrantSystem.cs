@@ -217,7 +217,23 @@ public class QuadrantSystem : SystemBase
         Entities.WithAll<VehicleMovementData>().WithReadOnly(localQuadrantParkSpots).ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
 
             NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
-            bool hasCarToRight = false;
+            
+
+            //the car is parked, non need to compute the stop variable as it doesn't move
+            if(vehicleMovementData.state==2) return;
+
+            //the car is parked and wants to get into the road: we just check if it can (road tile is free) and if so we change its translation component
+            if(vehicleMovementData.state == 3){
+                float3 roadPosition;
+                //if the parked car doesn't have a car on its left it can get into the road
+                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction, 3, VehicleTrafficLightType.VehicleType, out roadPosition)){
+                    //move the car on the roadTile
+                    translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 3);
+                    vehicleMovementData.state = 4;
+                }
+                
+                return;
+            }
             
             ComputeClosestInDirection(localQuadrant,
                 GetPositionHashMapKey(translation.Value),
@@ -241,15 +257,19 @@ public class QuadrantSystem : SystemBase
             // if(closestNativeArray[0].entity != Entity.Null){
             //     Debug.DrawLine(translation.Value, closestNativeArray[0].position);
             // }
-            if(vehicleMovementData.state == 1 && !hasCarToRight){
+
+            //car is looking for a parkSpot, we also want to know if they have a park available to their right
+            if(vehicleMovementData.state == 1){
                 float3 parkPos;
-                
-                bool parkFound = QuadrantUtils.GetHasParkSpotToTheRight(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction, out parkPos);
-                
-                if(parkFound){
-                    vehicleMovementData.state = 2;
-                    translation.Value = parkPos;
-                    vehicleMovementData.parkingTimer = 0;
+                //no reason to check for parkSpot if our car has another car to its right (we're either at an intersection or the parkSpot is taken)
+                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,1,VehicleTrafficLightType.VehicleType, out parkPos)){
+                    
+                    if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.ParkSpot,out parkPos)){
+                        //ParkSpot found: change the state and translation component of the car
+                        vehicleMovementData.state = 2;
+                        translation.Value = parkPos;
+                        vehicleMovementData.parkingTimer = 0;
+                    }
                 }
             }
             if(closestNativeArray[0].entity == Entity.Null){
