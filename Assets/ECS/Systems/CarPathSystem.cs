@@ -57,7 +57,7 @@ public class CarPathSystem : SystemBase
         localPathNodeMap= PathNodeMap; //because if it's not local the compiler complains
 
         //compute path
-        Entities.ForEach(( Entity entity, int entityInQueryIndex, ref CarPathParams carPathParams)=>{
+        Entities.WithAll<CarPathBuffer>().ForEach(( Entity entity, int entityInQueryIndex, ref CarPathParams carPathParams, ref DynamicBuffer<CarPathBuffer> carPathBuffer)=>{
             //make a copy of the graph hashmap exclusive to the job
             NativeArray<PathUtils.PathNode> tmpPathNodeMap = new NativeArray<PathUtils.PathNode>(localPathNodeMap, Allocator.Temp);
             
@@ -65,26 +65,26 @@ public class CarPathSystem : SystemBase
                              new int2(MOVE_X_COST, MOVE_Y_COST));
             int endNodeIndex = PathUtils.CalculateIndex(carPathParams.endPosition.x, carPathParams.endPosition.y, graphSize.x);
 
-            AssignPath(entity,tmpPathNodeMap,endNodeIndex,ecb, carPathParams.direction, carPathParams.init_cost, entityInQueryIndex);
+            AssignPath(entity,tmpPathNodeMap,endNodeIndex,ecb, carPathParams.direction, carPathParams.init_cost, entityInQueryIndex, ref carPathBuffer);
             tmpPathNodeMap.Dispose();
         }).ScheduleParallel();
         //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
         ecb_s.AddJobHandleForProducer(this.Dependency);
-        
      }
 
 
-    private static void AssignPath(Entity entity, NativeArray<PathUtils.PathNode> pathNodeMap,int endNodeIndex, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi){
+    private static void AssignPath(Entity entity, NativeArray<PathUtils.PathNode> pathNodeMap,int endNodeIndex, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi,
+        ref DynamicBuffer<CarPathBuffer> buf){
         
         
-        DynamicBuffer<CarPathBuffer> buf = ecb.AddBuffer<CarPathBuffer>(eqi,entity);
+        //DynamicBuffer<CarPathBuffer> buf = ecb.AddBuffer<CarPathBuffer>(eqi,entity);
 
         
         
         PathUtils.PathNode endNode = pathNodeMap[endNodeIndex];
         
-        //add end node to buffer
-        buf.Add(new CarPathBuffer{x = endNode.x, y = endNode.y, cost = endNode.reachedWithCost, withDirection = endNode.reachedWithDirection});
+        
+        buf[0]=new CarPathBuffer{x = endNode.x, y = endNode.y, cost = endNode.reachedWithCost, withDirection = endNode.reachedWithDirection};
         
         //add intermediate nodes
         PathUtils.PathNode cameFromNode = pathNodeMap[endNode.cameFromNodeIndex];

@@ -56,6 +56,7 @@ public class CarSpawnerSystem : SystemBase
 
         float deltaTime = UnityEngine.Time.deltaTime;
         
+        //spawning cars in districts with a certain delay (so that we do not overload the system with pathFind for all cars and start the app faster)
         Entities.WithReadOnly(localMapArray).ForEach((Entity e,int entityInQueryIndex, ref CarSpawnerComponent carSpawnerComponent) =>{
             carSpawnerComponent.timer+=deltaTime;
             if(carSpawnerComponent.timer < carSpawnerComponent.delay){
@@ -81,6 +82,7 @@ public class CarSpawnerSystem : SystemBase
                         int seed = entityInQueryIndex + index;
                         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
                         ecb.AddComponent(entityInQueryIndex,car, new Translation{Value = new float3(wp[0], wp[1], -1)});
+
                         SpawnerUtils.SetUpPathFind(carSpawnerComponent.d_x,carSpawnerComponent.d_y,r_x, r_y, car, graphSize,districtSize,mapSize,localMapArray,ecb,entityInQueryIndex,maxCarSpeed, r);
                         carSpawnerComponent.n_cars--;
                     }

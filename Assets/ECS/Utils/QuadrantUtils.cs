@@ -4,7 +4,7 @@ using UnityEngine;
 public static class QuadrantUtils  
 {
     private const int quadrantYMultiplier = 1000; //Offset in Y
-    private const int quadrantCellSize = 10; //Size of the quadrant
+    private const int quadrantCellSize = 5; //Size of the quadrant
     private const float minimumDistance = 8.0f; //Minimum distance to be considered as close
     private const float minimumStopDistance = 2.5f;
     private const float tileSize = 1f;

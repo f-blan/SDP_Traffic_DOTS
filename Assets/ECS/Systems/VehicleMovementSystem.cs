@@ -60,7 +60,7 @@ public class VehicleMovementSystem : SystemBase
             // //End Debug
 
             if(vehicleMovementData.state == 4){
-                ecbpw.RemoveComponent<CarPathBuffer>(entityInQueryIndex, entity);
+                //ecbpw.RemoveComponent<CarPathBuffer>(entityInQueryIndex, entity);
                 ResumeRunning(localGraphArray,ref translation, ref vehicleMovementData, ecbpw,entity,entityInQueryIndex, graphWidth);
                 return;
             }
@@ -111,12 +111,10 @@ public class VehicleMovementSystem : SystemBase
 
                 int index = PathUtils.CalculateIndex(lastCarPathBuffer.x, lastCarPathBuffer.y, graphWidth);
                 vehicleMovementData.curGraphIndex = index;
-            
-                carPathBuffer.RemoveAt(carPathBuffer.Length - 1);
-                
 
-                if(carPathBuffer.IsEmpty){
-                    
+                if(carPathBuffer.Length > 1){
+                    carPathBuffer.RemoveAt(carPathBuffer.Length - 1);
+                }else{                    
                     vehicleMovementData.startGraphIndex = index;
                     //function call to setup a random direction to look for parking
                     ParkingTurn( ref vehicleMovementData, ref translation, ref rotation, localGraphArray, index, graphWidth, 1);
@@ -150,10 +148,19 @@ public class VehicleMovementSystem : SystemBase
                     int nextIndex = PathUtils.CalculateIndex(carPathBuffer[carPathBuffer.Length - 1].x, carPathBuffer[carPathBuffer.Length - 1].y, graphWidth);
                     
                     Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) nextIndex+1);
-                    int nextDirection;
-                    do{
-                        nextDirection = r.NextInt(0, 3); 
-                    }while(localGraphArray[nextIndex].goesTo[nextDirection] == -1);
+
+                    NativeList<int> availableDirections = new NativeList<int>(Allocator.Temp);
+
+                    for(int t=0; t<4; ++t){
+                        if(localGraphArray[nextIndex].goesTo[t] !=-1){
+                            availableDirections.Add(t);
+                        }
+                    }
+                    int nextDirection = availableDirections[r.NextInt(0, availableDirections.Length)];
+                    availableDirections.Dispose();
+                    
+        
+        
                     
                     vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, nextDirection);
                     vehicleMovementData.targetDirection=nextDirection;
@@ -273,9 +280,13 @@ public class VehicleMovementSystem : SystemBase
         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
         
         int endNodeIndex;
-        do{
-            endNodeIndex = r.NextInt(0, graphArray.Length-1);
-        }while(endNodeIndex == vehicleMovementData.curGraphIndex);
+        endNodeIndex = r.NextInt(0, graphArray.Length-1);
+
+        if(endNodeIndex == startNode.index && endNodeIndex == graphArray.Length-1){
+            endNodeIndex -= 1;
+        }else if(endNodeIndex == startNode.index){
+            endNodeIndex += 1;
+        }
 
         PathUtils.PathNode endNode = graphArray[endNodeIndex];
 

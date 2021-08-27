@@ -17,7 +17,7 @@ public class QuadrantSystem : SystemBase
     //franco: i'm creating another one since looking for a car spot is an operation relevant only to parking cars
     private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrantParkSpots;
     private const int quadrantYMultiplier = 1000; //Offset in Y
-    private const int quadrantCellSize = 10; //Size of the quadrant
+    private const int quadrantCellSize = 5; //Size of the quadrant
     private const float minimumDistance = 8.0f; //Minimum distance to be considered as close
     private const float minimumStopDistance = 2.5f;
 
@@ -286,7 +286,7 @@ public class QuadrantSystem : SystemBase
             }
 
             closestNativeArray.Dispose();
-        }).WithReadOnly(localQuadrant).WithoutBurst().Run();//ScheduleParallel();
+        }).WithReadOnly(localQuadrant).ScheduleParallel();//WithoutBurst().Run();//ScheduleParallel();
         // }).WithoutBurst().Run();
 
         // DebugDrawQuadrant(Camera.main.ScreenToWorldPoint(Input.mousePosition));

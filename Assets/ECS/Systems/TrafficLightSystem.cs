@@ -7,7 +7,7 @@ using Unity.Rendering;
 
 public class TrafficLightSystem : SystemBase
 {
-    private const float SWITCH_INTERVAL = 4f;
+    private const float SWITCH_INTERVAL = 10f;
     private Material HorizontalMaterial;
     private Material VerticalMaterial;
     private float timer;

@@ -152,6 +152,7 @@ public class Map_Visual : MonoBehaviour
                     layer = 0
                 });
                 curDelay+=delayAddition;
+                
             }
         }
         districts.Dispose();
