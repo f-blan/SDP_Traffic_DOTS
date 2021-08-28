@@ -216,8 +216,6 @@ public class QuadrantSystem : SystemBase
         //Iterates through the VehicleMovementData having components and checks for a closer vehicle
         Entities.WithAll<VehicleMovementData>().WithReadOnly(localQuadrantParkSpots).ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
 
-            NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
-            
 
             //the car is parked, non need to compute the stop variable as it doesn't move
             if(vehicleMovementData.state==2) return;
@@ -234,6 +232,7 @@ public class QuadrantSystem : SystemBase
                 
                 return;
             }
+            NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
             
             ComputeClosestInDirection(localQuadrant,
                 GetPositionHashMapKey(translation.Value),
