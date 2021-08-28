@@ -323,10 +323,13 @@ public class Map_Spawner : MonoBehaviour
 
         for(int t=0; t<trafficLightTiles.Count; ++t){
             Material material;
+            bool isVertical;
             if(trafficLightTiles[t].Item1){
                 material = VerticalTrafficLightMaterial;
+                isVertical=true;
             }else{
                 material = HorizontalTrafficLightMaterial;
+                isVertical = false;
             }
 
             MapTile curTile = trafficLightTiles[t].Item2; 
@@ -336,7 +339,7 @@ public class Map_Spawner : MonoBehaviour
             em.SetName(e, "Traffic Light " + t);
             em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
 
-            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1});
+            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = isVertical});
 
             em.SetSharedComponentData(e, new RenderMesh{
                 mesh = Quad,
