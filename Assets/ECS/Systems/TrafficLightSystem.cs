@@ -7,9 +7,9 @@ using Unity.Rendering;
 
 public class TrafficLightSystem : SystemBase
 {
-    private const float GREEN_INTERVAL = 3f;
-    private const float YELLOW_INTERVAL = 2f;
-    private const float RED_INTERVAL = 2f;
+    private const float GREEN_INTERVAL = 5f;
+    private const float YELLOW_INTERVAL = 5f;
+    //private const float RED_INTERVAL = 2f;
     private Material HorizontalMaterial;
     private Material VerticalMaterial;
     private float timer;

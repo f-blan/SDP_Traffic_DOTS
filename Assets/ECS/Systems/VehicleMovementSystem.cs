@@ -61,7 +61,7 @@ public class VehicleMovementSystem : SystemBase
 
             if(vehicleMovementData.state == 4){
                 //ecbpw.RemoveComponent<CarPathBuffer>(entityInQueryIndex, entity);
-                ResumeRunning(localGraphArray,ref translation, ref vehicleMovementData, ecbpw,entity,entityInQueryIndex, graphWidth);
+                ResumeRunning(localGraphArray,ref translation, ref vehicleMovementData, ecbpw,entity,entityInQueryIndex, graphWidth, (int) math.floor(dt*10000000));
                 return;
             }
             //state 3 is handled by quadrant system
@@ -265,18 +265,19 @@ public class VehicleMovementSystem : SystemBase
 
     }
 
-    private static void ResumeRunning(NativeArray<PathUtils.PathNode> graphArray,ref Translation translation, ref VehicleMovementData vehicleMovementData, EntityCommandBuffer.ParallelWriter ecb, Entity entity, int eqi, int graphWidth){
+    private static void ResumeRunning(NativeArray<PathUtils.PathNode> graphArray,ref Translation translation, ref VehicleMovementData vehicleMovementData, EntityCommandBuffer.ParallelWriter ecb, Entity entity, int eqi, int graphWidth, int seedHelp){
         
         PathUtils.PathNode startNode = graphArray[vehicleMovementData.curGraphIndex];
         int offsetIndex = (vehicleMovementData.direction +3)%4;
         int prevNodeIndex = PathUtils.CalculatePrevNodeIndex(startNode.x, startNode.y,vehicleMovementData.direction,graphWidth);//(startNode.x + translationMoveOffset[offsetIndex].x, startNode.y + translationMoveOffset[offsetIndex].y, graphWidth);
         PathUtils.PathNode prevNode = graphArray[prevNodeIndex];
 
-        int leftoverCost = CarUtils.GetLeftoverCost(vehicleMovementData.direction, vehicleMovementData.initialPosition,prevNode.goesTo[vehicleMovementData.direction] , translation.Value);
+        int leftoverCost = CarUtils.GetLeftoverCost(vehicleMovementData.direction, vehicleMovementData.initialPosition,translation.Value, vehicleMovementData.targetDirection, vehicleMovementData.offset);
         
 
         //find another endNode for the pathFind
-        int seed = eqi+1;
+         
+        int seed = eqi+1 + startNode.index + seedHelp + vehicleMovementData.startGraphIndex;
         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
         
         int endNodeIndex;
@@ -287,7 +288,7 @@ public class VehicleMovementSystem : SystemBase
         }else if(endNodeIndex == startNode.index){
             endNodeIndex += 1;
         }
-
+        
         PathUtils.PathNode endNode = graphArray[endNodeIndex];
 
         //add the component that triggers path computation
@@ -296,7 +297,7 @@ public class VehicleMovementSystem : SystemBase
             startPosition = new int2(startNode.x, startNode.y),
             endPosition = new int2(endNode.x, endNode.y)
         });
-
+        
         //set initial position so that it gets initalized after pathfing
         vehicleMovementData.initialPosition.x = float.NaN;
         vehicleMovementData.initialPosition.y = float.NaN;

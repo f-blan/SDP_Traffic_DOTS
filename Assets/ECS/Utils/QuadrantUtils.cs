@@ -19,7 +19,7 @@ public static class QuadrantUtils
         //eg. car is facing down and relative direction is 1 (right) this becomes 3 (absolute left, relative right)
         int absoluteDirection = (carDirection + relativeDirection)%4; 
         
-        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, relativeDirection);
+        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, relativeDirection, 1);
 
 
         int hashMapKey = GetPositionHashMapKey(targetPosition);
@@ -42,18 +42,45 @@ public static class QuadrantUtils
         return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundPosition);
     }
     
+    //experiment for computing the stop variable in vehicleMovement data
+    public static bool GetStop(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, float3 carPosition, int carDirection, int offset){
+        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, 0, offset);
 
-    public static float3 GetNearTranslationInRelativeDirection(float3 pos, int direction, int relativeDirection){
+
+        int hashMapKey = GetPositionHashMapKey(targetPosition);
+
+        return IsObstacleInTargetPosition(nativeMultiHashMap,hashMapKey,targetPosition, carDirection);
+
+    }
+    private static bool IsObstacleInTargetPosition(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, float3 targetPosition, int carDirection){
+        NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
+        QuadrantSystem.QuadrantData quadrantData;
+        //Iterate through all of the elements in the current bucket
+        if(nativeMultiHashMap.TryGetFirstValue(hashMapKey, out quadrantData, out nativeMultiHashMapIterator)){
+            do{
+                bool expr = quadrantData.type == QuadrantSystem.VehicleTrafficLightType.VehicleType || (quadrantData.type == QuadrantSystem.VehicleTrafficLightType.TrafficLight && quadrantData.trafficLightData.isRed);
+                //if this elemenet (a parkSpot since this is the parkSpot hashmap) is in the position to the relative right of the car, return true
+                if(expr && isWithinTarget2(targetPosition, quadrantData.position, tileSize/2)){
+                    
+                    return true;
+                }
+
+            }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
+        }
+        
+        return false;
+    }
+    public static float3 GetNearTranslationInRelativeDirection(float3 pos, int direction, int relativeDirection, int offset){
         int absoluteDirection = (direction + relativeDirection)%4;
         switch(absoluteDirection){
             case 0:
-                return new float3(pos.x +0, pos.y +tileSize, pos.z);
+                return new float3(pos.x +0, pos.y +tileSize*offset, pos.z);
             case 1:
-                return new float3(pos.x +tileSize, pos.y +0, pos.z);
+                return new float3(pos.x +tileSize*offset, pos.y +0, pos.z);
             case 2:
-                return new float3(pos.x +0, pos.y -tileSize, pos.z);
+                return new float3(pos.x +0, pos.y -tileSize*offset, pos.z);
             case 3:
-                return new float3(pos.x -tileSize, pos.y +0, pos.z);
+                return new float3(pos.x -tileSize*offset, pos.y +0, pos.z);
             default:
                 return new float3(0, 0, 0);
         }
@@ -92,6 +119,12 @@ public static class QuadrantUtils
             if(math.abs(targetPosition.x - checkedPosition.x)<tileSize/2 && math.abs(targetPosition.y - checkedPosition.y) <= tileSize/2)
                 return true;
         }
+        return false;
+    }
+    public static bool isWithinTarget2(float3 targetPosition, float3 checkedPosition, float range){
+        if(math.abs(targetPosition.y - checkedPosition.y)<range && math.abs(targetPosition.x - checkedPosition.x) <= range)
+                return true;
+        
         return false;
     }
 }

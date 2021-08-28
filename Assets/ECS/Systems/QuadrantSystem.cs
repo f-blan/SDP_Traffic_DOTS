@@ -22,6 +22,7 @@ public class QuadrantSystem : SystemBase
     private const float minimumStopDistance = 2.5f;
 
     private const float epsilonDistance = 0.5f;
+    private const float tileSize = 1f;
 
     private bool isParkSpotMapValid;
     private EntityQueryDesc entityQueryDesc = new EntityQueryDesc{
@@ -157,7 +158,7 @@ public class QuadrantSystem : SystemBase
         //Deletes all elements currently inside of the hash map
         nativeMultiHashMapQuadrant.Clear();
         //franco: reset operation is not needed for parkSpot hashmap: They don't move and spawn all together. 
-        //As an improvement we can avoid it too for
+        
         
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
@@ -226,12 +227,13 @@ public class QuadrantSystem : SystemBase
                 //if the parked car doesn't have a car on its left it can get into the road
                 if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction, 3, VehicleTrafficLightType.VehicleType, out roadPosition)){
                     //move the car on the roadTile
-                    translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 3);
+                    translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 3, 1);
                     vehicleMovementData.state = 4;
                 }
                 
                 return;
             }
+            
             NativeArray<QuadrantData> closestNativeArray = new NativeArray<QuadrantData>(2, Allocator.Temp);
             
             ComputeClosestInDirection(localQuadrant,
@@ -246,6 +248,7 @@ public class QuadrantSystem : SystemBase
                     }
                 }, ref closestNativeArray);
 
+            
             // if(closestNativeArray[1].entity != Entity.Null && closestNativeArray[0].entity != Entity.Null){
             //     Debug.Log("Closest distance " + closestNativeArray[0].distance + "Second closest distance" + closestNativeArray[1].distance);
             // }
@@ -271,6 +274,9 @@ public class QuadrantSystem : SystemBase
                     }
                 }
             }
+
+            //vehicleMovementData.stop = QuadrantUtils.GetStop(localQuadrant, translation.Value, vehicleMovementData.direction);
+            
             if(closestNativeArray[0].entity == Entity.Null){
                 vehicleMovementData.stop = false;
             }
@@ -278,7 +284,14 @@ public class QuadrantSystem : SystemBase
                 vehicleMovementData.stop = true; 
             }
             else if((closestNativeArray[0].type == VehicleTrafficLightType.VehicleType && closestNativeArray[0].vehicleData.stop) || (closestNativeArray[0].type == VehicleTrafficLightType.VehicleType &&  minimumStopDistance > closestNativeArray[0].distance) || (closestNativeArray[1].type == VehicleTrafficLightType.VehicleType && closestNativeArray[1].vehicleData.stop)){
-                vehicleMovementData.stop = true;
+                //we only stop if the closest vehicle is not at our left: give precedence to car on the right
+                float3 frontTile = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 0,1);
+                if((closestNativeArray[0].vehicleData.direction+1)%4 == vehicleMovementData.direction && !QuadrantUtils.isWithinTarget2(frontTile, closestNativeArray[0].position, tileSize/2)){
+                    
+                    vehicleMovementData.stop = false;
+                }else{
+                    vehicleMovementData.stop = true;
+                }
             }
             else{
                 vehicleMovementData.stop = false;
