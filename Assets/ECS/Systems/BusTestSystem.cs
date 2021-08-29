@@ -10,10 +10,18 @@ using UnityEngine;
 public class BusTestSystem : SystemBase
 {
     
+    private EndSimulationEntityCommandBufferSystem ecb_s;
+    protected override void OnCreate(){
+        base.OnCreate();
+
+        ecb_s = World
+            .GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+        
+    }
     protected override void OnUpdate(){
         /*
-        
-        Entities.ForEach((Entity e, int entityInQueryIndex, ref BusPathComponent busPathComponent)=>{
+        EntityCommandBuffer ecb = ecb_s.CreateCommandBuffer();
+        Entities.ForEach((Entity e, ref BusPathComponent busPathComponent)=>{
             
             
             //BusPathBlobArray a = busPathComponent.pathArrayReference.Value;
@@ -23,29 +31,12 @@ public class BusTestSystem : SystemBase
 
             if(busPathComponent.verse == 1){
             for(int t=0; t<busPathComponent.pathLength; ++t){
-                
-                Debug.Log("------------COORDS-------------");
-                Debug.Log(v[t].x);
-                Debug.Log(v[t].y);
-                
-                Debug.Log("costs");
-                Debug.Log(v[t].cost.x);
-                Debug.Log(v[t].cost.y);
-
-                Debug.Log("directions");
-                Debug.Log(v[t].withDirection.x);
-                Debug.Log(v[t].withDirection.y);
-                
-                Debug.Log("stopCost");
-                Debug.Log(v[t].costToStop.x);
-                Debug.Log(v[t].costToStop.y);
-                  
-                
-                
+                Debug.Log(v[t].x + "-" +v[t].y + " costs: " + v[t].cost.x + "-" + v[t].cost.y + " directions: " + v[t].withDirection.x + "-" + v[t].withDirection.y
+                    + " stopCost: " + v[t].costToStop.x + "-" + v[t].costToStop.y);
             }   
             }
             Debug.Log("----------------------END---------------------------------------");
-            //ecb.DestroyEntity(entityInQueryIndex, e);
-        }).ScheduleParallel();*/
+            ecb.DestroyEntity( e);
+        }).WithoutBurst().Run();*/
     }
 }

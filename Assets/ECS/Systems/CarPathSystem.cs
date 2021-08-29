@@ -66,7 +66,7 @@ public class CarPathSystem : SystemBase
                              new int2(MOVE_X_COST, MOVE_Y_COST));
             int endNodeIndex = PathUtils.CalculateIndex(carPathParams.endPosition.x, carPathParams.endPosition.y, graphSize.x);
             
-            
+            //Debug.Log(tmpPathNodeMap.Count());
             AssignPath(entity,tmpPathNodeMap,endNodeIndex,ecb, carPathParams.direction, carPathParams.init_cost, entityInQueryIndex, ref carPathBuffer);
             tmpPathNodeMap.Dispose();
         }).WithReadOnly(localPathNodeMap).ScheduleParallel();

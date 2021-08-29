@@ -108,7 +108,7 @@ public class Map_Visual : MonoBehaviour
         if(n_cars_each==0 && n_cars!=0){
             n_cars_each=1;
         }
-        float curDelay = 0f;
+        float curDelay = 0.05f;
         
 
         switch(districtIndex){
