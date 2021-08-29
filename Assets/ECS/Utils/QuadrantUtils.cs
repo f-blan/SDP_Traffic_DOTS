@@ -14,12 +14,13 @@ public static class QuadrantUtils
     //if true it returns the exact translation component of the found entity inside of foundPosition
     //this function deals automatically with the quadrant conversion of the positions
     public static bool GetHasEntityToRelativeDirection(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, float3 carPosition, int carDirection, int relativeDirection, 
-        QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out float3 foundPosition){
+        QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out QuadrantSystem.QuadrantData foundEntity, int offset, float range){
 
         //eg. car is facing down and relative direction is 1 (right) this becomes 3 (absolute left, relative right)
         int absoluteDirection = (carDirection + relativeDirection)%4; 
         
-        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, relativeDirection, 1);
+        float3 targetPosition = GetNearTranslationInRelativeDirection(carPosition, carDirection, relativeDirection, offset);
+        
 
 
         int hashMapKey = GetPositionHashMapKey(targetPosition);
@@ -39,7 +40,7 @@ public static class QuadrantUtils
             return true;
         */
 
-        return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundPosition);
+        return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundEntity, range);
     }
     
     //experiment for computing the stop variable in vehicleMovement data
@@ -90,7 +91,7 @@ public static class QuadrantUtils
     }
     
     private static bool IsEntityInTargetPosition(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, 
-                    float3 targetPosition, int carDirection, QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out float3 foundPosition){
+                    float3 targetPosition, int carDirection, QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out QuadrantSystem.QuadrantData foundEntity, float range){
     
     NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantSystem.QuadrantData quadrantData;
@@ -99,14 +100,14 @@ public static class QuadrantUtils
             do{
 
                 //if this elemenet (a parkSpot since this is the parkSpot hashmap) is in the position to the relative right of the car, return true
-                if(quadrantData.type == vehicleTrafficLightType && isWithinTarget(targetPosition, quadrantData.position, carDirection)){
-                    foundPosition = new float3(quadrantData.position.x, quadrantData.position.y, quadrantData.position.z);
+                if(quadrantData.type == vehicleTrafficLightType && isWithinTarget2(targetPosition, quadrantData.position, range)){
+                    foundEntity = quadrantData;
                     return true;
                 }
 
             }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
         }
-        foundPosition = new float3(0,0,0);
+        foundEntity = new QuadrantSystem.QuadrantData{};
         return false;
 
     }

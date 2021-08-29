@@ -18,7 +18,7 @@ public class QuadrantSystem : SystemBase
     private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrantParkSpots;
     private const int quadrantYMultiplier = 1000; //Offset in Y
     private const int quadrantCellSize = 5; //Size of the quadrant
-    private const float minimumDistance = 8.0f; //Minimum distance to be considered as close
+    private const float minimumDistance = 4.0f; //Minimum distance to be considered as close
     private const float minimumStopDistance = 2.5f;
 
     private const float epsilonDistance = 0.5f;
@@ -223,9 +223,9 @@ public class QuadrantSystem : SystemBase
 
             //the car is parked and wants to get into the road: we just check if it can (road tile is free) and if so we change its translation component
             if(vehicleMovementData.state == 3){
-                float3 roadPosition;
+                QuadrantData dummy;
                 //if the parked car doesn't have a car on its left it can get into the road
-                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction, 3, VehicleTrafficLightType.VehicleType, out roadPosition)){
+                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction, 3, VehicleTrafficLightType.VehicleType, out dummy,1, tileSize/2)){
                     //move the car on the roadTile
                     translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 3, 1);
                     vehicleMovementData.state = 4;
@@ -262,14 +262,14 @@ public class QuadrantSystem : SystemBase
 
             //car is looking for a parkSpot, we also want to know if they have a park available to their right
             if(vehicleMovementData.state == 1){
-                float3 parkPos;
+                QuadrantData parkSpot;
                 //no reason to check for parkSpot if our car has another car to its right (we're either at an intersection or the parkSpot is taken)
-                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,1,VehicleTrafficLightType.VehicleType, out parkPos)){
+                if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,1,VehicleTrafficLightType.VehicleType, out parkSpot,1, tileSize/2)){
                     
-                    if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.ParkSpot,out parkPos)){
+                    if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantParkSpots, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.ParkSpot,out parkSpot,1, tileSize/2)){
                         //ParkSpot found: change the state and translation component of the car
                         vehicleMovementData.state = 2;
-                        translation.Value = parkPos;
+                        translation.Value = parkSpot.position;
                         vehicleMovementData.parkingTimer = 0;
                     }
                 }
@@ -284,13 +284,27 @@ public class QuadrantSystem : SystemBase
                 vehicleMovementData.stop = true; 
             }
             else if((closestNativeArray[0].type == VehicleTrafficLightType.VehicleType && closestNativeArray[0].vehicleData.stop) || (closestNativeArray[0].type == VehicleTrafficLightType.VehicleType &&  minimumStopDistance > closestNativeArray[0].distance) || (closestNativeArray[1].type == VehicleTrafficLightType.VehicleType && closestNativeArray[1].vehicleData.stop)){
+                //vehicleMovementData.stop = true;
                 //we only stop if the closest vehicle is not at our left: give precedence to car on the right
                 float3 frontTile = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 0,1);
-                if((closestNativeArray[0].vehicleData.direction+1)%4 == vehicleMovementData.direction && !QuadrantUtils.isWithinTarget2(frontTile, closestNativeArray[0].position, tileSize/2)){
+                if((closestNativeArray[0].vehicleData.direction+1)%4 == vehicleMovementData.direction && !QuadrantUtils.isWithinTarget2(frontTile, closestNativeArray[0].position, tileSize*6/10)){
                     
                     vehicleMovementData.stop = false;
                 }else{
                     vehicleMovementData.stop = true;
+                }
+            }
+            else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
+                //vehicleMovementData.stop = true;
+                //if you have a green traffic light in front, you also check if there are cars blocking your way inside. If yes you stay out of the intersection
+                QuadrantData foundEntity;
+                bool intrsectionBusy = QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, closestNativeArray[0].position,vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out foundEntity,2, tileSize*8/10);
+                
+                if(intrsectionBusy){ //&& foundEntity.vehicleData.direction != vehicleMovementData.direction){
+                    
+                    vehicleMovementData.stop=true;
+                } else{
+                    vehicleMovementData.stop=false;
                 }
             }
             else{
