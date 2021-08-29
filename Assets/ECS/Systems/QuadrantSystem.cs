@@ -170,7 +170,7 @@ public class QuadrantSystem : SystemBase
             nativeMultiHashMapQuadrantParkSpots = new NativeMultiHashMap<int, QuadrantData>(
                     GetEntityQuery(entityQueryDescParkSpots).CalculateEntityCount(), Allocator.Persistent);
         }
-
+        
         NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriter = nativeMultiHashMapQuadrant.AsParallelWriter();
         NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriterParkSpots = nativeMultiHashMapQuadrantParkSpots.AsParallelWriter();
         //Adds all elements with VehicleMovementData component to the hashmap 
@@ -274,6 +274,7 @@ public class QuadrantSystem : SystemBase
                     }
                 }
             }
+
 
             //vehicleMovementData.stop = QuadrantUtils.GetStop(localQuadrant, translation.Value, vehicleMovementData.direction);
             

@@ -55,25 +55,27 @@ public class CarPathSystem : SystemBase
 
         NativeArray<PathUtils.PathNode> localPathNodeMap; 
         localPathNodeMap= PathNodeMap; //because if it's not local the compiler complains
-
+        //Debug.Log("map has " + localPathNodeMap.Length + " nodes!");
+        int startingCapacity = 10;
         //compute path
         Entities.WithAll<CarPathBuffer>().ForEach(( Entity entity, int entityInQueryIndex, ref CarPathParams carPathParams, ref DynamicBuffer<CarPathBuffer> carPathBuffer)=>{
             //make a copy of the graph hashmap exclusive to the job
-            NativeArray<PathUtils.PathNode> tmpPathNodeMap = new NativeArray<PathUtils.PathNode>(localPathNodeMap, Allocator.Temp);
+            NativeHashMap<int, PathUtils.PathNode> tmpPathNodeMap = new NativeHashMap<int, PathUtils.PathNode>(startingCapacity,Allocator.Temp);
             
-            PathUtils.PathFind(tmpPathNodeMap, carPathParams.endPosition,carPathParams.startPosition,graphSize,
+            PathUtils.PathFind( localPathNodeMap, tmpPathNodeMap,carPathParams.endPosition,carPathParams.startPosition,graphSize,
                              new int2(MOVE_X_COST, MOVE_Y_COST));
             int endNodeIndex = PathUtils.CalculateIndex(carPathParams.endPosition.x, carPathParams.endPosition.y, graphSize.x);
-
+            
+            
             AssignPath(entity,tmpPathNodeMap,endNodeIndex,ecb, carPathParams.direction, carPathParams.init_cost, entityInQueryIndex, ref carPathBuffer);
             tmpPathNodeMap.Dispose();
-        }).ScheduleParallel();
+        }).WithReadOnly(localPathNodeMap).ScheduleParallel();
         //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
         ecb_s.AddJobHandleForProducer(this.Dependency);
      }
 
 
-    private static void AssignPath(Entity entity, NativeArray<PathUtils.PathNode> pathNodeMap,int endNodeIndex, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi,
+    private static void AssignPath(Entity entity, NativeHashMap<int, PathUtils.PathNode> pathNodeMap,int endNodeIndex, EntityCommandBuffer.ParallelWriter ecb, int first_direction, int first_cost, int eqi,
         ref DynamicBuffer<CarPathBuffer> buf){
         
         
