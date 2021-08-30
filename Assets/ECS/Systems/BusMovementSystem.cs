@@ -21,12 +21,6 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.speed = MAX_BUS_SPEED;
                 vehicleMovementData.velocity = CarUtils.ComputeVelocity(MAX_BUS_SPEED, vehicleMovementData.direction); //Create a velocity vector with respect to the direction
 
-                // if(busPathComponent.verse == 1){
-                //     busPathComponent.pathIndex += busPathComponent.pathLength - 1;
-                //     busPathComponent.pathIndex %= busPathComponent.pathLength;
-                // }
-                // currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex];
-
                 vehicleMovementData.offset = 
                     CarUtils.ComputeOffset(
                         currentPathElement.cost[busPathComponent.verse == -1 ? 0 : 1],
@@ -41,7 +35,6 @@ public class BusMovementSystem : SystemBase
 
             if(CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.offset, translation.Value)){
 
-                float2 uTurnOffset = CarUtils.ComputeUTurn(vehicleMovementData.direction, busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1]);
                 UpdatePathElement(ref busPathComponent);
                 currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex]; 
 
