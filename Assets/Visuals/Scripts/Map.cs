@@ -17,16 +17,17 @@ public class Map<TMapObject>
     private float tileSize;
     private Vector3 originPosition;
     private TMapObject[,] mapArray;
-
+    private int spawnTilesPerDistrict;
+    private int roadTilesPerDistrict;
     
 
     //constructor
-    public Map(int n_districts_x, int n_districts_y, int d_width, int d_height, float tileSize, Vector3 originPosition,Func<Map<TMapObject>, int, int, TMapObject> createMapObject){
+    public Map(int n_districts_x, int n_districts_y, int d_width, int d_height, float tileSize, Vector3 originPosition,Func<Map<TMapObject>, int, int, TMapObject> createMapObject, int spawnTilesPerDistrict){
         this.n_districts_x=n_districts_x;
         this.n_districts_y=n_districts_y;
         this.district_width=d_width;
         this.district_height=d_height;
-        
+        this.spawnTilesPerDistrict = spawnTilesPerDistrict;
         this.width = district_width*n_districts_x;
         this.height = district_height*n_districts_y;
         this.tileSize = tileSize;
@@ -41,6 +42,10 @@ public class Map<TMapObject>
                 
             }
         }
+    }
+
+    public int GetSpawnTilesPerDistrict(){
+        return this.spawnTilesPerDistrict;
     }
 
     public Vector3 GetOriginPosition(){

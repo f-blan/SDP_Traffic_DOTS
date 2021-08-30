@@ -382,10 +382,10 @@ public static class MapUtils
 
         switch(index){
             case 0:
-                ret = new int[]{12,10,1,1};
+                ret = new int[]{12,10,1,1,10,20};
             break;
             case 1:
-                ret = new int[]{30, 20, 4,3};
+                ret = new int[]{30, 20, 4,3,128};
                 break;
             default:
                 ret= null;
