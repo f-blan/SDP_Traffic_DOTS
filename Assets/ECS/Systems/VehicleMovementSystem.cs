@@ -27,7 +27,7 @@ public class VehicleMovementSystem : SystemBase
 
         //For debugging, add WithoutBurst() in the chain and do Debug.Log
         Entities.WithAll<CarPathBuffer>().ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref DynamicBuffer<CarPathBuffer> carPathBuffer, ref Rotation rotation) => {
-
+            
             CarPathBuffer lastCarPathBuffer; //Temporary variable for accessing the currently used carPathBuffer
 
             // //Debug

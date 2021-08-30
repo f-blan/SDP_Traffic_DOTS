@@ -143,6 +143,7 @@ public static class SpawnerUtils
             offset = new float2(float.NaN, float.NaN)
         });
     }
+    
 
     public static float3 ComputeBusInitialPosition(float3 worldPosition, int direction){
         switch(direction){

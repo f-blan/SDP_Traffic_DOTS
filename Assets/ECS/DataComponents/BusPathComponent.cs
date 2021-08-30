@@ -16,7 +16,7 @@ public struct BusPathComponent : IComponentData
     public int verse;
 
     // public VehicleMovementData vehicleMovementData;
-
+    public int test;    
     public BlobAssetReference<BusPathBlobArray> pathArrayReference;
     
 }

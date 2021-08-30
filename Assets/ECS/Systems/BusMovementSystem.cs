@@ -44,7 +44,7 @@ public class BusMovementSystem : SystemBase
             }
 
             return;
-        }).ScheduleParallel();
+        }).WithoutBurst().Run();
 
         return;
     }
@@ -83,8 +83,9 @@ public class BusMovementSystem : SystemBase
         int nextDirection = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1];
         int prevDirection = busPathComponent.pathArrayReference.Value.pathArray[GetPrevPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1];
         
-        Debug.Log(prevDirection);
-        Debug.Log(curDirection);
+        if(busPathComponent.verse==1)
+        Debug.Log(currentPathElement.x +"-" +currentPathElement.y + " "+currentPathElement.withDirection.y);
+        //Debug.Log(curDirection);
         float2 uTurnOffset = CarUtils.ComputeUTurn(prevDirection, curDirection);
 
         vehicleMovementData.initialPosition.x += vehicleMovementData.offset.x + uTurnOffset.x;
