@@ -5,14 +5,25 @@ using Unity.Mathematics;
 
 public class BusMovementSystem : SystemBase
 {
-    private const float MAX_BUS_SPEED = 1.0f;
+    private const float MAX_BUS_SPEED = 5.0f;
+    private const float MAX_STOP_TIME = 2.0f;
+
     protected override void OnUpdate()
     {
         float dt = Time.DeltaTime;
 
-        Entities.WithAll<BusPathComponent>().ForEach((ref BusPathComponent busPathComponent, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref Rotation rotation) => {
+        Entities.WithAll<BusPathComponent>().ForEach((Entity entity, int entityInQueryIndex, ref BusPathComponent busPathComponent, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref Rotation rotation) => {
             
             PathElement currentPathElement  = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex]; 
+
+            if(vehicleMovementData.stop){
+                return;
+            }
+
+            if(vehicleMovementData.stopTime < 0){
+                vehicleMovementData.stopTime += dt;
+                return;
+            }
 
             if(float.IsNaN(vehicleMovementData.initialPosition.x)){
                 vehicleMovementData.initialPosition.x = translation.Value.x; //Set initial position to the starting position of the vehicle
@@ -41,10 +52,13 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.direction = currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
                 UpdateVehicleMovementData(ref vehicleMovementData, ref busPathComponent, ref translation);
                 rotation = new Rotation{Value = Quaternion.Euler(0, 0, CarUtils.ComputeRotation(currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1]))};
+ 
+                vehicleMovementData.stopTime = -MAX_STOP_TIME;
+
             }
 
             return;
-        }).WithoutBurst().Run();
+        }).ScheduleParallel();
 
         return;
     }

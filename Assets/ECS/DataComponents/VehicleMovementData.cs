@@ -9,6 +9,6 @@ public struct VehicleMovementData : IComponentData
     public int direction;
     public float2 initialPosition;
     public float2 offset;
-
-    public bool stop;
+    public bool stop; 
+    public float stopTime;
 }
