@@ -103,15 +103,15 @@ public class BusPathSystem : SystemBase
         PathUtils.InitPartialData(out neighbourOffsetArray);
         
         //i compute the circular path on three points separately (this should be rather fast since district graph is very small compared to actual graph)
-        
+        int lastDirection = -1;
         //Debug.Log("first district");
-        PathUtils.PathFindPartial(districtNodeArray, graphMap, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray, graphMap, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray, lastDirection);
         PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos2);
         //Debug.Log("second district");
-        PathUtils.PathFindPartial(districtNodeArray,graphMap, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray, lastDirection);
         PathUtils.addPathToInt2List(toInt2,graphMap, graphSizeDistrict, pos3);
         //Debug.Log("third district");
-        PathUtils.PathFindPartial(districtNodeArray,graphMap,  pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap,  pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray,lastDirection);
         PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos1);
        
 
@@ -134,14 +134,14 @@ public class BusPathSystem : SystemBase
         PathUtils.InitPartialData( out neighbourOffsetArray);
 
         NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
-        
+        int lastDirection =-1;
         int2 firstNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
         int2 curNodePos = firstNodePos;
         int2 nextNodePos;
         for(int t=1; t<districtPath.Length; ++t){
             nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords );    
             
-            PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray);
+            lastDirection=PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray,lastDirection);
             
             
             
@@ -151,7 +151,7 @@ public class BusPathSystem : SystemBase
         }
         //last iteration: link path end with path beginning 
         nextNodePos = nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
-        PathUtils.PathFindPartial(graphArray,graphMap, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray);
+        lastDirection =PathUtils.PathFindPartial(graphArray,graphMap, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray, lastDirection);
             
         addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
 

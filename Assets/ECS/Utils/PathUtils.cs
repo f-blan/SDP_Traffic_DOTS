@@ -279,7 +279,8 @@ public static class PathUtils
     }
 
     //variant of function PathFind but meant to be used for paths with multiple destination points (eg. BusPathFind)
-    public static void PathFindPartial(NativeArray<PathUtils.PathNode> graphArray,NativeHashMap<int, PathNode> graphMap, int2 endPosition, int2 startPosition, int2 graphSize,  int2 Hcosts, NativeArray<int2> neighbourOffsetArray){
+    public static int PathFindPartial(NativeArray<PathUtils.PathNode> graphArray,NativeHashMap<int, PathNode> graphMap, int2 endPosition, int2 startPosition, int2 graphSize,  int2 Hcosts, NativeArray<int2> neighbourOffsetArray,
+        int lastDirection){
             /*
             //reset the map
             for(int t =0; t< graphArray.Length; ++t){
@@ -311,7 +312,7 @@ public static class PathUtils
           
 
             openList.Add(startNode.index);
-
+            int i=0;
             //as long as we have unprocessed reachable nodes
             while(openList.Length >0){
                 int currentNodeIndex = PathUtils.GetLowestCostFNodeIndex(openList, graphMap);
@@ -339,8 +340,8 @@ public static class PathUtils
                     if(currentNode.goesTo[t] == -1){
                         continue;
                     }
-                    if(t == (currentNode.reachedWithDirection+2)%4){
-                        //for buses we avoid U turns
+                    if(i==0 && (lastDirection+2)%4 == t){
+                        //for buses we avoid U turns after reaching an edge node between the several computed paths 
                         
                         continue;
                     }
@@ -389,6 +390,7 @@ public static class PathUtils
                     }
 
                 }
+                i++;
             }
             openList.Dispose();
             closedList.Dispose();
@@ -396,7 +398,7 @@ public static class PathUtils
                 Debug.Log("ALERT PATH NOT FOUND. THIS SHOULD NOT BE POSSIBLE");
             }
 
-            return;
+            return graphMap[endNodeIndex].reachedWithDirection;
 
     }
 
