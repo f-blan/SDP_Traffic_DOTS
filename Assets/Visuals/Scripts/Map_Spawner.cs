@@ -52,16 +52,35 @@ public class Map_Spawner : MonoBehaviour
             //typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(BusPathComponent)
             //ecb.AddComponent(eqi, busVerseA, busArchetype);
             
-            ecb.AddComponent<BusPathComponent>(eqi, busVerseA,  new BusPathComponent{pathIndex = 1, direction = pathList[1].withDirection.x, 
-                                pathLength = pathList.Length, verse = -1, pathArrayReference = pathReference});
-            ecb.AddComponent<BusPathComponent>(eqi, busVerseB,  new BusPathComponent{pathIndex = pathList.Length-1, direction = pathList[pathList.Length-1].withDirection.y, 
-                                pathLength = pathList.Length, verse = 1, pathArrayReference = pathReference});
+            ecb.AddComponent<BusPathComponent>(eqi, busVerseA,  
+                new BusPathComponent{pathIndex = 1, 
+                pathLength = pathList.Length,
+                verse = -1,
+                pathArrayReference = pathReference});
+            
+            ecb.AddComponent<BusPathComponent>(eqi, busVerseB,  
+                new BusPathComponent{pathIndex = pathList.Length-1, 
+                pathLength = pathList.Length, 
+                verse = 1, 
+                pathArrayReference = pathReference});
+
+            ecb.AddComponent<VehicleMovementData>(eqi, busVerseA, 
+                new VehicleMovementData{direction = pathList[1].withDirection.x,
+                initialPosition = new float2(float.NaN,float.NaN)});
+
+            ecb.AddComponent<VehicleMovementData>(eqi, busVerseB, 
+                new VehicleMovementData{direction = pathList[1].withDirection.y,
+                initialPosition = new float2(float.NaN,float.NaN)});
 
             //ecb.SetComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
             //ecb.SetComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
-            ecb.AddComponent<Translation>(eqi, busVerseA, new Translation{Value = new float3(referenceWorldPosition[0], referenceWorldPosition[1], referenceWorldPosition[2])});
-            ecb.AddComponent<Translation>(eqi, busVerseB, new Translation{Value = new float3(referenceWorldPosition[0]-1f, referenceWorldPosition[1]+1f, referenceWorldPosition[2])});
+
+            ecb.AddComponent<Translation>(eqi, busVerseA, new Translation{Value = SpawnerUtils.ComputeBusInitialPosition(referenceWorldPosition, pathList[1].withDirection.x)});
+            ecb.AddComponent<Translation>(eqi, busVerseB, new Translation{Value = SpawnerUtils.ComputeBusInitialPosition(referenceWorldPosition, pathList[1].withDirection.y)});
             
+            ecb.AddComponent<Rotation>(eqi, busVerseA, new Rotation{Value = Quaternion.Euler(0,0,CarUtils.ComputeRotation(pathList[1].withDirection.x))});
+            ecb.AddComponent<Rotation>(eqi, busVerseB, new Rotation{Value = Quaternion.Euler(0,0,CarUtils.ComputeRotation(pathList[1].withDirection.y))});
+
         }
         public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
             

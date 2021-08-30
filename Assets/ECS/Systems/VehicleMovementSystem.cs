@@ -113,14 +113,6 @@ public class VehicleMovementSystem : SystemBase
             }
         }).ScheduleParallel();
 
-
-        Entities.WithAll<BusPathComponent>().ForEach((Entity entity) => {
-            
-            
-
-            return;
-        });
-
         esEcbs.AddJobHandleForProducer(this.Dependency);
 
         return;
