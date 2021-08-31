@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using CodeMonkey.Utils;
-
+using Unity.Mathematics;
 public class Map<TMapObject>
 {
     
@@ -22,7 +22,7 @@ public class Map<TMapObject>
     
 
     //constructor
-    public Map(int n_districts_x, int n_districts_y, int d_width, int d_height, float tileSize, Vector3 originPosition,Func<Map<TMapObject>, int, int, TMapObject> createMapObject, int spawnTilesPerDistrict){
+    public Map(int n_districts_x, int n_districts_y, int d_width, int d_height, float tileSize, Vector3 originPosition,Func<Map<TMapObject>, int, int, Vector3, TMapObject> createMapObject, int spawnTilesPerDistrict){
         this.n_districts_x=n_districts_x;
         this.n_districts_y=n_districts_y;
         this.district_width=d_width;
@@ -38,8 +38,8 @@ public class Map<TMapObject>
 
         for (int y = 0; y < mapArray.GetLength(0); y++) {
             for (int x = 0; x < mapArray.GetLength(1); x++) {
-                mapArray[y, x] = createMapObject(this, x, y);
                 
+                mapArray[y, x] = createMapObject(this, x, y, GetWorldPosition(x,y));
             }
         }
     }

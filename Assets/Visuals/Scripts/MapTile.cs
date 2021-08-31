@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Unity.Mathematics;
 
 public class MapTile 
 {
@@ -27,18 +27,23 @@ public class MapTile
     private int y;
     private TileType type;
     private GraphNode graphNode;
-
+    private Vector3 worldPosition;
+    
     private bool isWalkable;
 
-    public MapTile(Map<MapTile> map, int x, int y) {
+    public MapTile(Map<MapTile> map, int x, int y, Vector3 wp) {
         this.map = map;
         this.x = x;
         this.y = y;
         type = TileType.Road;
         graphNode = null;
         isWalkable = true;
+        worldPosition = wp;
     }
 
+    public Vector3 GetWorldPosition(){
+        return worldPosition;
+    }
     public bool IsWalkable(){
         return isWalkable;
     }
@@ -87,6 +92,7 @@ public class MapTile
     public void SetGraphNode(GraphNode g){
         if(type == TileType.Intersection){
             this.graphNode = g;
+            g.SetReferenceTile(this);
         }else{
             return;
         }

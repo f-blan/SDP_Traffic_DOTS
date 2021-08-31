@@ -18,6 +18,8 @@ public class GraphNode
     //might be needed
     private bool isWalkable;
 
+    private MapTile referenceTile;
+
     public GraphNode(int x, int y) {
         this.x = x;
         this.y = y;
@@ -35,8 +37,15 @@ public class GraphNode
         isBusStop=false;
         isWalkable = true;
         goesTo=null;
+        referenceTile = null;
+    }
+    public void SetReferenceTile(MapTile mt){
+        referenceTile = mt;
     }
 
+    public MapTile GetReferenceTile(MapTile mt){
+        return mt;
+    }
     public bool IsWalkable() {
         return isWalkable;
     }

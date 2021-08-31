@@ -1,14 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using CodeMonkey.Utils;
-using CodeMonkey;
-using Unity.Entities;
-using Unity.Jobs;
-using Unity.Burst;
-using Unity.Rendering;
-using Unity.Transforms;
-using Unity.Collections;
+using Unity.Mathematics;
 using System;
 
 public class Map_Setup : MonoBehaviour
@@ -71,7 +64,7 @@ public class Map_Setup : MonoBehaviour
         float tileSize = 1f;
         Vector3 originPosition = new Vector3(-width/2, -height/2, 0);
 
-        CityMap = new Map<MapTile>(map_n_districts_x, map_n_districts_y,  District_width, District_height,tileSize,originPosition, (Map<MapTile> map, int x, int y) => new MapTile(map,x,y),spawnTilesPerDistrict);
+        CityMap = new Map<MapTile>(map_n_districts_x, map_n_districts_y,  District_width, District_height,tileSize,originPosition, (Map<MapTile> map, int x, int y, Vector3 wp) => new MapTile(map,x,y, wp),spawnTilesPerDistrict);
         CityGraph = new PathFindGraph( map_n_districts_x, map_n_districts_y,  GraphDistrict_width, GraphDistrict_height);
 
         //initialize both CityMap and CityGraph according to parameters
