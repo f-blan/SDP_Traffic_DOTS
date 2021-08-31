@@ -9,7 +9,7 @@ using System;
 
 public class Map_Spawner : MonoBehaviour
 {
-        public static Map_Spawner Instance {private set; get; }
+        public static Map_Spawner instance {private set; get; }
         [SerializeField] private Material carMaterial;
         [SerializeField] private Material busMaterial;
         [SerializeField] public float maxCarSpeed;
@@ -18,9 +18,14 @@ public class Map_Spawner : MonoBehaviour
 
         [SerializeField] private Material HorizontalTrafficLightMaterial;
         [SerializeField] private Mesh Quad;
-        
 
         //used by BusPathSystem
+
+        private void Awake(){
+            if(instance == null){
+                instance = this;
+            }
+        }
         public static void SpawnBusEntities(NativeList<PathElement> pathList, Vector3 referenceWorldPosition,
             EntityCommandBuffer.ParallelWriter ecb, int eqi, Entity entityToSpawn){
             

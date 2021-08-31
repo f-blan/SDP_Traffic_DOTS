@@ -9,7 +9,6 @@ using UnityEngine;
 
 public class CarSpawnerSystem : SystemBase
 {
-    
     private NativeArray<TileStruct> map;
     private EndSimulationEntityCommandBufferSystem ecb_s;
     private bool isMapValid;
@@ -19,7 +18,7 @@ public class CarSpawnerSystem : SystemBase
         // Find the ECB system once and store it for later usage
         ecb_s = World
             .GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-        
+          
         isMapValid=false;
     }
 
@@ -52,7 +51,8 @@ public class CarSpawnerSystem : SystemBase
         Vector3 originPosition = Map_Setup.Instance.CityMap.GetOriginPosition();
         
         NativeArray<TileStruct> localMapArray = map;
-        float maxCarSpeed = 1f;
+
+        float maxCarSpeed = Map_Spawner.instance.maxCarSpeed;
 
         float deltaTime = UnityEngine.Time.deltaTime;
         
