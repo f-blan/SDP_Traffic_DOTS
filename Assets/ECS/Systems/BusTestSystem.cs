@@ -15,7 +15,7 @@ public class BusTestSystem : SystemBase
         base.OnCreate();
 
         ecb_s = World
-            .GetOrCreateSyste>>>>>>> SpawnAndPathm<EndSimulationEntityCommandBufferSystem>();
+            .GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         
     }
     protected override void OnUpdate(){
