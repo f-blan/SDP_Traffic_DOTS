@@ -78,7 +78,6 @@ public class BusPathSystem : SystemBase
             //get a reference world position and spawn the bus with their path as a blob array 
             Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords,  busStopRelativePosition, originPosition);
             Map_Spawner.SpawnBusEntities(pathList, referenceWorldPosition, ecb, entityInQueryIndex, busPathParams.entityToSpawn);
-
             
 
             //get rid of support structures and destroy the busLine entity

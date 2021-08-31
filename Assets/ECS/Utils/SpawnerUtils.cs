@@ -145,6 +145,20 @@ public static class SpawnerUtils
             offset = new float2(float.NaN, float.NaN)
         });
     }
+    
+
+    public static float3 ComputeBusInitialPosition(float3 worldPosition, int direction){
+        switch(direction){
+            case ((int)CarUtils.DirectionEnum.Up):
+                return new float3(worldPosition.x, worldPosition.y + 1, worldPosition.z);
+            case ((int)CarUtils.DirectionEnum.Right):
+                return new float3(worldPosition.x, worldPosition.y, worldPosition.z);
+            case ((int)CarUtils.DirectionEnum.Down):
+                return new float3(worldPosition.x - 1, worldPosition.y, worldPosition.z);
+            default:
+                return new float3(worldPosition.x - 1, worldPosition.y + 1, worldPosition.z);
+        }
+    }
 }
 
 public struct TileStruct{
