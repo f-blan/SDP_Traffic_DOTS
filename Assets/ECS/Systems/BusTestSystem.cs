@@ -21,7 +21,7 @@ public class BusTestSystem : SystemBase
     protected override void OnUpdate(){
         
         EntityCommandBuffer ecb = ecb_s.CreateCommandBuffer();
-        Entities.ForEach((Entity e, ref BusPathComponent busPathComponent)=>{
+        /*Entities.ForEach((Entity e, ref BusPathComponent busPathComponent)=>{
             //BusPathBlobArray a = busPathComponent.pathArrayReference.Value;
             //Debug.Log("attempt2");
             ref BlobArray<PathElement> v = ref busPathComponent.pathArrayReference.Value.pathArray;
@@ -36,6 +36,6 @@ public class BusTestSystem : SystemBase
             }
             //Debug.Log("----------------------END---------------------------------------");
             //ecb.DestroyEntity( e);
-        }).WithoutBurst().Run();
+        }).WithoutBurst().Run();*/
     }
 }

@@ -103,14 +103,15 @@ public class BusPathSystem : SystemBase
         
         //i compute the circular path on three points separately (this should be rather fast since district graph is very small compared to actual graph)
         int lastDirection = -1;
+    
         //Debug.Log("first district");
-        lastDirection =PathUtils.PathFindPartial(districtNodeArray, graphMap, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray, lastDirection);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray, graphMap, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray, lastDirection, -1,-1);
         PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos2);
         //Debug.Log("second district");
-        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray, lastDirection);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray, lastDirection, -1,-1);
         PathUtils.addPathToInt2List(toInt2,graphMap, graphSizeDistrict, pos3);
         //Debug.Log("third district");
-        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap,  pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray,lastDirection);
+        lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap,  pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray,lastDirection, -1,-1);
         PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos1);
        
 
@@ -137,20 +138,21 @@ public class BusPathSystem : SystemBase
         int2 firstNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
         int2 curNodePos = firstNodePos;
         int2 nextNodePos;
+        int2 firstData = new int2(-1,-1);
         for(int t=1; t<districtPath.Length; ++t){
             nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords );    
             
-            lastDirection=PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray,lastDirection);
+            lastDirection=PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray,lastDirection,firstData.x, firstData.y);
             
             
-            
-            addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
+            if(t==1)
+            firstData = addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
             
             curNodePos = nextNodePos;
         }
         //last iteration: link path end with path beginning 
         nextNodePos = nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
-        lastDirection =PathUtils.PathFindPartial(graphArray,graphMap, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray, lastDirection);
+        lastDirection =PathUtils.PathFindPartial(graphArray,graphMap, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray, lastDirection, firstData.x,firstData.y);
             
         addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
 
@@ -168,7 +170,7 @@ public class BusPathSystem : SystemBase
         return pathList;
     }
 
-    private static void addPathToElementList(NativeList<PathElement> pathList,
+    private static int2 addPathToElementList(NativeList<PathElement> pathList,
                                             NativeHashMap<int,PathUtils.PathNode> graphMap, int2 endNodePos, int2 graphSize){
         //NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
         //Debug.Log("attempting addition to pathList");
@@ -229,7 +231,7 @@ public class BusPathSystem : SystemBase
         
         supportList.Dispose();
 
-        return;
+        return new int2(pathList[1].withDirection.x, PathUtils.CalculateIndex(pathList[0].x, pathList[0].y, graphSize.x));
     }
     
 }

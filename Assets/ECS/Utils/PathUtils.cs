@@ -280,7 +280,7 @@ public static class PathUtils
 
     //variant of function PathFind but meant to be used for paths with multiple destination points (eg. BusPathFind)
     public static int PathFindPartial(NativeArray<PathUtils.PathNode> graphArray,NativeHashMap<int, PathNode> graphMap, int2 endPosition, int2 startPosition, int2 graphSize,  int2 Hcosts, NativeArray<int2> neighbourOffsetArray,
-        int lastDirection){
+        int lastDirection, int firstDirection, int firstNodeIndex){
             /*
             //reset the map
             for(int t =0; t< graphArray.Length; ++t){
@@ -349,7 +349,10 @@ public static class PathUtils
                     int2 neighbourPosition = new int2(currentNode.x + neighbourOffsetArray[t].x, + currentNode.y + neighbourOffsetArray[t].y);
                     int neighBourNodeIndex = PathUtils.CalculateIndex(neighbourPosition.x, neighbourPosition.y, graphSize.x);
 
-                    
+                    if(neighBourNodeIndex == firstNodeIndex && t == (firstDirection+2)%4){
+                        //we avoid having the same direction for the very first node in the path
+                        continue;
+                    }
 
                     if(closedList.Contains(neighBourNodeIndex) && !(endNodeIndex == neighBourNodeIndex)){
                         //that node was already processed
@@ -445,7 +448,6 @@ public static class PathUtils
         }
 
         supportList.Dispose();
-        
     }
 
     private static PathNode CopyPathNode(PathNode p){
