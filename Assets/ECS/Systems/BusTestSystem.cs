@@ -15,29 +15,26 @@ public class BusTestSystem : SystemBase
         base.OnCreate();
 
         ecb_s = World
-            .GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+            .GetOrCreateSyste>>>>>>> SpawnAndPathm<EndSimulationEntityCommandBufferSystem>();
         
     }
     protected override void OnUpdate(){
-        
+        /*
         EntityCommandBuffer ecb = ecb_s.CreateCommandBuffer();
         Entities.ForEach((Entity e, ref BusPathComponent busPathComponent)=>{
-            if(busPathComponent.test==1){
-                return;
-            }
-            busPathComponent.test=1;
             //BusPathBlobArray a = busPathComponent.pathArrayReference.Value;
             //Debug.Log("attempt2");
             ref BlobArray<PathElement> v = ref busPathComponent.pathArrayReference.Value.pathArray;
             
             if(busPathComponent.verse == 1){
             for(int t=0; t<busPathComponent.pathLength; ++t){
-                Debug.Log("index: "+ t + "node: "+v[t].x + "-" +v[t].y + " costs: " + v[t].cost.x + "-" + v[t].cost.y + " directions: " + v[t].withDirection.x + "-" + v[t].withDirection.y
+
+                Debug.Log(v[t].x + "-" +v[t].y + " costs: " + v[t].cost.x + "-" + v[t].cost.y + " directions: " + v[t].withDirection.x + "-" + v[t].withDirection.y
                     + " stopCost: " + v[t].costToStop.x + "-" + v[t].costToStop.y);
             }   
             }
             Debug.Log("----------------------END---------------------------------------");
-            //ecb.DestroyEntity( e);
-        }).WithoutBurst().Run();
+            ecb.DestroyEntity( e);
+        }).WithoutBurst().Run();*/
     }
 }

@@ -5,7 +5,7 @@ public struct BusPathComponent : IComponentData
     public int pathIndex;
 
     //0 = up, 1 = right, 2 = down, 3 = left
-    //public int direction;
+    //public int direction; //Direction is now handled by the VehicleMovementData for simplicity's sake
 
     //might be unnecessary since probably this can be accessed through pathArrayReference
     public int pathLength;

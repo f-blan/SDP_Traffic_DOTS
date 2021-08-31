@@ -105,10 +105,13 @@ public class Map_Visual : MonoBehaviour
         Material material;
         int left_cars = n_cars;
         int n_cars_each = n_cars/districts.Length;
+        if(map.GetSpawnTilesPerDistrict()< n_cars_each){
+            Debug.Log("maximum number of cars for the given map size exceeded, only the maximum available number of cars will be spawned. Create a bigger map and retry");
+        }
         if(n_cars_each==0 && n_cars!=0){
             n_cars_each=1;
         }
-        float curDelay = 0f;
+        float curDelay = 0.05f;
         
 
         switch(districtIndex){
@@ -152,6 +155,7 @@ public class Map_Visual : MonoBehaviour
                     layer = 0
                 });
                 curDelay+=delayAddition;
+                
             }
         }
         districts.Dispose();

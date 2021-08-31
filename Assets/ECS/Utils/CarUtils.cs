@@ -1,5 +1,5 @@
 using Unity.Mathematics;
-
+using UnityEngine;
 public static class CarUtils{
     
     public enum DirectionEnum{
@@ -96,6 +96,29 @@ public static class CarUtils{
                 return initialPosition.x + offset.x >= currentPosition.x;
         }
     }
+
+    public static int GetLeftoverCost(int direction, float2 initialPosition, float3 currentPosition, int targetDirection, float2 offset){
+        int offsetAdjustment;
+        if(targetDirection == (direction +2)%4 || targetDirection == (direction+1)%4){
+            
+            offsetAdjustment=0;
+        }else{
+            offsetAdjustment=1;
+            
+        }
+
+        switch(direction){
+            case ((int)CarUtils.DirectionEnum.Up):
+                return (int) math.floor(math.abs(offset.y) - math.abs(initialPosition.y - currentPosition.y)) - offsetAdjustment;
+            case ((int)CarUtils.DirectionEnum.Right):
+                return (int) math.floor(math.abs(offset.x) - math.abs(initialPosition.x - currentPosition.x)) - offsetAdjustment;
+            case ((int)CarUtils.DirectionEnum.Down):
+                return (int) math.floor(math.abs(offset.y) - math.abs(initialPosition.y - currentPosition.y)) - offsetAdjustment;
+            default:
+                return (int) math.floor(math.abs(offset.x) - math.abs(initialPosition.x - currentPosition.x)) - offsetAdjustment;
+        }
+    }
+    
 
 }
 

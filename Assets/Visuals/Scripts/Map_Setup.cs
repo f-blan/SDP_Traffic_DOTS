@@ -25,6 +25,7 @@ public class Map_Setup : MonoBehaviour
     //dimensions (in MapTiles) of each district
     private int District_width;
     private int District_height;
+    private int spawnTilesPerDistrict;
     
     //dimensions (in GraphNodes) of each district
     private int GraphDistrict_width;
@@ -51,6 +52,7 @@ public class Map_Setup : MonoBehaviour
         
         GraphDistrict_width = districtData[2];
         GraphDistrict_height=districtData[3];
+        spawnTilesPerDistrict = districtData[4];
     }
 
     // Start is called before the first frame update
@@ -69,7 +71,7 @@ public class Map_Setup : MonoBehaviour
         float tileSize = 1f;
         Vector3 originPosition = new Vector3(-width/2, -height/2, 0);
 
-        CityMap = new Map<MapTile>(map_n_districts_x, map_n_districts_y,  District_width, District_height,tileSize,originPosition, (Map<MapTile> map, int x, int y) => new MapTile(map,x,y));
+        CityMap = new Map<MapTile>(map_n_districts_x, map_n_districts_y,  District_width, District_height,tileSize,originPosition, (Map<MapTile> map, int x, int y) => new MapTile(map,x,y),spawnTilesPerDistrict);
         CityGraph = new PathFindGraph( map_n_districts_x, map_n_districts_y,  GraphDistrict_width, GraphDistrict_height);
 
         //initialize both CityMap and CityGraph according to parameters

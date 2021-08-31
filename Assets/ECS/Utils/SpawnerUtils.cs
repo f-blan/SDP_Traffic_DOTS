@@ -124,6 +124,8 @@ public static class SpawnerUtils
             endPos = new int2(r.NextInt(0, graphSize.x), r.NextInt(0, graphSize.y));
             
         }while(endPos.x == startPos.x && endPos.y == startPos.y);
+        DynamicBuffer<CarPathBuffer> buf = ecb.AddBuffer<CarPathBuffer>(eqi,entity);
+        buf.Add(new CarPathBuffer{x = endPos.x, y = endPos.y, cost = cost, withDirection = direction});
         ecb.AddComponent(eqi,entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = startPos, endPosition = endPos});
         //Debug.Log(endPos.x + " " + endPos.y);
         InitializeCarData(ecb, entity, direction, eqi, maxCarSpeed);
