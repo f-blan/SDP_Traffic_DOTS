@@ -285,20 +285,20 @@ public class QuadrantSystem : SystemBase
                 vehicleMovementData.stop = true; 
             }
             else if((closestNativeArray[0].type == VehicleTrafficLightType.VehicleType && closestNativeArray[0].vehicleData.stop) || (closestNativeArray[0].type == VehicleTrafficLightType.VehicleType &&  minimumStopDistance > closestNativeArray[0].distance) || (closestNativeArray[1].type == VehicleTrafficLightType.VehicleType && closestNativeArray[1].vehicleData.stop)){
-                //vehicleMovementData.stop = true;
-                //we only stop if the closest vehicle is not at our left: give precedence to car on the right
+                vehicleMovementData.stop = true;
+                /*//we only stop if the closest vehicle is not at our left: give precedence to car on the right
                 float3 frontTile = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 0,1);
                 if((closestNativeArray[0].vehicleData.direction+1)%4 == vehicleMovementData.direction && !QuadrantUtils.isWithinTarget2(frontTile, closestNativeArray[0].position, tileSize*6/10)){
                     
                     vehicleMovementData.stop = false;
                 }else{
                     vehicleMovementData.stop = true;
-                }
+                }*/
             }
             else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
-                //vehicleMovementData.stop = true;
+                vehicleMovementData.stop = false;
                 //if you have a green traffic light in front, you also check if there are cars blocking your way inside. If yes you stay out of the intersection
-                QuadrantData foundEntity;
+                /*QuadrantData foundEntity;
                 bool intrsectionBusy = QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, closestNativeArray[0].position,vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out foundEntity,2, tileSize*8/10);
                 
                 if(intrsectionBusy){ //&& foundEntity.vehicleData.direction != vehicleMovementData.direction){
@@ -306,7 +306,7 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop=true;
                 } else{
                     vehicleMovementData.stop=false;
-                }
+                }*/
             }
             else{
                 vehicleMovementData.stop = false;

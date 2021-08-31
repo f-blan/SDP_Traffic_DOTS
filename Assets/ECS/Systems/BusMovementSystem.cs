@@ -19,11 +19,11 @@ public class BusMovementSystem : SystemBase
             if(vehicleMovementData.stop){
                 return;
             }
-
+            /*
             if(vehicleMovementData.stopTime < 0){
                 vehicleMovementData.stopTime += dt;
                 return;
-            }
+            }*/
 
             if(float.IsNaN(vehicleMovementData.initialPosition.x)){
                 vehicleMovementData.initialPosition.x = translation.Value.x; //Set initial position to the starting position of the vehicle
@@ -52,7 +52,7 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.direction = currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
                 UpdateVehicleMovementData(ref vehicleMovementData, ref busPathComponent, ref translation);
                 rotation = new Rotation{Value = Quaternion.Euler(0, 0, CarUtils.ComputeRotation(currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1]))};
- 
+
                 vehicleMovementData.stopTime = -MAX_STOP_TIME;
 
             }
@@ -97,8 +97,8 @@ public class BusMovementSystem : SystemBase
         int nextDirection = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1];
         int prevDirection = busPathComponent.pathArrayReference.Value.pathArray[GetPrevPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1];
         
-        if(busPathComponent.verse==1)
-        Debug.Log(currentPathElement.x +"-" +currentPathElement.y + " "+currentPathElement.withDirection.y);
+        //if(busPathComponent.verse==1)
+        //Debug.Log(currentPathElement.x +"-" +currentPathElement.y + " "+currentPathElement.withDirection.y);
         //Debug.Log(curDirection);
         float2 uTurnOffset = CarUtils.ComputeUTurn(prevDirection, curDirection);
 
