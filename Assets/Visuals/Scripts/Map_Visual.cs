@@ -16,16 +16,19 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material Obstacle;
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
+    [SerializeField] private Material BusStop;
     [SerializeField] private Material CarMaterial;
     
     [SerializeField] private Material DistrictMaterial0;
     [SerializeField] private Material DistrictMaterial1;
-    
+    [SerializeField] private Material DistrictMaterial2;
+    [SerializeField] private Material DistrictMaterial3;
+    [SerializeField] private Material DistrictMaterial4;
     [SerializeField] private float delayAddition;
 
     public void SetMap(Map<MapTile> map, int districtIndex, int n_cars){
         this.map = map;
-        UpdateVisual2(districtIndex, n_cars);
+        UpdateVisual2(districtIndex,n_cars);
 
         
     }
@@ -54,6 +57,9 @@ public class Map_Visual : MonoBehaviour
                 case MapTile.TileType.Road:
                         material = Road;
                         break;
+                case MapTile.TileType.Intersection:
+                        material = Road;
+                        break;
                     case MapTile.TileType.Obstacle:
                         material = Obstacle;
                         break;
@@ -64,7 +70,7 @@ public class Map_Visual : MonoBehaviour
                         material = ParkSpot;
                         break;
                     default:
-                        material = Road;
+                        material = BusStop;
                         break;
             }
 
@@ -121,6 +127,16 @@ public class Map_Visual : MonoBehaviour
             case 1:
                 material = DistrictMaterial1;
                 break;
+            case 2:
+                material = DistrictMaterial2;
+                break;
+            case 3:
+                material = DistrictMaterial3;
+                break;
+            case 4:
+                material = DistrictMaterial4;
+                break;
+                    
             default:
                 material = DistrictMaterial0;
                 break;

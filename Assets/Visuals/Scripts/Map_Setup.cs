@@ -68,12 +68,11 @@ public class Map_Setup : MonoBehaviour
         CityGraph = new PathFindGraph( map_n_districts_x, map_n_districts_y,  GraphDistrict_width, GraphDistrict_height);
 
         //initialize both CityMap and CityGraph according to parameters
-        List<MapTile> roadTiles;
         List<GraphNode> busStopNodes;
         List<Tuple<bool, MapTile>> trafficLightTiles;
         List<MapTile> parkSpotTiles;
 
-        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y, out roadTiles,out busStopNodes,
+        MapUtils.InitializeMap(CityMap, CityGraph, districtTypeIndex, map_n_districts_x, map_n_districts_y,out busStopNodes,
             out trafficLightTiles, out parkSpotTiles);
         
 

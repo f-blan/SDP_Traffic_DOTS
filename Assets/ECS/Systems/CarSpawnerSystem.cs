@@ -67,7 +67,7 @@ public class CarSpawnerSystem : SystemBase
             
             //the 2 and minus 2 is to avoid spawning a car close to the end of its district, which may lead to cars spawning in already busy tiles
             for(int r_x = 2; r_x < districtSize.x-2; ++r_x){
-                for(int r_y = 2; r_y< districtSize.y-2; ++r_y){
+                for(int r_y = 3; r_y< districtSize.y-2; ++r_y){
                     
                     if(carSpawnerComponent.n_cars <= 0){
                         //we spawned all cars we had to spawn

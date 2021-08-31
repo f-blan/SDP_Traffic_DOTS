@@ -5,7 +5,7 @@ using System;
 
 public static class MapUtils 
 {
-    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<MapTile> roadTiles,out List<GraphNode> busStopNodes,
+    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<GraphNode> busStopNodes,
             out List<Tuple<bool,MapTile>> trafficLightTiles, out List<MapTile> parkSpotTiles)
     {
         int[,] i_to_n;
@@ -13,12 +13,12 @@ public static class MapUtils
         int[] refBusTile;
         int[,] tlTiles;
         
-        Dictionary<int, int>[] toDeadEnd;
-        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out toDeadEnd, out refBusTile, out tlTiles);
+        
+        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out refBusTile, out tlTiles);
         GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
         busStopNodes = new List<GraphNode>();
-        roadTiles = new List<MapTile>();
+        
         trafficLightTiles = new List<Tuple<bool,MapTile>>();
         parkSpotTiles = new List<MapTile>();
 
@@ -39,21 +39,7 @@ public static class MapUtils
                     for( int d_x=0; d_x<districtImage.GetLength(1); ++d_x){
                         MapTile tile = CityMap.GetMapObject(m_x, m_y);
 
-                        bool ok = true;
-
-                        //necessary to avoid spawning cars headed towards a wall (border of the map)
-                        if(t==n_districts_y-1 && toDeadEnd[0].ContainsKey(d_x) && d_y >= toDeadEnd[0][d_x]){
-                            ok = false;
-                        }
-                        if(t == 0 && toDeadEnd[2].ContainsKey(d_x) && d_y <= toDeadEnd[2][d_x]){
-                            ok = false;
-                        }
-                        if(s == n_districts_x-1 && toDeadEnd[1].ContainsKey(d_y) && d_x >= toDeadEnd[1][d_y]){
-                            ok = false;
-                        }
-                        if(s == 0 && toDeadEnd[3].ContainsKey(d_y) && d_x <= toDeadEnd[3][d_y]){
-                            ok = false;
-                        }
+                        
                         
 
                         //cut at the borders of the map
@@ -63,13 +49,7 @@ public static class MapUtils
                             tile.SetTileType(districtImage[d_y,d_x]);
                         }
 
-                        //support data structures for spawning
-                        if(tile.GetTileType() == MapTile.TileType.Road && ok){
-                            roadTiles.Add(tile);
-                        }else if(tile.GetTileType()== MapTile.TileType.Road){
-                            tile.SetIsWalkable(false);
-                        }
-                        else if(tile.GetTileType() == MapTile.TileType.ParkSpot){
+                        if(tile.GetTileType() == MapTile.TileType.ParkSpot){
                             parkSpotTiles.Add(tile);
                         }
                         m_x++;
@@ -154,14 +134,10 @@ public static class MapUtils
 
     }
 
-    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out Dictionary<int, int>[] toDeadEnd, out int[] busStopReferencePosition,
+    public static MapTile.TileType[,] GetDistrictImage(int index, out int[,] intersectionTiles, out int[,] busStopTiles, out int[] busStopReferencePosition,
             out int[,] tlTiles){
         //define here the map of a district
-        toDeadEnd = new Dictionary<int, int>[4];
-        toDeadEnd[0] = new Dictionary<int, int>();
-        toDeadEnd[1] = new Dictionary<int, int>();
-        toDeadEnd[2] = new Dictionary<int, int>();
-        toDeadEnd[3] = new Dictionary<int, int>();
+        
 
         //for brevity write it as int[,] with 0 = obstacle, 1 = road, 2 = parkSpot, 3 = traffic light, 4 = intersection, 5 = busStop
         int[,] image;
@@ -193,20 +169,16 @@ public static class MapUtils
                     {6,3}
                 };
 
-                toDeadEnd[0].Add(6, 6);
-                toDeadEnd[1].Add(4, 7);
-                toDeadEnd[2].Add(5, 3);
-                toDeadEnd[3].Add(5, 4);
                 
                 
                 break;
             case 1:
                 image = new int[,]{
-                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
                     { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
-                    { 2, 0, 1, 3, 0, 2, 2, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 2, 0, 1, 3, 0, 2, 2, 2, 2, 0, 1, 1, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
                     { 0, 2, 1, 1, 0, 2, 2, 2, 2, 0, 1, 1, 0, 2, 2, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 3, 1, 0, 0 },
@@ -216,26 +188,26 @@ public static class MapUtils
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
-                    { 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 3, 1, 0, 0, 5, 6, 0, 0, 0, 0, 3, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 3, 1, 0, 5, 6, 0, 0, 0, 0, 0, 3, 1, 0, 0 },
                     { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
                     { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
-                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 0, 0, 1, 3, 0, 0, 2, 2, 2, 2, 2, 0, 1, 3, 0, 0 },
-                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 0, 1, 3, 0, 0, 2, 2, 2, 2, 2, 0, 1, 3, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                 };
                 
                 tlTiles = new int[,]{
-                    {17,1},
-                    {27, 1},
+                    {17,2},
+                    {27, 2},
                     {27, 9},
                     {3, 15}
                 };
 
                 intersectionTiles= new int[,]{
-                    {2, 2, 0, 0},
-                    {10, 2, 1, 0},
-                    {16, 2, 2, 0},
-                    {26, 2, 3, 0},
+                    {2, 3, 0, 0},
+                    {10, 3, 1, 0},
+                    {16, 3, 2, 0},
+                    {26, 3, 3, 0},
 
                     {2, 10, 0, 1},
                     {10, 10, 1, 1},
@@ -252,28 +224,176 @@ public static class MapUtils
                     {2, 0},
                     
                 };
-                busStopReferencePosition = new int[]{17,2};
-
-
-                toDeadEnd[0].Add(3,18);
-                toDeadEnd[0].Add(17,18);
-                toDeadEnd[0].Add(27, 18);
-
-                toDeadEnd[1].Add(2, 28);
-                toDeadEnd[1].Add(10, 28);
-                toDeadEnd[1].Add(16, 28);
-
-                toDeadEnd[2].Add(2, 1);
-                toDeadEnd[2].Add(16, 1);
-                toDeadEnd[2].Add(26, 1);
-
-                toDeadEnd[3].Add(3, 1);
-                toDeadEnd[3].Add(11, 1);
-                toDeadEnd[3].Add(17, 1);
-
-
-
+                busStopReferencePosition = new int[]{16,3};
+                
                 break;
+            case 2:
+                image = new int[,]{
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 2, 0, 3, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
+                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 1, 1 },
+                    { 2, 0, 1, 3, 0, 0, 2, 2, 2, 0, 1, 1, 0, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 6, 1, 1, 2, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 5, 1, 1, 2, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 2, 0, 3, 1, 0, 5, 6, 0, 0, 2, 2, 0, 3, 1, 0, 0 },
+                    { 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 4, 4, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
+                    { 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 4, 4, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 2, 1, 1, 2, 6, 5, 0, 1, 3, 0, 0, 2, 2, 2, 2, 0, 0, 1, 3, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 2, 1, 1, 6, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0 },
+                    { 0, 0, 3, 1, 0, 2, 2, 2, 0, 0, 1, 1, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 1, 1 },
+                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 1, 1 },
+                    { 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                };
+
+                tlTiles = new int[,]{
+                    {3,2},
+                    //{17,2},
+                    //{27, 2},
+                    {3,15},
+                    {27, 9},
+                    {17, 9}
+                };
+
+                intersectionTiles= new int[,]{
+                    {2, 3, 0, 0},
+                    {10, 3, 1, 0},
+                    {16, 3, 2, 0},
+                    {26, 3, 3, 0},
+
+                    {2, 10, 0, 1},
+                    {10, 10, 1, 1},
+                    {16, 10, 2, 1},
+                    {26, 10, 3, 1},
+
+                    {2, 16, 0, 2},
+                    {10, 16, 1, 2},
+                    {16, 16, 2, 2},
+                    {26, 16, 3, 2}
+                };
+
+                busStopTiles = new int[,]{
+                    {2, 1},
+                    
+                };
+                busStopReferencePosition = new int[]{16,10};
+            break;
+            case 3:
+                image = new int[,]{
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 2, 0, 1, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 2, 2, 2, 2, 2, 0, 0, 3, 1, 0, 0 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
+                    { 2, 0, 0, 0, 0, 0, 2, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1, 3, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 3, 1, 0, 5, 6, 0, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 1, 1, 0, 0 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1 },
+                    { 0, 0, 1, 1, 0, 0, 0, 6, 5, 0, 1, 3, 0, 2, 2, 0, 1, 1, 0, 0, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 5, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 6, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 3, 1, 0, 2, 2, 2, 0, 0, 1, 1, 0, 2, 2, 0, 3, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1 },
+                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1 },
+                    { 0, 0, 1, 3, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 2, 2, 2, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                };
+
+                tlTiles = new int[,]{
+                    {3,2},
+                    {11,9},
+                    {27, 15},
+                    
+                    {17, 2}
+                };
+
+                intersectionTiles= new int[,]{
+                    {2, 3, 0, 0},
+                    {10, 3, 1, 0},
+                    {16, 3, 2, 0},
+                    {26, 3, 3, 0},
+
+                    {2, 10, 0, 1},
+                    {10, 10, 1, 1},
+                    {16, 10, 2, 1},
+                    {26, 10, 3, 1},
+
+                    {2, 16, 0, 2},
+                    {10, 16, 1, 2},
+                    {16, 16, 2, 2},
+                    {26, 16, 3, 2}
+                };
+
+                busStopTiles = new int[,]{
+                    {1, 1},
+                    
+                };
+                busStopReferencePosition = new int[]{10,10};
+            break;
+            case 4:
+                image = new int[,]{
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 2, 0, 1, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 2, 2, 2, 2, 0, 0, 3, 1, 0, 0 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
+                    { 2, 0, 0, 0, 0, 0, 2, 2, 2, 0, 1, 1, 0, 2, 2, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1, 3, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 3, 1, 0, 0 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
+                    { 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 0, 0, 0, 0, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 2, 2, 0, 2, 0, 0, 1, 3, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 6, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 5, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 3, 1, 0, 2, 2, 2, 0, 0, 1, 1, 0, 2, 2, 0, 3, 1, 0, 5, 6, 0, 2, 2, 2, 0, 3, 1, 0, 0 },
+                    { 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3, 1 },
+                    { 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1, 1, 1, 3, 4, 4, 1, 1 },
+                    { 0, 0, 1, 3, 0, 0, 2, 2, 0, 0, 0, 0, 0, 6, 5, 0, 1, 3, 0, 0, 2, 2, 2, 0, 0, 0, 1, 3, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                    { 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+                };
+
+                tlTiles = new int[,]{
+                    {3,2},
+                    
+                    {27, 15},
+                    {27, 2},
+                    {27, 9},
+                    {17, 2}
+                };
+
+                intersectionTiles= new int[,]{
+                    {2, 3, 0, 0},
+                    {10, 3, 1, 0},
+                    {16, 3, 2, 0},
+                    {26, 3, 3, 0},
+
+                    {2, 10, 0, 1},
+                    {10, 10, 1, 1},
+                    {16, 10, 2, 1},
+                    {26, 10, 3, 1},
+
+                    {2, 16, 0, 2},
+                    {10, 16, 1, 2},
+                    {16, 16, 2, 2},
+                    {26, 16, 3, 2}
+                };
+
+                busStopTiles = new int[,]{
+                    {2, 0},
+                    
+                };
+                busStopReferencePosition = new int[]{16,3};
+            break;
             default:
                 image = null;
                 intersectionTiles = null;
@@ -339,34 +459,130 @@ public static class MapUtils
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
-                ret[0,0].SetGoesTo(new int[]{-1,7,5,5});
+                ret[0,0].SetGoesTo(new int[]{-1,7,6,5});
                 ret[0,1]=new GraphNode(1,0);
                 ret[0,1].SetGoesTo(new int[]{-1,5,-1,7});
                 ret[0,2]=new GraphNode(2,0);
-                ret[0,2].SetGoesTo(new int[]{7,9,5,5});
+                ret[0,2].SetGoesTo(new int[]{6,9,6,5});
                 ret[0,3]=new GraphNode(3,0);
-                ret[0,3].SetGoesTo(new int[]{7,5,5,9});
+                ret[0,3].SetGoesTo(new int[]{-1,5,6,-1});
 
                 ret[1,0]=new GraphNode(0,1);
                 ret[1,0].SetGoesTo(new int[]{5,7,-1,5});
                 ret[1,1]=new GraphNode(1,1);
                 ret[1,1].SetGoesTo(new int[]{5,5,-1,7});
                 ret[1,2]=new GraphNode(2,1);
-                ret[1,2].SetGoesTo(new int[]{-1,9,7,5});
+                ret[1,2].SetGoesTo(new int[]{-1,9,6,5});
                 ret[1,3]=new GraphNode(0,1);
-                ret[1,3].SetGoesTo(new int[]{5,5,7,9});
+                ret[1,3].SetGoesTo(new int[]{5,5,6,9});
 
                 ret[2,0]=new GraphNode(0,2);
-                ret[2,0].SetGoesTo(new int[]{5,7,5,5});
+                ret[2,0].SetGoesTo(new int[]{6,7,5,5});
                 ret[2,1]=new GraphNode(1,2);
                 ret[2,1].SetGoesTo(new int[]{-1,5,5,7});
                 ret[2,2]=new GraphNode(2,2);
-                ret[2,2].SetGoesTo(new int[]{5,-1,-1,5});
+                ret[2,2].SetGoesTo(new int[]{6,-1,-1,5});
                 ret[2,3]=new GraphNode(3,2);
-                ret[2,3].SetGoesTo(new int[]{5,5,5,-1});
+                ret[2,3].SetGoesTo(new int[]{6,5,5,-1});
                 
 
-                break;
+            break;
+            case 2:
+                ret = new GraphNode[3,4];
+
+                ret[0,0]=new GraphNode(0,0);
+                ret[0,0].SetGoesTo(new int[]{6,7,6,5});
+                ret[0,1]=new GraphNode(1,0);
+                ret[0,1].SetGoesTo(new int[]{6,5,-1,7});
+                ret[0,2]=new GraphNode(2,0);
+                ret[0,2].SetGoesTo(new int[]{6,9,6,5});
+                ret[0,3]=new GraphNode(3,0);
+                ret[0,3].SetGoesTo(new int[]{6,5,6,-1});
+
+                ret[1,0]=new GraphNode(0,1);
+                ret[1,0].SetGoesTo(new int[]{5,-1,6,5});
+                ret[1,1]=new GraphNode(1,1);
+                ret[1,1].SetGoesTo(new int[]{5,5,6,-1});
+                ret[1,2]=new GraphNode(2,1);
+                ret[1,2].SetGoesTo(new int[]{5,9,6,5});
+                ret[1,3]=new GraphNode(0,1);
+                ret[1,3].SetGoesTo(new int[]{5,5,6,9});
+
+                ret[2,0]=new GraphNode(0,2);
+                ret[2,0].SetGoesTo(new int[]{6,-1,5,5});
+                ret[2,1]=new GraphNode(1,2);
+                ret[2,1].SetGoesTo(new int[]{-1,5,5,-1});
+                ret[2,2]=new GraphNode(2,2);
+                ret[2,2].SetGoesTo(new int[]{6,-1,5,5});
+                ret[2,3]=new GraphNode(3,2);
+                ret[2,3].SetGoesTo(new int[]{6,5,5,-1});
+                
+
+            break;
+            case 3:
+                ret = new GraphNode[3,4];
+
+                ret[0,0]=new GraphNode(0,0);
+                ret[0,0].SetGoesTo(new int[]{6,7,6,5});
+                ret[0,1]=new GraphNode(1,0);
+                ret[0,1].SetGoesTo(new int[]{6,5,-1,7});
+                ret[0,2]=new GraphNode(2,0);
+                ret[0,2].SetGoesTo(new int[]{6,9,6,5});
+                ret[0,3]=new GraphNode(3,0);
+                ret[0,3].SetGoesTo(new int[]{-1,5,6,9});
+
+                ret[1,0]=new GraphNode(0,1);
+                ret[1,0].SetGoesTo(new int[]{-1,7,6,5});
+                ret[1,1]=new GraphNode(1,1);
+                ret[1,1].SetGoesTo(new int[]{5,5,6,7});
+                ret[1,2]=new GraphNode(2,1);
+                ret[1,2].SetGoesTo(new int[]{-1,9,6,5});
+                ret[1,3]=new GraphNode(0,1);
+                ret[1,3].SetGoesTo(new int[]{5,5,-1,9});
+
+                ret[2,0]=new GraphNode(0,2);
+                ret[2,0].SetGoesTo(new int[]{6,7,-1,5});
+                ret[2,1]=new GraphNode(1,2);
+                ret[2,1].SetGoesTo(new int[]{-1,-1,5,7});
+                ret[2,2]=new GraphNode(2,2);
+                ret[2,2].SetGoesTo(new int[]{6,9,-1,-1});
+                ret[2,3]=new GraphNode(3,2);
+                ret[2,3].SetGoesTo(new int[]{6,5,5,9});
+                
+
+            break;
+            case 4:
+                ret = new GraphNode[3,4];
+
+                ret[0,0]=new GraphNode(0,0);
+                ret[0,0].SetGoesTo(new int[]{6,7,6,5});
+                ret[0,1]=new GraphNode(1,0);
+                ret[0,1].SetGoesTo(new int[]{6,5,-1,7});
+                ret[0,2]=new GraphNode(2,0);
+                ret[0,2].SetGoesTo(new int[]{6,9,6,5});
+                ret[0,3]=new GraphNode(3,0);
+                ret[0,3].SetGoesTo(new int[]{6,5,6,9});
+
+                ret[1,0]=new GraphNode(0,1);
+                ret[1,0].SetGoesTo(new int[]{-1,7,6,5});
+                ret[1,1]=new GraphNode(1,1);
+                ret[1,1].SetGoesTo(new int[]{5,-1,6,7});
+                ret[1,2]=new GraphNode(2,1);
+                ret[1,2].SetGoesTo(new int[]{-1,9,6,-1});
+                ret[1,3]=new GraphNode(0,1);
+                ret[1,3].SetGoesTo(new int[]{5,5,6,9});
+
+                ret[2,0]=new GraphNode(0,2);
+                ret[2,0].SetGoesTo(new int[]{6,7,-1,5});
+                ret[2,1]=new GraphNode(1,2);
+                ret[2,1].SetGoesTo(new int[]{-1,5,5,7});
+                ret[2,2]=new GraphNode(2,2);
+                ret[2,2].SetGoesTo(new int[]{6,9,-1,5});
+                ret[2,3]=new GraphNode(3,2);
+                ret[2,3].SetGoesTo(new int[]{6,5,5,9});
+                
+
+            break;
             default:
                 ret= null;
             break;
@@ -385,6 +601,15 @@ public static class MapUtils
                 ret = new int[]{12,10,1,1,10,20};
             break;
             case 1:
+                ret = new int[]{30, 20, 4,3,128};
+                break;
+            case 2:
+                ret = new int[]{30, 20, 4,3,120};
+                break;
+            case 3:
+                ret = new int[]{30, 20, 4,3,128};
+                break;
+            case 4:
                 ret = new int[]{30, 20, 4,3,128};
                 break;
             default:
