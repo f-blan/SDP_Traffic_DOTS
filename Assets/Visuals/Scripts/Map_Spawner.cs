@@ -121,9 +121,10 @@ public class Map_Spawner : MonoBehaviour
                  int index = UnityEngine.Random.Range(0, busStopNodes.Count);
 
                  GraphNode node = busStopNodes[index];
+                 int districtType = CityGraph.GetDistrictTypeFromNodeCoords(node.GetX(), node.GetY());
                  //one bus stop per district, i find the district coords
-                 int d_x = (node.GetX()-CityGraph.GetBusStopRelativeCoords().x)/CityGraph.GetDistrictSize().x;
-                 int d_y = (node.GetY()-CityGraph.GetBusStopRelativeCoords().y)/CityGraph.GetDistrictSize().y;
+                 int d_x = (node.GetX()-CityGraph.GetBusStopRelativeCoords(districtType).x)/CityGraph.GetDistrictSize().x;
+                 int d_y = (node.GetY()-CityGraph.GetBusStopRelativeCoords(districtType).y)/CityGraph.GetDistrictSize().y;
                  Entity e = busStops[t];
                  busStopNodes.RemoveAt(index);
 

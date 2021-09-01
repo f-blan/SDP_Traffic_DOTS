@@ -2,26 +2,69 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Unity.Mathematics;
 
 public static class MapUtils 
 {
-    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int index, int n_districts_x, int n_districts_y, out List<GraphNode> busStopNodes,
+    public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int4 freqs, int n_districts_x, int n_districts_y, out List<GraphNode> busStopNodes,
             out List<Tuple<bool,MapTile>> trafficLightTiles, out List<MapTile> parkSpotTiles)
     {
-        int[,] i_to_n;
-        int[,] bs_to_n;
-        int[] refBusTile;
-        int[,] tlTiles;
+        List<int[,]> i_to_n_List = new List<int[,]>();
+        List<int[,]> bs_to_n_List = new List<int[,]>();
+        List<int[]> refBusTile_List = new List<int[]>();
+        List<int[,]> tlTiles_List = new List<int[,]>();
+        List<MapTile.TileType[,]> districtImages = new List<MapTile.TileType[,]>();
+        List<GraphNode[,]> graphDistrictImages = new List<GraphNode[,]>();
+        //MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out refBusTile, out tlTiles);
+        //GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
         
-        
-        MapTile.TileType[,] districtImage = MapUtils.GetDistrictImage(index, out i_to_n, out bs_to_n, out refBusTile, out tlTiles);
-        GraphNode[,] graphDistrictImage = MapUtils.GetGraphDistrictImage(index);
-        
+        //gather all district images
+        for(int t=0; t<4; ++t){
+            int[,] intersections;
+            int[,] busStops;
+            int[] referenceBusTiles;
+            int[,] tlTiles;
+            districtImages.Add(MapUtils.GetDistrictImage(t,out intersections,out busStops, out referenceBusTiles, out tlTiles));
+            i_to_n_List.Add(intersections);
+            bs_to_n_List.Add(busStops);
+            refBusTile_List.Add(referenceBusTiles);
+            tlTiles_List.Add(tlTiles);
+            graphDistrictImages.Add(GetGraphDistrictImage(t));
+        }
+
         busStopNodes = new List<GraphNode>();
         
         trafficLightTiles = new List<Tuple<bool,MapTile>>();
         parkSpotTiles = new List<MapTile>();
 
+        //initialize district types and CityMap
+        for(int d_y=0; d_y<n_districts_y; ++d_y){
+            for(int d_x =0; d_x<n_districts_x; ++d_x){
+                int districtType = RandomDistrictType(freqs);
+                CityGraph.SetDistrictType(d_x,d_y,districtType);
+                MapTile.TileType[,] districtImage = districtImages[districtType];
+
+                for(int r_y = 0; r_y < districtImage.GetLength(0); ++r_y ){
+                    for(int r_x = 0; r_x < districtImage.GetLength(1); ++r_x){
+                        MapTile tile = CityMap.GetMapObject(d_x, d_y,r_x,r_y);
+
+                        //cut at the borders of the map
+                        if(tile.GetX()==0 || tile.GetY()==0 || tile.GetX()== CityMap.GetWidth()-1 || tile.GetY()== CityMap.GetHeight()-1){
+                            tile.SetTileType(MapTile.TileType.Obstacle);    
+                        }else{
+                            tile.SetTileType(districtImage[r_y,r_x]);
+                        }
+
+                        if(tile.GetTileType() == MapTile.TileType.ParkSpot){
+                            parkSpotTiles.Add(tile);
+                        }
+                    }
+
+                }
+            }
+        }
+
+        /* OLD CODE (ONLY ONE DISTRICT AT A TIME WAS AVAILABLE HERE)
         int m_x = 0;
         int m_y = 0;
 
@@ -59,9 +102,40 @@ public static class MapUtils
                 
                 m_y++;
             }
+        }*/
+
+        for(int d_y=0; d_y<n_districts_y; ++d_y){
+            for(int d_x =0; d_x<n_districts_x; ++d_x){
+                int districtType = CityGraph.GetDistrictType(d_x, d_y);
+                
+                GraphNode[,] graphDistrictImage = graphDistrictImages[districtType];
+
+                for(int r_y = 0; r_y < graphDistrictImage.GetLength(0); ++r_y ){
+                    for(int r_x = 0; r_x < graphDistrictImage.GetLength(1); ++r_x){
+                        GraphNode g = CityGraph.GetGraphNode(d_x,d_y,r_x,r_y);
+
+                        int[] temp1 = new int[]{g.GetY(), g.GetX(), g.GetY(), g.GetX()};
+                        int [] temp2 = new int[]{CityGraph.GetHeight()-1, CityGraph.GetWidth()-1, 0, 0};
+                        int[] goesTo = new int[4];
+
+                        //cut at the borders of the
+                        for(int i =0 ; i< 4; ++i){
+                            if(temp1[i] == temp2[i]){
+                               goesTo[i] = -1;
+                            }else{
+                               goesTo[i] = graphDistrictImage[r_y, r_x].GetGoesTo()[i];
+                            }
+                        }
+
+
+                        g.SetGoesTo( goesTo);
+                    }
+
+                }
+            }
         }
-
-
+        
+        /* OLD CODE (ONLY ONE DISTRICT AT A TIME WAS AVAILABLE HERE)
         //initialize CityGraph
         
         for(int t=0; t<n_districts_y; ++t){
@@ -95,20 +169,29 @@ public static class MapUtils
                 
                 g_y++;
             }
-        }
+        }*/
         
         //link intersections to graphnodes (so that given your position you can know what node you're in)
-        CityGraph.SetBusStopRelativeCoords(bs_to_n[0,0], bs_to_n[0,1]);
-        CityGraph.SetBusStopRelativePosition(refBusTile[0], refBusTile[1]);
-        for(int y=0; y<n_districts_y; ++y){
-            for(int x =0 ; x<n_districts_x; ++x){
+        for(int t=0; t<4; t++){
+            int[,] bs_to_n = bs_to_n_List[t];
+            int[] refBusTile = refBusTile_List[t];
+            CityGraph.SetBusStopRelativeCoords(bs_to_n[0,0], bs_to_n[0,1],t);
+            CityGraph.SetBusStopRelativePosition(refBusTile[0], refBusTile[1],t);
+        }
+        
+        for(int d_y=0; d_y<n_districts_y; ++d_y){
+            for(int d_x =0 ; d_x<n_districts_x; ++d_x){
+                int districtType = CityGraph.GetDistrictType(d_x,d_y);
+                int[,] i_to_n = i_to_n_List[districtType];
+                int[,] bs_to_n = bs_to_n_List[districtType];
+                int[,] tlTiles = tlTiles_List[districtType];
 
                 for(int t=0; t< i_to_n.GetLength(0); ++t){
-                    GraphNode g = CityGraph.GetGraphNode(x,y,i_to_n[t, 2], i_to_n[t, 3]);
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]).SetGraphNode(g);
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]).SetGraphNode(g);
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0], i_to_n[t, 1]+1).SetGraphNode(g);
-                    CityMap.GetMapObject(x,y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).SetGraphNode(g);
+                    GraphNode g = CityGraph.GetGraphNode(d_x,d_y,i_to_n[t, 2], i_to_n[t, 3]);
+                    CityMap.GetMapObject(d_x,d_y, i_to_n[t, 0], i_to_n[t, 1]).SetGraphNode(g);
+                    CityMap.GetMapObject(d_x,d_y, i_to_n[t, 0]+1, i_to_n[t, 1]).SetGraphNode(g);
+                    CityMap.GetMapObject(d_x,d_y, i_to_n[t, 0], i_to_n[t, 1]+1).SetGraphNode(g);
+                    CityMap.GetMapObject(d_x,d_y, i_to_n[t, 0]+1, i_to_n[t, 1]+1).SetGraphNode(g);
                     //Debug.Log("linked "+i_to_n[t,0]+ "-"+i_to_n[t, 1] + "to node " + g.GetX() + "-"+g.GetY());
                 }
 
@@ -116,17 +199,17 @@ public static class MapUtils
                 for(int t=0; t<bs_to_n.GetLength(0); ++t){
                    
                     //also graphNodes have to be aware that they are "bus stop nodes"
-                    CityGraph.GetGraphNode(x,y, bs_to_n[t,0], bs_to_n[t,1]).SetIsBusStop(true);
-                    busStopNodes.Add(CityGraph.GetGraphNode(x,y,bs_to_n[t,0], bs_to_n[t,1]));
+                    CityGraph.GetGraphNode(d_x,d_y, bs_to_n[t,0], bs_to_n[t,1]).SetIsBusStop(true);
+                    busStopNodes.Add(CityGraph.GetGraphNode(d_x,d_y,bs_to_n[t,0], bs_to_n[t,1]));
                 }
                 //initialize trafficLightTiles
                 for(int t=0; t<tlTiles.GetLength(0); ++t){
                     int r_x = tlTiles[t,0];
                     int r_y = tlTiles[t,1];
-                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(x,y,r_x,r_y)));
-                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(x,y, r_x-1, r_y + 3)));
-                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(x,y, r_x+1, r_y + 2)));
-                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(x,y, r_x-2, r_y + 1))); 
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(d_x,d_y,r_x,r_y)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(true, CityMap.GetMapObject(d_x,d_y, r_x-1, r_y + 3)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(d_x,d_y, r_x+1, r_y + 2)));
+                    trafficLightTiles.Add(new Tuple<bool, MapTile>(false, CityMap.GetMapObject(d_x,d_y, r_x-2, r_y + 1))); 
                 }
 
             }
@@ -143,36 +226,6 @@ public static class MapUtils
         int[,] image;
         switch (index){
             case 0:
-                image = new int[,]{
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                    {2, 2, 2, 2, 0, 3, 1, 0, 2, 2, 2, 2,},
-                    {1, 1, 1, 1, 1, 4, 4, 3, 1, 1, 1, 1,},
-                    {1, 1, 1, 1, 3, 4, 4, 1, 1, 1, 1, 1,},
-                    {2, 2, 2, 2, 0, 1, 3, 0, 2, 2, 2, 2,},
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                    {0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0,},
-                };
-
-                //this will be used in Map_Setup (initializeMap) to link the intersection tile to the graphNode (i think we need a way to get the node from the tile coords)
-                //since it's easier if each intersection is composed of 4 tiles, just specify (for each intersection) the bottom left tile coordinates
-                //and the coordinates of the graph node you want them to be linked to
-                intersectionTiles = new int[,]{
-                    { 5, 4, 0, 0 },
-                };
-                busStopTiles = new int[0,0];
-                busStopReferencePosition = new int[2];
-
-                tlTiles = new int[,]{
-                    {6,3}
-                };
-
-                
-                
-                break;
-            case 1:
                 image = new int[,]{
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 2, 0, 3, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
@@ -227,7 +280,7 @@ public static class MapUtils
                 busStopReferencePosition = new int[]{17,3};
                 
                 break;
-            case 2:
+            case 1:
                 image = new int[,]{
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 2, 0, 3, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
@@ -283,7 +336,7 @@ public static class MapUtils
                 };
                 busStopReferencePosition = new int[]{17,10};
             break;
-            case 3:
+            case 2:
                 image = new int[,]{
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 2, 0, 1, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 2, 2, 2, 2, 2, 0, 0, 3, 1, 0, 0 },
@@ -338,7 +391,7 @@ public static class MapUtils
                 };
                 busStopReferencePosition = new int[]{11,10};
             break;
-            case 4:
+            case 3:
                 image = new int[,]{
                     { 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
                     { 2, 0, 1, 1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 2, 2, 2, 2, 0, 0, 3, 1, 0, 0 },
@@ -449,13 +502,8 @@ public static class MapUtils
 
         //Must be coherent to the DistrictImage of the same index
         switch(index){
+            
             case 0:
-                ret = new GraphNode[1,1];
-                ret[0,0] = new GraphNode(0,0);
-                
-                ret[0,0].SetGoesTo(new int[]{9,11,9,11});
-            break;
-            case 1:
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
@@ -487,7 +535,7 @@ public static class MapUtils
                 
 
             break;
-            case 2:
+            case 1:
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
@@ -519,7 +567,7 @@ public static class MapUtils
                 
 
             break;
-            case 3:
+            case 2:
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
@@ -551,7 +599,7 @@ public static class MapUtils
                 
 
             break;
-            case 4:
+            case 3:
                 ret = new GraphNode[3,4];
 
                 ret[0,0]=new GraphNode(0,0);
@@ -598,18 +646,15 @@ public static class MapUtils
 
         switch(index){
             case 0:
-                ret = new int[]{12,10,1,1,10,20};
-            break;
-            case 1:
                 ret = new int[]{30, 20, 4,3,128};
                 break;
-            case 2:
+            case 1:
                 ret = new int[]{30, 20, 4,3,120};
                 break;
-            case 3:
+            case 2:
                 ret = new int[]{30, 20, 4,3,128};
                 break;
-            case 4:
+            case 3:
                 ret = new int[]{30, 20, 4,3,128};
                 break;
             default:
@@ -620,5 +665,17 @@ public static class MapUtils
         return ret;
     }
 
-    
+    private static int RandomDistrictType(int4 freqs){
+        int sum = freqs[0] + freqs[1] + freqs[2] + freqs[3];
+        int r = UnityEngine.Random.Range(1, sum+1);
+        int floor = 0;
+        
+        for(int t=0; t<4; ++t){
+            if(freqs[t] != 0 && r<=floor + freqs[t]){
+                return t;
+            }
+            floor+= freqs[t];
+        }
+        return UnityEngine.Random.Range(0,4);
+    }
 }

@@ -148,7 +148,7 @@ public class QuadrantSystem : SystemBase
     //Disposes
     protected override void OnDestroy(){
         nativeMultiHashMapQuadrant.Dispose();
-        nativeMultiHashMapQuadrantParkSpots.Dispose();
+        if(isParkSpotMapValid) nativeMultiHashMapQuadrantParkSpots.Dispose();
         
     }   
 

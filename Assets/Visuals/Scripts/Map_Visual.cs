@@ -23,12 +23,12 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material DistrictMaterial1;
     [SerializeField] private Material DistrictMaterial2;
     [SerializeField] private Material DistrictMaterial3;
-    [SerializeField] private Material DistrictMaterial4;
+    
     [SerializeField] private float delayAddition;
 
-    public void SetMap(Map<MapTile> map, int districtIndex, int n_cars){
+    public void SetMap(Map<MapTile> map,PathFindGraph CityGraph,int n_cars){
         this.map = map;
-        UpdateVisual2(districtIndex,n_cars);
+        UpdateVisual2(CityGraph,n_cars);
 
         
     }
@@ -88,7 +88,7 @@ public class Map_Visual : MonoBehaviour
         
     }
 
-    private void UpdateVisual2(int districtIndex, int n_cars){
+    private void UpdateVisual2(PathFindGraph CityGraph, int n_cars){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
         EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), typeof(LocalToWorld), typeof(RenderBounds), typeof(NonUniformScale),
                         typeof(CarSpawnerComponent));
@@ -120,30 +120,27 @@ public class Map_Visual : MonoBehaviour
         float curDelay = 0.05f;
         
 
-        switch(districtIndex){
-            case 0:
-                material = DistrictMaterial0;
-                break;
-            case 1:
-                material = DistrictMaterial1;
-                break;
-            case 2:
-                material = DistrictMaterial2;
-                break;
-            case 3:
-                material = DistrictMaterial3;
-                break;
-            case 4:
-                material = DistrictMaterial4;
-                break;
-                    
-            default:
-                material = DistrictMaterial0;
-                break;
-        }
-
         for(int d_x=0; d_x<map.GetNDistrictsX(); ++d_x){
             for(int d_y = 0; d_y< map.GetNDistrictsY(); ++d_y){
+                int districtIndex = CityGraph.GetDistrictType(d_x,d_y);
+                switch(districtIndex){
+                    case 0:
+                        material = DistrictMaterial0;
+                    break;
+                    case 1:
+                        material = DistrictMaterial1;
+                    break;
+                    case 2:
+                        material = DistrictMaterial2;
+                    break;
+                    case 3:
+                        material = DistrictMaterial3;
+                    break;
+                    
+                    default:
+                    material = DistrictMaterial0;
+                    break;
+                }
                 int index = d_x*map.GetNDistrictsY()+d_y;
                 Entity e = districts[index];
                 Vector3 wp = map.GetDistrictWorldPosition(d_x, d_y);
@@ -158,7 +155,7 @@ public class Map_Visual : MonoBehaviour
                 
                 em.SetName(e, "district" + d_x + "-" + d_y);
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 1)});
-                em.SetComponentData(e, new CarSpawnerComponent{d_x = d_x, d_y = d_y, timer = 0, delay = curDelay,n_cars = carsToSpawn, entityToSpawn = defaultCarEntity });
+                em.SetComponentData(e, new CarSpawnerComponent{d_x = d_x, d_y = d_y, timer = 0, delay = curDelay,n_cars = carsToSpawn, entityToSpawn = defaultCarEntity, dType=districtIndex });
                 em.SetComponentData(e, new NonUniformScale{ Value = {
                     x = map.GetDistrictWidth(),
                     y = map.GetDistrictHeight(),

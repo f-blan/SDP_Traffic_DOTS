@@ -49,6 +49,7 @@ public class BusPathSystem : SystemBase
 
 
     protected override void OnUpdate(){
+        /*
         EntityCommandBuffer.ParallelWriter ecb = ecb_s.CreateCommandBuffer().AsParallelWriter();
 
         int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());  
@@ -87,7 +88,7 @@ public class BusPathSystem : SystemBase
             ecb.DestroyEntity(entityInQueryIndex, entity);
         }).WithReadOnly(localPathNodeArray).ScheduleParallel();
         //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
-        ecb_s.AddJobHandleForProducer(this.Dependency);
+        ecb_s.AddJobHandleForProducer(this.Dependency);*/
     }
     private static NativeList<int2> ComputeDistrictPath(NativeArray<PathUtils.PathNode> districtNodeArray,int2 graphSizeDistrict, int2 pos1, int2 pos2, int2 pos3){
         //if bottleneck this can be done as jobs, but it's done only in the first frame for the whole duration so it's not critical for framerate
