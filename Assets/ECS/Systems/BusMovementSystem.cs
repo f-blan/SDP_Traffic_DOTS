@@ -45,7 +45,6 @@ public class BusMovementSystem : SystemBase
             translation.Value.y += vehicleMovementData.velocity.y * dt;
 
             if(CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.offset, translation.Value)){
-
                 UpdatePathElement(ref busPathComponent);
                 currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex]; 
 
