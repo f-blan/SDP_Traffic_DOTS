@@ -13,6 +13,7 @@ public class Map_Spawner : MonoBehaviour
         [SerializeField] private Material carMaterial;
         [SerializeField] private Material busMaterial;
         [SerializeField] public float maxCarSpeed;
+        [SerializeField] public float maxBusSpeed;
         
         [SerializeField] private Material VerticalTrafficLightMaterial;
 
