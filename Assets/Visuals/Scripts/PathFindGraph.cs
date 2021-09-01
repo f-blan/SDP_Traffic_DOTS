@@ -80,6 +80,9 @@ public class PathFindGraph
     public int2 GetBusStopRelativeCoords(int dType){
         return busStopRelativeCoords[dType];
     }
+    
+
+    
     public void SetBusStopRelativePosition(int x, int y, int dType){
         busStopRelativePosition[dType] = new int2(x,y);
     }

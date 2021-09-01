@@ -20,9 +20,9 @@ public static class PathUtils
                 int[] goesTo = CityGraph.GetGraphNode(x,y).GetGoesTo();
                 pn.goesTo = new int4(goesTo[0], goesTo[1], goesTo[2], goesTo[3]);
                 pn.gCost = int.MaxValue;
-                pn.lastIteration=0;
+                
 
-                pn.isBusStop=false;
+                pn.isBusStop=CityGraph.GetGraphNode(x,y).IsBusStop();
                 pn.cameFromNodeIndex = -1;
                 pn.reachedWithDirection = -1;
                 pn.reachedWithCost = -1;
@@ -65,8 +65,8 @@ public static class PathUtils
         //sum of the two
         public int fCost;
         
-        //needed to tell how i have to consider this node during the current partial pathfind iteration (blank or traversed) 
-        public int lastIteration;
+        //used only when using pathfind with district. Needed to tell the district type
+        public int type;
 
         public int4 goesTo;
 
@@ -133,9 +133,11 @@ public static class PathUtils
                 pn.x = x;
                 pn.y = y;
                 pn.index = CalculateIndex(x,y, graphSize.x);
-                pn.lastIteration=0;
+                
                 pn.goesTo = new int4(move_x_cost, move_y_cost, move_x_cost, move_y_cost);
                 pn.gCost = int.MaxValue;
+                //Debug.Log("type " +CityGraph.GetDistrictType(x,y));
+                pn.type = CityGraph.GetDistrictType(x,y);
 
                 if(x == 0){
                     pn.goesTo[3]=-1;
@@ -428,7 +430,7 @@ public static class PathUtils
             
     }
 
-    public static void addPathToInt2List(NativeList<int2> pathList,NativeHashMap<int,PathNode> graphMap, int2 graphSize, int2 endPos){
+    public static void addPathToInt3List(NativeList<int3> pathList,NativeHashMap<int,PathNode> graphMap, int2 graphSize, int2 endPos){
         
         
         /*
@@ -439,7 +441,7 @@ public static class PathUtils
         Debug.Log(graphArray[3].cameFromNodeIndex);
         */
        
-        NativeList<int2> supportList = new NativeList<int2>(Allocator.Temp);
+        NativeList<int3> supportList = new NativeList<int3>(Allocator.Temp);
 
         int curIndex = CalculateIndex(endPos.x,endPos.y, graphSize.x);
         
@@ -449,7 +451,7 @@ public static class PathUtils
         //curNode = graphArray[curNode.cameFromNodeIDndex];
         while(curNode.cameFromNodeIndex != -1){
             curNode = graphMap[curNode.cameFromNodeIndex];
-            supportList.Add(new int2(curNode.x, curNode.y));
+            supportList.Add(new int3(curNode.x, curNode.y, curNode.type));
         }
 
         //supportList.Add(new int2(cameFromNode.x, cameFromNode.y));
@@ -466,7 +468,7 @@ public static class PathUtils
             gCost = p.gCost, hCost = p.hCost, fCost = p.fCost, 
             goesTo = new int4(p.goesTo[0],p.goesTo[1],p.goesTo[2],p.goesTo[3]),
             cameFromNodeIndex = p.cameFromNodeIndex, reachedWithCost = p.reachedWithCost, reachedWithDirection = p.reachedWithDirection,
-            isBusStop = p.isBusStop};
+            isBusStop = p.isBusStop, type = p.type};
     }
 
     private static void AddNodeToMap(NativeHashMap<int, PathUtils.PathNode> graphMap, PathNode p){
@@ -495,5 +497,22 @@ public static class PathUtils
             default:
                 return -1;
         }
+    }
+
+    public static NativeArray<int2> initRelativeCoords(PathFindGraph CityGraph){
+        NativeArray<int2> busStopRelativeCoords = new NativeArray<int2>(4, Allocator.Persistent);
+        busStopRelativeCoords[0] = CityGraph.GetBusStopRelativeCoords(0);
+        busStopRelativeCoords[1] = CityGraph.GetBusStopRelativeCoords(1);
+        busStopRelativeCoords[2] = CityGraph.GetBusStopRelativeCoords(2);
+        busStopRelativeCoords[3] = CityGraph.GetBusStopRelativeCoords(3);
+        return busStopRelativeCoords;
+    }
+    public static NativeArray<int2> initRelativePosition(PathFindGraph CityGraph){
+        NativeArray<int2> busStopRelativePosition = new NativeArray<int2>(4, Allocator.Persistent);
+        busStopRelativePosition[0] = CityGraph.GetBusStopRelativePosition(0);
+        busStopRelativePosition[1] = CityGraph.GetBusStopRelativePosition(1);
+        busStopRelativePosition[2] = CityGraph.GetBusStopRelativePosition(2);
+        busStopRelativePosition[3] = CityGraph.GetBusStopRelativePosition(3);
+        return busStopRelativePosition;
     }
 }

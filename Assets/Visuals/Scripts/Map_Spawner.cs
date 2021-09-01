@@ -131,10 +131,10 @@ public class Map_Spawner : MonoBehaviour
                  Vector3 wp = CityMap.GetWorldPosition(node.GetX(), node.GetY());
 
                 em.SetName(e, "BusStop "+t);
-                SetUpBusPathFind(d_x, d_y, e, CityMap.GetNDistrictsX(), CityMap.GetNDistrictsY(), CityMap, em,r, defaultBusEntity);
+                SetUpBusPathFind(d_x, d_y, e, CityMap.GetNDistrictsX(), CityMap.GetNDistrictsY(), CityMap, em,r, defaultBusEntity, districtType);
              }
         }
-        private void SetUpBusPathFind(int d_x, int d_y, Entity entity, int n_district_x, int n_district_y, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r, Entity defaultBusEntity){
+        private void SetUpBusPathFind(int d_x, int d_y, Entity entity, int n_district_x, int n_district_y, Map<MapTile> CityMap, EntityManager em, Unity.Mathematics.Random r, Entity defaultBusEntity, int pos1DistrictType){
             
             
 
@@ -156,7 +156,7 @@ public class Map_Spawner : MonoBehaviour
                 pos3.y = r.NextInt(0, n_district_y);
             }while((pos3.x == pos1.x && pos3.y == pos1.y)||(pos3.x == pos2.x && pos3.y == pos2.y));
             
-            em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3, entityToSpawn = defaultBusEntity});
+            em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3, entityToSpawn = defaultBusEntity, pos1DistrictType = pos1DistrictType});
 
         }
         public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){

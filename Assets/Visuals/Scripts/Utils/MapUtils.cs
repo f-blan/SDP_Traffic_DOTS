@@ -543,7 +543,7 @@ public static class MapUtils
                 ret[0,1]=new GraphNode(1,0);
                 ret[0,1].SetGoesTo(new int[]{6,5,-1,7});
                 ret[0,2]=new GraphNode(2,0);
-                ret[0,2].SetGoesTo(new int[]{6,9,6,5});
+                ret[0,2].SetGoesTo(new int[]{6,-1,6,5});
                 ret[0,3]=new GraphNode(3,0);
                 ret[0,3].SetGoesTo(new int[]{6,5,6,-1});
 
