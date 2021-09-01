@@ -43,8 +43,8 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.offset = 
                     CarUtils.ComputeOffset(
                         currentPathElement.cost[busPathComponent.verse == -1 ? 0 : 1],
-                        vehicleMovementData.direction, 
-                        busPathComponent.pathArrayReference.Value.pathArray[GetPrevPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1], 
+                        vehicleMovementData.direction,
+                        -1,
                         busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1]);
                 vehicleMovementData.stop = false;
             }
