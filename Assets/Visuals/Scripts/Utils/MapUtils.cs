@@ -224,7 +224,7 @@ public static class MapUtils
                     {2, 0},
                     
                 };
-                busStopReferencePosition = new int[]{16,3};
+                busStopReferencePosition = new int[]{17,3};
                 
                 break;
             case 2:
@@ -281,7 +281,7 @@ public static class MapUtils
                     {2, 1},
                     
                 };
-                busStopReferencePosition = new int[]{16,10};
+                busStopReferencePosition = new int[]{17,10};
             break;
             case 3:
                 image = new int[,]{
@@ -336,7 +336,7 @@ public static class MapUtils
                     {1, 1},
                     
                 };
-                busStopReferencePosition = new int[]{10,10};
+                busStopReferencePosition = new int[]{11,10};
             break;
             case 4:
                 image = new int[,]{
@@ -392,7 +392,7 @@ public static class MapUtils
                     {2, 0},
                     
                 };
-                busStopReferencePosition = new int[]{16,3};
+                busStopReferencePosition = new int[]{17,3};
             break;
             default:
                 image = null;
@@ -465,7 +465,7 @@ public static class MapUtils
                 ret[0,2]=new GraphNode(2,0);
                 ret[0,2].SetGoesTo(new int[]{6,9,6,5});
                 ret[0,3]=new GraphNode(3,0);
-                ret[0,3].SetGoesTo(new int[]{-1,5,6,-1});
+                ret[0,3].SetGoesTo(new int[]{6,5,6,9});
 
                 ret[1,0]=new GraphNode(0,1);
                 ret[1,0].SetGoesTo(new int[]{5,7,-1,5});

@@ -342,14 +342,25 @@ public static class PathUtils
                     }
                     if(i==0 && (lastDirection+2)%4 == t){
                         //for buses we avoid U turns after reaching an edge node between the several computed paths 
-                        
+                        /*Debug.Log("----------------avoided------------------------");
+                        Debug.Log(currentNode.x);
+                        Debug.Log(currentNode.y);
+                        Debug.Log(t);
+                        Debug.Log(lastDirection);
+                        Debug.Log("goesTo");
+                        Debug.Log(currentNode.goesTo[0]);
+                        Debug.Log(currentNode.goesTo[1]);
+                        Debug.Log(currentNode.goesTo[2]);
+                        Debug.Log(currentNode.goesTo[3]);
+                        Debug.Log("------------------------------------------");*/
                         continue;
                     }
                     //get the neighboring node
                     int2 neighbourPosition = new int2(currentNode.x + neighbourOffsetArray[t].x, + currentNode.y + neighbourOffsetArray[t].y);
                     int neighBourNodeIndex = PathUtils.CalculateIndex(neighbourPosition.x, neighbourPosition.y, graphSize.x);
-
+                    
                     if(neighBourNodeIndex == firstNodeIndex && t == (firstDirection+2)%4){
+                        
                         //we avoid having the same direction for the very first node in the path
                         continue;
                     }
