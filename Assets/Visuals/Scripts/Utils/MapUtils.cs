@@ -7,7 +7,7 @@ using Unity.Mathematics;
 public static class MapUtils 
 {
     public static void InitializeMap(Map<MapTile> CityMap, PathFindGraph CityGraph, int4 freqs, int n_districts_x, int n_districts_y, out List<GraphNode> busStopNodes,
-            out List<Tuple<bool,MapTile>> trafficLightTiles, out List<MapTile> parkSpotTiles)
+            out List<Tuple<bool,MapTile>> trafficLightTiles, out List<MapTile> parkSpotTiles, out List<MapTile> busStopTiles)
     {
         List<int[,]> i_to_n_List = new List<int[,]>();
         List<int[,]> bs_to_n_List = new List<int[,]>();
@@ -36,6 +36,7 @@ public static class MapUtils
         
         trafficLightTiles = new List<Tuple<bool,MapTile>>();
         parkSpotTiles = new List<MapTile>();
+        busStopTiles = new List<MapTile>();
 
         //initialize district types and CityMap
         for(int d_y=0; d_y<n_districts_y; ++d_y){
@@ -53,6 +54,9 @@ public static class MapUtils
                             tile.SetTileType(MapTile.TileType.Obstacle);    
                         }else{
                             tile.SetTileType(districtImage[r_y,r_x]);
+                            if(tile.GetTileType() == MapTile.TileType.BusStop){
+                                busStopTiles.Add(tile);
+                            }
                         }
 
                         if(tile.GetTileType() == MapTile.TileType.ParkSpot){

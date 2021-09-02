@@ -397,5 +397,25 @@ public class Map_Spawner : MonoBehaviour
         }
         tiles.Dispose();
     }
+    public void SpawnBusStops(Map<MapTile> CityMap, List<MapTile> busStopTiles){
+        EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(BusStopTag));
+
+        NativeArray<Entity> tiles = new NativeArray<Entity>(busStopTiles.Count, Allocator.Temp);
+
+        em.CreateEntity(arch, tiles);
+        
+        for(int t=0; t<busStopTiles.Count; ++t){
+            MapTile curTile = busStopTiles[t]; 
+            Entity e = tiles[t];
+            Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
+
+            em.SetName(e, "BusStop " + t);
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+
+            
+        }
+        tiles.Dispose();
+    }
 }
 

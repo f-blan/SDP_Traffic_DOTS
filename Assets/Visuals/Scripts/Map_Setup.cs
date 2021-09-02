@@ -75,9 +75,10 @@ public class Map_Setup : MonoBehaviour
         List<GraphNode> busStopNodes;
         List<Tuple<bool, MapTile>> trafficLightTiles;
         List<MapTile> parkSpotTiles;
+        List<MapTile> busStopTiles;
         int4 freqs = new int4(Frequency_District_0,Frequency_District_1,Frequency_District_2,Frequency_District_3);
         MapUtils.InitializeMap(CityMap, CityGraph, freqs, map_n_districts_x, map_n_districts_y,out busStopNodes,
-            out trafficLightTiles, out parkSpotTiles);
+            out trafficLightTiles, out parkSpotTiles, out busStopTiles);
         
 
         map_Visual.SetMap(CityMap,CityGraph, n_entities);
@@ -87,6 +88,7 @@ public class Map_Setup : MonoBehaviour
         map_Spawner.SpawnBusLine(CityMap,CityGraph,busStopNodes, n_bus_lines);
         map_Spawner.SpawnTrafficLights(CityMap, trafficLightTiles);
         map_Spawner.SpawnParkSpots(CityMap, parkSpotTiles);
+        map_Spawner.SpawnBusStops(CityMap, busStopTiles);
         
     }
 }
