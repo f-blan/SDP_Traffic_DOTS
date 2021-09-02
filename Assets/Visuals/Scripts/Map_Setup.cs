@@ -14,6 +14,7 @@ public class Map_Setup : MonoBehaviour
     //map is a sequence of copy-pasted "districts"
     public Map<MapTile> CityMap;
     public PathFindGraph CityGraph;
+    public int runningEntities;
 
     //dimensions (in MapTiles) of each district
     private int District_width;
@@ -30,7 +31,7 @@ public class Map_Setup : MonoBehaviour
     [SerializeField] private int map_n_districts_x;
     [SerializeField] int map_n_districts_y;
 
-    [SerializeField] int n_entities;
+    [SerializeField] public int n_entities;
     [SerializeField] int n_bus_lines;
     //[SerializeField] int districtTypeIndex;
     [SerializeField] int Frequency_District_0;
@@ -50,6 +51,8 @@ public class Map_Setup : MonoBehaviour
         GraphDistrict_width = districtData[2];
         GraphDistrict_height=districtData[3];
         spawnTilesPerDistrict = districtData[4];
+
+        runningEntities=0;
     }
 
     // Start is called before the first frame update

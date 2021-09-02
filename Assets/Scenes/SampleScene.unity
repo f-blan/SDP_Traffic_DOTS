@@ -356,7 +356,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   map_n_districts_x: 2
   map_n_districts_y: 2
-  n_entities: 0
+  n_entities: 100
   n_bus_lines: 1
   Frequency_District_0: 1
   Frequency_District_1: 0

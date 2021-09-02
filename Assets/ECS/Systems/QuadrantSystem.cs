@@ -27,6 +27,12 @@ public class QuadrantSystem : SystemBase
     private const float tileSize = 1f;
 
     private bool isParkSpotMapValid;
+
+    private EntityQueryDesc entityQueryDescVehicles = new EntityQueryDesc{
+        Any = new ComponentType[]{
+            ComponentType.ReadOnly<VehicleMovementData>()
+        }
+    };
     private EntityQueryDesc entityQueryDesc = new EntityQueryDesc{
         Any = new ComponentType[]{
             ComponentType.ReadOnly<VehicleMovementData>(), 
@@ -171,7 +177,9 @@ public class QuadrantSystem : SystemBase
         
         
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
+            EntityQuery queryVehicles = GetEntityQuery(entityQueryDescVehicles);
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
+            Map_Setup.Instance.runningEntities = queryVehicles.CalculateEntityCount();
         }
 
         if(isParkSpotMapValid == false){
@@ -326,10 +334,10 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop = true;
                 }*/
             }
-            else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
+            /*else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
                 vehicleMovementData.stop = false;
                 //if you have a green traffic light in front, you also check if there are cars blocking your way inside. If yes you stay out of the intersection
-                /*QuadrantData foundEntity;
+                QuadrantData foundEntity;
                 bool intrsectionBusy = QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, closestNativeArray[0].position,vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out foundEntity,2, tileSize*8/10);
                 
                 if(intrsectionBusy){ //&& foundEntity.vehicleData.direction != vehicleMovementData.direction){
@@ -337,8 +345,8 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop=true;
                 } else{
                     vehicleMovementData.stop=false;
-                }*/
-            }
+                }
+            }*/
             else{
                 vehicleMovementData.stop = false;
             }
