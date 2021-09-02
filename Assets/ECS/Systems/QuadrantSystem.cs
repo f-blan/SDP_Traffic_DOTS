@@ -237,16 +237,6 @@ public class QuadrantSystem : SystemBase
         //Iterates through the VehicleMovementData having components and checks for a closer vehicle
         Entities.WithAll<VehicleMovementData>().WithReadOnly(localQuadrantParkSpots).ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
             
-            //state reserved to buses: the bus knows there's a busStop in the current node
-            if(vehicleMovementData.state==5){
-                QuadrantData busStop;
-                if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantBusStops, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.BusStop,out busStop,1, tileSize*3/5)){
-                        //ParkSpot found: change the state and translation component of the car
-                        vehicleMovementData.state = 6;
-                        translation.Value = busStop.position;
-                        vehicleMovementData.parkingTimer = 0;
-                    }
-            }
 
             //the car is parked, non need to compute the stop variable as it doesn't move
             if(vehicleMovementData.state==2) return;
@@ -306,7 +296,16 @@ public class QuadrantSystem : SystemBase
                     }
                 }
             }
-
+            //state reserved to buses: the bus knows there's a busStop in the current node
+            if(vehicleMovementData.state==5){
+                QuadrantData busStop;
+                if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantBusStops, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.BusStop,out busStop,1, tileSize*3/5)){
+                        //ParkSpot found: change the state and translation component of the car
+                        vehicleMovementData.state = 6;
+                        translation.Value = busStop.position;
+                        vehicleMovementData.parkingTimer = 0;
+                    }
+            }
 
             //vehicleMovementData.stop = QuadrantUtils.GetStop(localQuadrant, translation.Value, vehicleMovementData.direction);
             

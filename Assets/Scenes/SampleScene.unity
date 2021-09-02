@@ -354,12 +354,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b37c2ff8f5006bf459eae4afd1c9ea5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  map_n_districts_x: 1
-  map_n_districts_y: 1
+  map_n_districts_x: 2
+  map_n_districts_y: 2
   n_entities: 0
-  n_bus_lines: 0
-  Frequency_District_0: 0
-  Frequency_District_1: 1
+  n_bus_lines: 1
+  Frequency_District_0: 1
+  Frequency_District_1: 0
   Frequency_District_2: 0
   Frequency_District_3: 0
 --- !u!4 &1651507030
