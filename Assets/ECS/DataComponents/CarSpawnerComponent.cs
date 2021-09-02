@@ -1,4 +1,5 @@
 using Unity.Entities;
+using UnityEngine;
 
 public struct CarSpawnerComponent : IComponentData
 {
@@ -15,4 +16,6 @@ public struct CarSpawnerComponent : IComponentData
     public int d_x;
     public int d_y;
     public Entity entityToSpawn;
+    
+    public Color color;
 }

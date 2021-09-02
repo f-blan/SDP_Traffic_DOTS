@@ -28,8 +28,7 @@ public class Map_Spawner : MonoBehaviour
             }
         }
         public static void SpawnBusEntities(NativeList<PathElement> pathList, Vector3 referenceWorldPosition,
-            EntityCommandBuffer.ParallelWriter ecb, int eqi, Entity entityToSpawn){
-            
+            EntityCommandBuffer.ParallelWriter ecb, int eqi, Entity entityToSpawn){ 
             
             BlobAssetReference<BusPathBlobArray> pathReference;
            
@@ -190,6 +189,9 @@ public class Map_Spawner : MonoBehaviour
                 em.SetName(e, "Vehicle "+t);
 
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], -1)});
+
+                carMaterial.color = new Color(UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),1f);
+                Debug.Log(carMaterial.color);
 
                 em.SetSharedComponentData(e, new RenderMesh{
                     mesh = carMesh,

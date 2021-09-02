@@ -16,8 +16,8 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material Obstacle;
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
-    [SerializeField] private Material CarMaterial;
-    
+    [SerializeField] public Material CarMaterial;
+    [SerializeField] public int differentTypeOfVehicles; 
     [SerializeField] private Material DistrictMaterial0;
     [SerializeField] private Material DistrictMaterial1;
     
@@ -26,8 +26,6 @@ public class Map_Visual : MonoBehaviour
     public void SetMap(Map<MapTile> map, int districtIndex, int n_cars){
         this.map = map;
         UpdateVisual2(districtIndex, n_cars);
-
-        
     }
 
     
@@ -94,6 +92,7 @@ public class Map_Visual : MonoBehaviour
 
         Mesh carMesh = MeshUtils.CreateMesh(0.47f, 1f);
 
+
         em.SetSharedComponentData(defaultCarEntity, new RenderMesh{
             mesh = carMesh,
             material = CarMaterial,
@@ -142,7 +141,7 @@ public class Map_Visual : MonoBehaviour
                 
                 em.SetName(e, "district" + d_x + "-" + d_y);
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 1)});
-                em.SetComponentData(e, new CarSpawnerComponent{d_x = d_x, d_y = d_y, timer = 0, delay = curDelay,n_cars = carsToSpawn, entityToSpawn = defaultCarEntity });
+                em.SetComponentData(e, new CarSpawnerComponent{d_x = d_x, d_y = d_y, timer = 0, delay = curDelay,n_cars = carsToSpawn, entityToSpawn = defaultCarEntity});
                 em.SetComponentData(e, new NonUniformScale{ Value = {
                     x = map.GetDistrictWidth(),
                     y = map.GetDistrictHeight(),
