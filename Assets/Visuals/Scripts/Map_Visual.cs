@@ -16,9 +16,9 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material Obstacle;
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
+    [SerializeField] public Material CarMaterial;
+    [SerializeField] public int differentTypeOfVehicles; 
     [SerializeField] private Material BusStop;
-    [SerializeField] private Material CarMaterial;
-    
     [SerializeField] private Material DistrictMaterial0;
     [SerializeField] private Material DistrictMaterial1;
     [SerializeField] private Material DistrictMaterial2;
@@ -29,8 +29,6 @@ public class Map_Visual : MonoBehaviour
     public void SetMap(Map<MapTile> map,PathFindGraph CityGraph,int n_cars){
         this.map = map;
         UpdateVisual2(CityGraph,n_cars);
-
-        
     }
 
     
@@ -99,6 +97,7 @@ public class Map_Visual : MonoBehaviour
         Entity defaultCarEntity = em.CreateEntity(defaultCarArchetype);
 
         Mesh carMesh = MeshUtils.CreateMesh(0.47f, 1f);
+
 
         em.SetSharedComponentData(defaultCarEntity, new RenderMesh{
             mesh = carMesh,

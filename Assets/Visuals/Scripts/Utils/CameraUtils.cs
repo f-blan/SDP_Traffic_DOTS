@@ -87,13 +87,18 @@ public class CameraUtils : MonoBehaviour
 
         if(Input.GetMouseButton(SECONDARY_MOUSE_BUTTON) && (cameraFollowsVehicleTranslationIndex != -1 || followEntity != Entity.Null)){
             cameraFollowsVehicleTranslationIndex = -1;
+            World.DefaultGameObjectInjectionWorld.EntityManager.RemoveComponent<SelectedVehicleTag>(followEntity);
+            var line = GameObject.Find("BusLineTrace");
+            if(line != null){
+                Destroy(line);
+            }
             followEntity = Entity.Null;
             return;
         }
 
         if(cameraFollowsVehicleTranslationIndex != -1 || followEntity != Entity.Null){            
             Vector3 tmpPosition = World.DefaultGameObjectInjectionWorld.EntityManager.GetComponentData<Translation>(followEntity).Value;
-            Debug.Log("following " + tmpPosition.x + "__" + tmpPosition.y);
+            //Debug.Log("following " + tmpPosition.x + "__" + tmpPosition.y);
             tmpPosition.z = -10;
             transform.position = tmpPosition; 
             return;
@@ -122,6 +127,9 @@ public class CameraUtils : MonoBehaviour
                 cameraFollowsVehicleTranslation = vehicleTranslations[vehicleIndex[0]];
                 followEntity = vehicleEntities[vehicleIndex[0]];
                 transform.position = new Vector3(cameraFollowsVehicleTranslation.Value.x, cameraFollowsVehicleTranslation.Value.y, transform.position.z);
+                if(World.DefaultGameObjectInjectionWorld.EntityManager.HasComponent<BusPathComponent>(followEntity)){
+                    World.DefaultGameObjectInjectionWorld.EntityManager.AddComponent<SelectedVehicleTag>(followEntity);
+                }
             }
             //Dispose of Nativearrays
             vehicleTranslations.Dispose();

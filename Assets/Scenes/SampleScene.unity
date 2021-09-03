@@ -152,9 +152,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d961885fca8c5c24f8238d58c2f983f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
+  carMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
   busMaterial: {fileID: 2100000, guid: c85d2ab9e3aeeb9ba9aa7222c3f0b72c, type: 2}
   maxCarSpeed: 3
+<<<<<<< HEAD
+=======
+  maxBusSpeed: 3
+>>>>>>> 6d206e861d5e3c7ea79c0ef064311e8e607c4e0a
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
   Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
@@ -566,8 +570,9 @@ MonoBehaviour:
   Obstacle: {fileID: 2100000, guid: ebad6eabd1171c046865c72449dce896, type: 2}
   ParkSpot: {fileID: 2100000, guid: 2b6e3a70fdc7cb64b86b879cb30ddfa0, type: 2}
   TrafficLight: {fileID: 2100000, guid: d9f3ee9f6a53b36409a5477920951fb5, type: 2}
+  CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
+  differentTypeOfVehicles: 4
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}
-  CarMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   DistrictMaterial0: {fileID: 2100000, guid: cc8e559b3d504c0488cb354db98b715e, type: 2}
   DistrictMaterial1: {fileID: 2100000, guid: a5b4dead00ee4564ab857e51a1206899, type: 2}
   DistrictMaterial2: {fileID: 2100000, guid: 54dda37333dfe164f93062f28268ce1b, type: 2}
