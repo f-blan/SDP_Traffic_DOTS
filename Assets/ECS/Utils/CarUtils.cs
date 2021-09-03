@@ -28,7 +28,7 @@ public static class CarUtils{
         return -((direction + 2) % 4)*90f; //Changed after Francesco's suggestion
     }
 
-    public static float2 ComputeOffset(float offset, int direction, int prevDirection, int nextDirection){
+    public static float2 ComputeOffset(float offset, int direction, int prevDirection, int nextDirection, out float2 intersectionOffset){
         float2 offsetFloat2;
 
         //If the vehicle has to perform a left turn, then, an extra tile must be moved.
@@ -45,15 +45,19 @@ public static class CarUtils{
         switch(direction){
             case (int)DirectionEnum.Up:
                 offsetFloat2 = new float2(0f, offset + nextOffset + prevOffset);
+                intersectionOffset = new float2(0, offset + prevOffset -1);
                 break;
             case (int)DirectionEnum.Down:
                 offsetFloat2 = new float2(0f, -offset - nextOffset - prevOffset);
+                intersectionOffset = new float2(0,-offset - prevOffset +1);
                 break;
             case (int)DirectionEnum.Right:
                 offsetFloat2 = new float2(offset + nextOffset + prevOffset, 0f);
+                intersectionOffset = new float2(offset + prevOffset -1,0);
                 break;
             default:
                 offsetFloat2 = new float2(-offset - nextOffset - prevOffset, 0f);
+                intersectionOffset =new float2( -offset -prevOffset +1,0);
                 break;
         }
 
@@ -118,7 +122,9 @@ public static class CarUtils{
                 return (int) math.floor(math.abs(offset.x) - math.abs(initialPosition.x - currentPosition.x)) - offsetAdjustment;
         }
     }
-    
+    public static int ComputeTurnState(int curDirection, int nextDirection){
+        return ((nextDirection - curDirection)+4)%4;
+    }
 
 }
 

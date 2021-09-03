@@ -69,7 +69,7 @@ public class Map_Setup : MonoBehaviour
         height = District_height * map_n_districts_y;
 
         float tileSize = 1f;
-        Vector3 originPosition = new Vector3(-width/2, -height/2, 0);
+        Vector3 originPosition = new Vector3((-width/2) +0.5f, (-height/2) +0.5f, 0);
 
         CityMap = new Map<MapTile>(map_n_districts_x, map_n_districts_y,  District_width, District_height,tileSize,originPosition, (Map<MapTile> map, int x, int y, Vector3 wp) => new MapTile(map,x,y, wp),spawnTilesPerDistrict);
         CityGraph = new PathFindGraph( map_n_districts_x, map_n_districts_y,  GraphDistrict_width, GraphDistrict_height);

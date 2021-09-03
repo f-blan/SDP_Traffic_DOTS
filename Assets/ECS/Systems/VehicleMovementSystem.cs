@@ -81,6 +81,15 @@ public class VehicleMovementSystem : SystemBase
                 return;
             }
 
+            //notify to the quadrant system where you need to turn when you're at an intersection
+            if( CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.intersectionOffset, translation.Value) && vehicleMovementData.turningState == -1){
+                vehicleMovementData.turningState = CarUtils.ComputeTurnState(vehicleMovementData.direction, vehicleMovementData.targetDirection);
+                //temporary solution: save the reference tile into intersectionOffset
+                vehicleMovementData.intersectionOffset.x = translation.Value.x;
+                vehicleMovementData.intersectionOffset.y = translation.Value.y;
+                
+            }
+
             if(vehicleMovementData.state==1){
                 ParkingHandler(ref translation, ref vehicleMovementData, ref rotation, localGraphArray, graphWidth, dt);
                 return;
@@ -93,9 +102,11 @@ public class VehicleMovementSystem : SystemBase
                 vehicleMovementData.initialPosition.x = translation.Value.x; //Set initial position to the starting position of the vehicle
                 vehicleMovementData.initialPosition.y = translation.Value.y;
 
-                vehicleMovementData.offset = CarUtils.ComputeOffset(lastCarPathBuffer.cost, vehicleMovementData.direction, -1, carPathBuffer[carPathBuffer.Length - 2].withDirection); //Compoutes offset
+                vehicleMovementData.offset = CarUtils.ComputeOffset(lastCarPathBuffer.cost, vehicleMovementData.direction, -1, carPathBuffer[carPathBuffer.Length - 2].withDirection, out vehicleMovementData.intersectionOffset); //Compoutes offset
                 vehicleMovementData.stop = false;
-                
+                vehicleMovementData.targetDirection = carPathBuffer[carPathBuffer.Length-2].withDirection;
+                vehicleMovementData.turningState = -1;
+                vehicleMovementData.trafficLightintersection = false;
             }
             if(vehicleMovementData.stop == true){
                 return;
@@ -108,7 +119,8 @@ public class VehicleMovementSystem : SystemBase
 
             if(checker){
                 //Removing last element from the buffer
-
+                vehicleMovementData.turningState = -1;
+                vehicleMovementData.trafficLightintersection=false;
                 int index = PathUtils.CalculateIndex(lastCarPathBuffer.x, lastCarPathBuffer.y, graphWidth);
                 vehicleMovementData.curGraphIndex = index;
 
@@ -141,7 +153,8 @@ public class VehicleMovementSystem : SystemBase
 
                 //If there are enough CarPathBuffers remaining, then, compute new offset
                 if(carPathBuffer.Length >= 2){
-                    vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, carPathBuffer[carPathBuffer.Length - 2].withDirection);
+                    vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, carPathBuffer[carPathBuffer.Length - 2].withDirection, out vehicleMovementData.intersectionOffset);
+                    vehicleMovementData.targetDirection = carPathBuffer[carPathBuffer.Length - 2].withDirection;
                 }
                 else{
                     
@@ -158,11 +171,8 @@ public class VehicleMovementSystem : SystemBase
                     }
                     int nextDirection = availableDirections[r.NextInt(0, availableDirections.Length)];
                     availableDirections.Dispose();
-                    
-        
-        
-                    
-                    vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, nextDirection);
+                
+                    vehicleMovementData.offset = CarUtils.ComputeOffset(carPathBuffer[carPathBuffer.Length - 1].cost, carPathBuffer[carPathBuffer.Length - 1].withDirection, vehicleMovementData.direction, nextDirection,  out vehicleMovementData.intersectionOffset);
                     vehicleMovementData.targetDirection=nextDirection;
                 }
 
@@ -225,7 +235,7 @@ public class VehicleMovementSystem : SystemBase
         translation.Value.y = vehicleMovementData.initialPosition.y;
 
         //calculate offset
-        vehicleMovementData.offset = CarUtils.ComputeOffset(p.goesTo[targetDirection], targetDirection, vehicleMovementData.direction, nextDirection);
+        vehicleMovementData.offset = CarUtils.ComputeOffset(p.goesTo[targetDirection], targetDirection, vehicleMovementData.direction, nextDirection, out vehicleMovementData.intersectionOffset);
          
          //Update velocity
         vehicleMovementData.velocity = CarUtils.ComputeVelocity(vehicleMovementData.speed, targetDirection);
@@ -250,7 +260,8 @@ public class VehicleMovementSystem : SystemBase
         
         if(checker){
             int seedHelp = (int) math.floor(dt*100000f);
-            
+            vehicleMovementData.turningState = -1;
+            vehicleMovementData.trafficLightintersection = false;
             ParkingTurn(ref vehicleMovementData, ref translation,ref rotation, graphArray, vehicleMovementData.curGraphIndex, graphWidth, (int) math.floor(dt*10000000));
             return;
         }

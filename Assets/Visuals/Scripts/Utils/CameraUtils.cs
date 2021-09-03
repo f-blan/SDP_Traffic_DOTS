@@ -93,6 +93,7 @@ public class CameraUtils : MonoBehaviour
 
         if(cameraFollowsVehicleTranslationIndex != -1 || followEntity != Entity.Null){            
             Vector3 tmpPosition = World.DefaultGameObjectInjectionWorld.EntityManager.GetComponentData<Translation>(followEntity).Value;
+            Debug.Log("following " + tmpPosition.x + "__" + tmpPosition.y);
             tmpPosition.z = -10;
             transform.position = tmpPosition; 
             return;

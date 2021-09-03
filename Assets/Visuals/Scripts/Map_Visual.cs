@@ -149,14 +149,16 @@ public class Map_Visual : MonoBehaviour
                 int carsToSpawn;
                 if(left_cars>=n_cars_each){
                     carsToSpawn = n_cars_each;
-                    if(UnityEngine.Random.Range(0,10)>4 && leftover_cars>0){
+                    left_cars-=n_cars_each;
+                    if(UnityEngine.Random.Range(0,10)>4 && leftover_cars>0 && left_cars>0){
                         carsToSpawn+=2;
                         leftover_cars-=2;
                     }
                 }else{
                     carsToSpawn = left_cars;
+                    left_cars-=carsToSpawn;
                 }
-                left_cars-= carsToSpawn;
+                //left_cars-= carsToSpawn;
                 
                 em.SetName(e, "district" + d_x + "-" + d_y);
                 em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 1)});

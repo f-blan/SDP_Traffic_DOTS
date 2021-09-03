@@ -5,13 +5,14 @@ using Unity.Mathematics;
 
 public class BusMovementSystem : SystemBase
 {
-    private const float MAX_BUS_SPEED = 5.0f;
+    private const float MAX_BUS_SPEED = 1.0f;
     private const float MAX_STOP_TIME = 2.0f;
 
 
     protected override void OnUpdate()
     {
         float dt = Time.DeltaTime;
+
 
         Entities.WithAll<BusPathComponent>().ForEach((Entity entity, int entityInQueryIndex, ref BusPathComponent busPathComponent, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref Rotation rotation) => {
             
@@ -28,7 +29,13 @@ public class BusMovementSystem : SystemBase
                 }
                 return;
             }
-
+            if(CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.intersectionOffset, translation.Value) && vehicleMovementData.turningState == -1){
+                vehicleMovementData.turningState = CarUtils.ComputeTurnState(vehicleMovementData.direction, vehicleMovementData.targetDirection);
+                //temporary solution: save the reference tile into intersectionOffset
+                vehicleMovementData.intersectionOffset.x = translation.Value.x;
+                vehicleMovementData.intersectionOffset.y = translation.Value.y;
+                
+            }
             if(vehicleMovementData.stop){
                 return;
             }
@@ -50,8 +57,13 @@ public class BusMovementSystem : SystemBase
                         currentPathElement.cost[busPathComponent.verse == -1 ? 0 : 1],
                         vehicleMovementData.direction, 
                         busPathComponent.pathArrayReference.Value.pathArray[GetPrevPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1], 
-                        busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1]);
+                        busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1],
+                        out vehicleMovementData.intersectionOffset);
                 vehicleMovementData.stop = false;
+                PathElement nextPathElement = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)];
+                vehicleMovementData.targetDirection = nextPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
+                vehicleMovementData.turningState = -1;
+                vehicleMovementData.trafficLightintersection = false;
             }
 
             translation.Value.x += vehicleMovementData.velocity.x * dt;
@@ -67,6 +79,10 @@ public class BusMovementSystem : SystemBase
                 UpdateVehicleMovementData(ref vehicleMovementData, ref busPathComponent, ref translation);
                 rotation = new Rotation{Value = Quaternion.Euler(0, 0, CarUtils.ComputeRotation(currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1]))};
 
+                PathElement nextPathElement = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)];
+                vehicleMovementData.targetDirection = nextPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
+                vehicleMovementData.turningState = -1;
+                vehicleMovementData.trafficLightintersection = false;
                 vehicleMovementData.stopTime = -MAX_STOP_TIME;
 
             }
@@ -124,7 +140,7 @@ public class BusMovementSystem : SystemBase
 
         vehicleMovementData.velocity = CarUtils.ComputeVelocity(vehicleMovementData.speed, vehicleMovementData.direction);
         vehicleMovementData.offset = CarUtils.ComputeOffset(currentPathElement.cost[busPathComponent.verse == -1 ? 0 : 1], 
-        vehicleMovementData.direction, prevDirection, nextDirection);
+        vehicleMovementData.direction, prevDirection, nextDirection, out vehicleMovementData.intersectionOffset);
 
         return;
     }
