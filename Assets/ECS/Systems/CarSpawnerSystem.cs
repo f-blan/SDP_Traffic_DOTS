@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ public class CarSpawnerSystem : SystemBase
     private NativeArray<TileStruct> map;
     private EndSimulationEntityCommandBufferSystem ecb_s;
     private bool isMapValid;
+    private Material[] carMaterialVariants;
+    private int carVariants;
 
     protected override void OnCreate(){
         base.OnCreate();
@@ -28,22 +31,32 @@ public class CarSpawnerSystem : SystemBase
         //get the graph in a format usable by jobs (a native map of struct PathNode, and do it only once per runtime: Allocator.Persistent used)
         //Debug.Log("creating map");
         map = SpawnerUtils.GetMapArray();
-        isMapValid=true;
+
+        //Get amount of different types of vehicles there should be 
+        carVariants = GameObject.Find("Map_Visual").GetComponent<Map_Visual>().differentTypeOfVehicles;
+        //Get car material
+        Material carMaterial = GameObject.Find("Map_Visual").GetComponent<Map_Visual>().CarMaterial;
+        carMaterialVariants = new Material[carVariants];
+
+        for(int i = 0; i < carVariants; i++){
+            //Insert new car material and change its color
+            carMaterialVariants[i] = new Material(carMaterial);
+            carMaterialVariants[i].color = new Color(UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),1f);
+        }
+    } 
         
-    }
 
     protected override void OnDestroy(){
-
         if(isMapValid){
-            map.Dispose();
-            
+            map.Dispose(); 
         }
     }
     
     // Update is called once per frame
     protected override void OnUpdate()
     {
-        EntityCommandBuffer.ParallelWriter ecb = ecb_s.CreateCommandBuffer().AsParallelWriter();
+        EntityCommandBuffer ecbNonParallel = ecb_s.CreateCommandBuffer();
+        EntityCommandBuffer.ParallelWriter ecb = ecbNonParallel.AsParallelWriter();
         
         int2 mapSize = new int2(Map_Setup.Instance.CityMap.GetWidth(), Map_Setup.Instance.CityMap.GetHeight());        
         int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(),Map_Setup.Instance.CityGraph.GetHeight());
@@ -57,7 +70,7 @@ public class CarSpawnerSystem : SystemBase
         float deltaTime = UnityEngine.Time.deltaTime;
         
         //spawning cars in districts with a certain delay (so that we do not overload the system with pathFind for all cars and start the app faster)
-        Entities.WithReadOnly(localMapArray).ForEach((Entity e,int entityInQueryIndex, ref CarSpawnerComponent carSpawnerComponent) =>{
+        Entities.WithReadOnly(localMapArray).ForEach((Entity e, int entityInQueryIndex, ref CarSpawnerComponent carSpawnerComponent) =>{
             carSpawnerComponent.timer+=deltaTime;
             if(carSpawnerComponent.timer < carSpawnerComponent.delay){
                 return;
@@ -81,7 +94,8 @@ public class CarSpawnerSystem : SystemBase
                         Entity car = ecb.Instantiate(entityInQueryIndex, carSpawnerComponent.entityToSpawn);
                         int seed = entityInQueryIndex + index;
                         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
-                        ecb.AddComponent(entityInQueryIndex,car, new Translation{Value = new float3(wp[0], wp[1], -1)});
+                        ecb.AddComponent(entityInQueryIndex,car, new Translation{Value = new float3(wp[0], wp[1], -1)}); 
+                        ecb.AddComponent(entityInQueryIndex, car, new ChangeColorTag()); 
 
                         SpawnerUtils.SetUpPathFind(carSpawnerComponent.d_x,carSpawnerComponent.d_y,r_x, r_y, car, graphSize,districtSize,mapSize,localMapArray,ecb,entityInQueryIndex,maxCarSpeed, r);
                         carSpawnerComponent.n_cars--;
@@ -93,6 +107,16 @@ public class CarSpawnerSystem : SystemBase
             ecb.RemoveComponent<CarSpawnerComponent>(entityInQueryIndex, e);
         }).ScheduleParallel(); 
         
+        //Managing the changing of color for a vehicle
+        Entities.WithAll<ChangeColorTag>().ForEach((Entity e, in RenderMesh renderMesh, in ChangeColorTag changeColorTag) => {
+            int index = UnityEngine.Random.Range((int) 0, (int) carVariants);
+            ecbNonParallel.SetSharedComponent(e, new RenderMesh{
+                mesh = renderMesh.mesh,
+                material = carMaterialVariants[index],
+                layer = 0
+            });
+            ecbNonParallel.RemoveComponent<ChangeColorTag>(e);
+        }).WithoutBurst().Run();
         
         ecb_s.AddJobHandleForProducer(this.Dependency);
     }

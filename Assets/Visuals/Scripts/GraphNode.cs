@@ -43,8 +43,8 @@ public class GraphNode
         referenceTile = mt;
     }
 
-    public MapTile GetReferenceTile(MapTile mt){
-        return mt;
+    public MapTile GetReferenceTile(){
+        return referenceTile;
     }
     public bool IsWalkable() {
         return isWalkable;

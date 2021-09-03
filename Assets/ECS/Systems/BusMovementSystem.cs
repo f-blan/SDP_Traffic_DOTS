@@ -5,13 +5,20 @@ using Unity.Mathematics;
 
 public class BusMovementSystem : SystemBase
 {
-    private const float MAX_BUS_SPEED = 5.0f;
+    private float globalMaxBusSpeed;
     private const float MAX_STOP_TIME = 2.0f;
 
+    protected override void OnStartRunning()
+    {
+        base.OnStartRunning();
+
+        globalMaxBusSpeed = Map_Spawner.instance.maxBusSpeed;
+    }
 
     protected override void OnUpdate()
     {
         float dt = Time.DeltaTime;
+        float maxBusSpeed = globalMaxBusSpeed;
 
         Entities.WithAll<BusPathComponent>().ForEach((Entity entity, int entityInQueryIndex, ref BusPathComponent busPathComponent, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref Rotation rotation) => {
             
@@ -42,14 +49,14 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.initialPosition.x = translation.Value.x; //Set initial position to the starting position of the vehicle
                 vehicleMovementData.initialPosition.y = translation.Value.y;
 
-                vehicleMovementData.speed = MAX_BUS_SPEED;
-                vehicleMovementData.velocity = CarUtils.ComputeVelocity(MAX_BUS_SPEED, vehicleMovementData.direction); //Create a velocity vector with respect to the direction
+                vehicleMovementData.speed = maxBusSpeed;
+                vehicleMovementData.velocity = CarUtils.ComputeVelocity(maxBusSpeed, vehicleMovementData.direction); //Create a velocity vector with respect to the direction
 
                 vehicleMovementData.offset = 
                     CarUtils.ComputeOffset(
                         currentPathElement.cost[busPathComponent.verse == -1 ? 0 : 1],
-                        vehicleMovementData.direction, 
-                        busPathComponent.pathArrayReference.Value.pathArray[GetPrevPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1], 
+                        vehicleMovementData.direction,
+                        -1,
                         busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)].withDirection[busPathComponent.verse == -1 ? 0 : 1]);
                 vehicleMovementData.stop = false;
             }
@@ -58,7 +65,6 @@ public class BusMovementSystem : SystemBase
             translation.Value.y += vehicleMovementData.velocity.y * dt;
 
             if(CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.offset, translation.Value)){
-
                 UpdatePathElement(ref busPathComponent);
                 currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex];
                 if(currentPathElement.costToStop[busPathComponent.verse == -1 ? 0 : 1] != -1) vehicleMovementData.state = 5; 

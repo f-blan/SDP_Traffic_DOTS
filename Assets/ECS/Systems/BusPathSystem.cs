@@ -156,6 +156,7 @@ public class BusPathSystem : SystemBase
             
             lastDirection=PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray,lastDirection,firstData.x, firstData.y);
             
+            firstData = addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
             //Debug.Log(t);
             if(t==1){
                 firstData = addPathToElementList(pathList, graphMap, nextNodePos, graphSize);

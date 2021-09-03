@@ -152,9 +152,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d961885fca8c5c24f8238d58c2f983f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  carMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
+  carMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
   busMaterial: {fileID: 2100000, guid: c85d2ab9e3aeeb9ba9aa7222c3f0b72c, type: 2}
-  maxCarSpeed: 8
+  maxCarSpeed: 5
+  maxBusSpeed: 0
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
   Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
