@@ -305,8 +305,9 @@ MonoBehaviour:
   Obstacle: {fileID: 2100000, guid: ebad6eabd1171c046865c72449dce896, type: 2}
   ParkSpot: {fileID: 2100000, guid: 2b6e3a70fdc7cb64b86b879cb30ddfa0, type: 2}
   TrafficLight: {fileID: 2100000, guid: d9f3ee9f6a53b36409a5477920951fb5, type: 2}
+  CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
+  differentTypeOfVehicles: 4
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}
-  CarMaterial: {fileID: 2100000, guid: b15e17c4ee64a984cb2579fbb1d85035, type: 2}
   DistrictMaterial0: {fileID: 2100000, guid: cc8e559b3d504c0488cb354db98b715e, type: 2}
   DistrictMaterial1: {fileID: 2100000, guid: a5b4dead00ee4564ab857e51a1206899, type: 2}
   DistrictMaterial2: {fileID: 2100000, guid: 54dda37333dfe164f93062f28268ce1b, type: 2}
@@ -355,6 +356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b37c2ff8f5006bf459eae4afd1c9ea5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  runningEntities: 0
   map_n_districts_x: 2
   map_n_districts_y: 2
   n_entities: 100
