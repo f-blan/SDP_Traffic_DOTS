@@ -32,12 +32,14 @@ public class CarSpawnerSystem : SystemBase
         //Debug.Log("creating map");
         map = SpawnerUtils.GetMapArray();
 
+        //Get amount of different types of vehicles there should be 
         carVariants = GameObject.Find("Map_Visual").GetComponent<Map_Visual>().differentTypeOfVehicles;
+        //Get car material
         Material carMaterial = GameObject.Find("Map_Visual").GetComponent<Map_Visual>().CarMaterial;
-
         carMaterialVariants = new Material[carVariants];
 
         for(int i = 0; i < carVariants; i++){
+            //Insert new car material and change its color
             carMaterialVariants[i] = new Material(carMaterial);
             carMaterialVariants[i].color = new Color(UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),1f);
         }
@@ -93,9 +95,7 @@ public class CarSpawnerSystem : SystemBase
                         int seed = entityInQueryIndex + index;
                         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
                         ecb.AddComponent(entityInQueryIndex,car, new Translation{Value = new float3(wp[0], wp[1], -1)}); 
-                        ecb.AddComponent(entityInQueryIndex, car, new ChangeColorTag{
-                            newColor = carSpawnerComponent.color
-                        }); 
+                        ecb.AddComponent(entityInQueryIndex, car, new ChangeColorTag()); 
 
                         SpawnerUtils.SetUpPathFind(carSpawnerComponent.d_x,carSpawnerComponent.d_y,r_x, r_y, car, graphSize,districtSize,mapSize,localMapArray,ecb,entityInQueryIndex,maxCarSpeed, r);
                         carSpawnerComponent.n_cars--;
@@ -107,6 +107,7 @@ public class CarSpawnerSystem : SystemBase
             ecb.RemoveComponent<CarSpawnerComponent>(entityInQueryIndex, e);
         }).ScheduleParallel(); 
         
+        //Managing the changing of color for a vehicle
         Entities.WithAll<ChangeColorTag>().ForEach((Entity e, in RenderMesh renderMesh, in ChangeColorTag changeColorTag) => {
             int index = UnityEngine.Random.Range((int) 0, (int) carVariants);
             ecbNonParallel.SetSharedComponent(e, new RenderMesh{
