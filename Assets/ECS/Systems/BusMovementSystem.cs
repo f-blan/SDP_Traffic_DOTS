@@ -23,6 +23,18 @@ public class BusMovementSystem : SystemBase
         Entities.WithAll<BusPathComponent>().ForEach((Entity entity, int entityInQueryIndex, ref BusPathComponent busPathComponent, ref Translation translation, ref VehicleMovementData vehicleMovementData, ref Rotation rotation) => {
             
             PathElement currentPathElement  = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex]; 
+            if(vehicleMovementData.state == 3){
+                //this is handled by quadrantSystem
+                return;
+            }
+            if(vehicleMovementData.state == 6){
+                vehicleMovementData.parkingTimer+= dt;
+                if(vehicleMovementData.parkingTimer >= MAX_STOP_TIME){
+                    vehicleMovementData.parkingTimer = 0;
+                    vehicleMovementData.state = 3;
+                }
+                return;
+            }
 
             if(vehicleMovementData.stop){
                 return;
@@ -54,7 +66,8 @@ public class BusMovementSystem : SystemBase
 
             if(CarUtils.ComputeReachedDestination(vehicleMovementData.direction, vehicleMovementData.initialPosition, vehicleMovementData.offset, translation.Value)){
                 UpdatePathElement(ref busPathComponent);
-                currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex]; 
+                currentPathElement = busPathComponent.pathArrayReference.Value.pathArray[busPathComponent.pathIndex];
+                if(currentPathElement.costToStop[busPathComponent.verse == -1 ? 0 : 1] != -1) vehicleMovementData.state = 5; 
 
                 vehicleMovementData.direction = currentPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
                 UpdateVehicleMovementData(ref vehicleMovementData, ref busPathComponent, ref translation);

@@ -15,6 +15,7 @@ public struct CarSpawnerComponent : IComponentData
     //district coordinates
     public int d_x;
     public int d_y;
+    public int dType;
     public Entity entityToSpawn;
     
     public Color color;

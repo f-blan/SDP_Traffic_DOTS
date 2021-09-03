@@ -15,6 +15,8 @@ public class BusPathSystem : SystemBase
      //but is only run once for all selected bus stops at the first frame
      private NativeArray<PathUtils.PathNode> DistrictNodeArray;
      private NativeArray<PathUtils.PathNode> PathNodeArray;
+     private NativeArray<int2> globalBusStopRelativeCoords;
+     private NativeArray<int2> globalBusStopRelativePosition;
 
      private bool isGraphValid; 
 
@@ -37,6 +39,8 @@ public class BusPathSystem : SystemBase
         base.OnStartRunning();
         DistrictNodeArray = PathUtils.GetDistrictNodeArray(D_MOVE_X_COST, D_MOVE_Y_COST);
         PathNodeArray = PathUtils.GetPathNodeArray();
+        globalBusStopRelativeCoords = PathUtils.initRelativeCoords(Map_Setup.Instance.CityGraph);
+        globalBusStopRelativePosition = PathUtils.initRelativePosition(Map_Setup.Instance.CityGraph);
         isGraphValid=true;
     }
 
@@ -44,17 +48,22 @@ public class BusPathSystem : SystemBase
         if(isGraphValid){
             PathNodeArray.Dispose();
             DistrictNodeArray.Dispose();
+            globalBusStopRelativeCoords.Dispose();
+            globalBusStopRelativePosition.Dispose();
         }
      }
 
+    
 
     protected override void OnUpdate(){
+        
         EntityCommandBuffer.ParallelWriter ecb = ecb_s.CreateCommandBuffer().AsParallelWriter();
 
         int2 graphSize = new int2(Map_Setup.Instance.CityGraph.GetWidth(), Map_Setup.Instance.CityGraph.GetHeight());  
-        int2 graphSizeDistrict = new int2(Map_Setup.Instance.CityMap.GetNDistrictsX(),Map_Setup.Instance.CityMap.GetNDistrictsY());    
-        int2 busStopRelativeCoords = Map_Setup.Instance.CityGraph.GetBusStopRelativeCoords();
-        int2 busStopRelativePosition = Map_Setup.Instance.CityGraph.GetBusStopRelativePosition();
+        int2 graphSizeDistrict = new int2(Map_Setup.Instance.CityMap.GetNDistrictsX(),Map_Setup.Instance.CityMap.GetNDistrictsY());
+        NativeArray<int2> busStopRelativeCoords = globalBusStopRelativeCoords;  
+        
+        NativeArray<int2> busStopRelativePosition = globalBusStopRelativePosition;
         int2 districtSizeTiles = new int2(Map_Setup.Instance.CityMap.GetDistrictWidth(), Map_Setup.Instance.CityMap.GetDistrictHeight());
         int2 districtSizeNodes = Map_Setup.Instance.CityGraph.GetDistrictSize();
         Vector3 originPosition = Map_Setup.Instance.CityMap.GetOriginPosition();
@@ -64,19 +73,20 @@ public class BusPathSystem : SystemBase
         NativeArray<PathUtils.PathNode> localDistrictNodeArray; 
         localDistrictNodeArray= DistrictNodeArray;
 
+        //Debug.Log(busStopRelativeCoords.x + " coords " + busStopRelativeCoords.y + " " + busStopRelativePosition.x + " pos " + busStopRelativePosition.y);
         //compute path
         Entities.WithReadOnly(localDistrictNodeArray).ForEach(( Entity entity, int entityInQueryIndex, ref BusPathParams busPathParams)=>{
             
             //compute the busStop path
-            NativeList<int2> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
+            NativeList<int3> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
             NativeHashMap<int, PathUtils.PathNode> tmpPathNodeMap=new NativeHashMap<int, PathUtils.PathNode>(10, Allocator.Temp);
-
+            
             //compute the actual node path and transform into an array of PathElements
             NativeList<PathElement> pathList = ComputeNodePath(DistrictPathIndexes, localPathNodeArray, tmpPathNodeMap, graphSize, districtSizeNodes, busStopRelativeCoords);
 
-            
+            int dtype = busPathParams.pos1DistrictType;
             //get a reference world position and spawn the bus with their path as a blob array 
-            Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords,  busStopRelativePosition, originPosition);
+            Vector3 referenceWorldPosition = PathUtils.CalculateStopWorldPosition(busPathParams.pos1.x, busPathParams.pos1.y, districtSizeTiles,  busStopRelativeCoords[dtype],  busStopRelativePosition[dtype], originPosition);
             Map_Spawner.SpawnBusEntities(pathList, referenceWorldPosition, ecb, entityInQueryIndex, busPathParams.entityToSpawn);
             
 
@@ -84,11 +94,11 @@ public class BusPathSystem : SystemBase
             DistrictPathIndexes.Dispose();
             tmpPathNodeMap.Dispose();
             ecb.DestroyEntity(entityInQueryIndex, entity);
-        }).WithReadOnly(localPathNodeArray).ScheduleParallel();
+        }).WithReadOnly(localPathNodeArray).WithReadOnly(busStopRelativePosition).WithReadOnly(busStopRelativeCoords).ScheduleParallel();
         //magical lifesaver line (probably delays and schedules all actions performed by ecb inside the forEach)
         ecb_s.AddJobHandleForProducer(this.Dependency);
     }
-    private static NativeList<int2> ComputeDistrictPath(NativeArray<PathUtils.PathNode> districtNodeArray,int2 graphSizeDistrict, int2 pos1, int2 pos2, int2 pos3){
+    private static NativeList<int3> ComputeDistrictPath(NativeArray<PathUtils.PathNode> districtNodeArray,int2 graphSizeDistrict, int2 pos1, int2 pos2, int2 pos3){
         //if bottleneck this can be done as jobs, but it's done only in the first frame for the whole duration so it's not critical for framerate
         //also this whole system is already executed in parallel between the entities, so using a job might not bring to an improvement
         
@@ -97,7 +107,8 @@ public class BusPathSystem : SystemBase
         
         NativeArray<int2> neighbourOffsetArray;
         int2 moveCosts = new int2(D_MOVE_X_COST, D_MOVE_Y_COST);
-        NativeList<int2> toInt2 = new NativeList<int2>(Allocator.Temp);
+        //this is a compact structure to store the nodes and the district type of the districts they represent
+        NativeList<int3> toInt3 = new NativeList<int3>(Allocator.Temp);
 
         PathUtils.InitPartialData(out neighbourOffsetArray);
         
@@ -106,23 +117,23 @@ public class BusPathSystem : SystemBase
     
         //Debug.Log("first district");
         lastDirection =PathUtils.PathFindPartial(districtNodeArray, graphMap, pos2, pos1, graphSizeDistrict, moveCosts,  neighbourOffsetArray, lastDirection, -1,-1);
-        PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos2);
+        PathUtils.addPathToInt3List(toInt3, graphMap, graphSizeDistrict, pos2);
         //Debug.Log("second district");
         lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap, pos3, pos2, graphSizeDistrict, moveCosts, neighbourOffsetArray, lastDirection, -1,-1);
-        PathUtils.addPathToInt2List(toInt2,graphMap, graphSizeDistrict, pos3);
+        PathUtils.addPathToInt3List(toInt3,graphMap, graphSizeDistrict, pos3);
         //Debug.Log("third district");
         lastDirection =PathUtils.PathFindPartial(districtNodeArray,graphMap,  pos1, pos3, graphSizeDistrict, moveCosts,  neighbourOffsetArray,lastDirection, -1,-1);
-        PathUtils.addPathToInt2List(toInt2, graphMap, graphSizeDistrict, pos1);
+        PathUtils.addPathToInt3List(toInt3, graphMap, graphSizeDistrict, pos1);
        
 
         graphMap.Dispose();
         neighbourOffsetArray.Dispose();
         
 
-        return toInt2;
+        return toInt3;
     }
     
-    private static NativeList<PathElement> ComputeNodePath(NativeList<int2> districtPath, NativeArray<PathUtils.PathNode> graphArray,NativeHashMap<int, PathUtils.PathNode> graphMap,int2 graphSize, int2 districtSizeNodes, int2 busStopRelativeCoords){
+    private static NativeList<PathElement> ComputeNodePath(NativeList<int3> districtPath, NativeArray<PathUtils.PathNode> graphArray,NativeHashMap<int, PathUtils.PathNode> graphMap,int2 graphSize, int2 districtSizeNodes, NativeArray<int2> busStopRelativeCoords){
         //if bottleneck this can be done as jobs, but it's done only in the first frame for the whole duration so it's not critical for framerate
         //also this whole system is already executed in parallel between the entities, so using a job might not bring to an improvement
         
@@ -134,23 +145,30 @@ public class BusPathSystem : SystemBase
         PathUtils.InitPartialData( out neighbourOffsetArray);
 
         NativeList<PathElement> pathList = new NativeList<PathElement>(Allocator.Temp);
+        //Debug.Log(districtPath[0].z);
         int lastDirection =-1;
-        int2 firstNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
+        int2 firstNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords[districtPath[0].z] );
         int2 curNodePos = firstNodePos;
         int2 nextNodePos;
         int2 firstData = new int2(-1,-1);
         for(int t=1; t<districtPath.Length; ++t){
-            nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords );    
+            nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[t].x, districtPath[t].y, districtSizeNodes, busStopRelativeCoords[districtPath[t].z] );    
             
             lastDirection=PathUtils.PathFindPartial(graphArray, graphMap,nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray,lastDirection,firstData.x, firstData.y);
             
-            
             firstData = addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
-            
+            //Debug.Log(t);
+            if(t==1){
+                firstData = addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
+            }
+            else{
+                addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
+            }
             curNodePos = nextNodePos;
         }
+        //Debug.Log("almost done");
         //last iteration: link path end with path beginning 
-        nextNodePos = nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords );
+        nextNodePos = nextNodePos = PathUtils.CalculateBusStopCoords(districtPath[0].x, districtPath[0].y, districtSizeNodes, busStopRelativeCoords[districtPath[0].z] );
         lastDirection =PathUtils.PathFindPartial(graphArray,graphMap, nextNodePos, curNodePos,graphSize, new int2(N_MOVE_X_COST,N_MOVE_Y_COST), neighbourOffsetArray, lastDirection, firstData.x,firstData.y);
             
         addPathToElementList(pathList, graphMap, nextNodePos, graphSize);
@@ -163,7 +181,7 @@ public class BusPathSystem : SystemBase
         startElement.costToStop.x = startElement.cost.x-4;
 
         pathList[0] = startElement;
-
+        //Debug.Log("Done");
         neighbourOffsetArray.Dispose();
         
         return pathList;
@@ -217,8 +235,8 @@ public class BusPathSystem : SystemBase
             curElement.withDirection.y = (nextNode.reachedWithDirection+2)%4;
 
             if(curNode.isBusStop){
-                curElement.costToStop.x=curNode.reachedWithCost - 4;
-                curElement.costToStop.y=nextNode.reachedWithCost - 4;
+                curElement.costToStop.x=curNode.reachedWithCost - 3;
+                curElement.costToStop.y=nextNode.reachedWithCost - 3;
             }else{
                 curElement.costToStop.x = -1;
                 curElement.costToStop.y = -1;

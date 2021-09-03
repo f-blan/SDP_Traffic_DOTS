@@ -10,12 +10,14 @@ public class QuadrantSystem : SystemBase
     public enum VehicleTrafficLightType{
         VehicleType,
         TrafficLight,
-        ParkSpot
+        ParkSpot,
+        BusStop
     };
 
     private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrant;
     //franco: i'm creating another one since looking for a car spot is an operation relevant only to parking cars
     private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrantParkSpots;
+    private static NativeMultiHashMap<int, QuadrantData> nativeMultiHashMapQuadrantBusStops;
     private const int quadrantYMultiplier = 1000; //Offset in Y
     private const int quadrantCellSize = 5; //Size of the quadrant
     private const float minimumDistance = 4.0f; //Minimum distance to be considered as close
@@ -25,6 +27,12 @@ public class QuadrantSystem : SystemBase
     private const float tileSize = 1f;
 
     private bool isParkSpotMapValid;
+
+    private EntityQueryDesc entityQueryDescVehicles = new EntityQueryDesc{
+        Any = new ComponentType[]{
+            ComponentType.ReadOnly<VehicleMovementData>()
+        }
+    };
     private EntityQueryDesc entityQueryDesc = new EntityQueryDesc{
         Any = new ComponentType[]{
             ComponentType.ReadOnly<VehicleMovementData>(), 
@@ -35,6 +43,12 @@ public class QuadrantSystem : SystemBase
     private EntityQueryDesc entityQueryDescParkSpots = new EntityQueryDesc{
         Any = new ComponentType[]{
             ComponentType.ReadOnly<ParkSpotTag>()
+        }
+    };
+
+    private EntityQueryDesc entityQueryDescBusStops = new EntityQueryDesc{
+        Any = new ComponentType[]{
+            ComponentType.ReadOnly<BusStopTag>()
         }
     };
 
@@ -148,8 +162,10 @@ public class QuadrantSystem : SystemBase
     //Disposes
     protected override void OnDestroy(){
         nativeMultiHashMapQuadrant.Dispose();
-        nativeMultiHashMapQuadrantParkSpots.Dispose();
-        
+        if(isParkSpotMapValid){ 
+            nativeMultiHashMapQuadrantParkSpots.Dispose();
+            nativeMultiHashMapQuadrantBusStops.Dispose();
+        }
     }   
 
     protected override void OnUpdate(){ 
@@ -161,18 +177,22 @@ public class QuadrantSystem : SystemBase
         
         
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
+            EntityQuery queryVehicles = GetEntityQuery(entityQueryDescVehicles);
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
+            Map_Setup.Instance.runningEntities = queryVehicles.CalculateEntityCount();
         }
 
         if(isParkSpotMapValid == false){
             //couldn't do thin in OnCreate (race condition)
-            
             nativeMultiHashMapQuadrantParkSpots = new NativeMultiHashMap<int, QuadrantData>(
                     GetEntityQuery(entityQueryDescParkSpots).CalculateEntityCount(), Allocator.Persistent);
+            nativeMultiHashMapQuadrantBusStops = new NativeMultiHashMap<int, QuadrantData>(
+                    GetEntityQuery(entityQueryDescBusStops).CalculateEntityCount(), Allocator.Persistent);
         }
         
         NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriter = nativeMultiHashMapQuadrant.AsParallelWriter();
         NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriterParkSpots = nativeMultiHashMapQuadrantParkSpots.AsParallelWriter();
+        NativeMultiHashMap<int, QuadrantData>.ParallelWriter quadrantParallelWriterBusStops = nativeMultiHashMapQuadrantBusStops.AsParallelWriter();
         //Adds all elements with VehicleMovementData component to the hashmap 
         Entities.WithAny<VehicleMovementData, TrafficLightComponent>().ForEach((Entity entity, in Translation translation) => {
             if(HasComponent<VehicleMovementData>(entity)){
@@ -200,7 +220,7 @@ public class QuadrantSystem : SystemBase
             }
         }).ScheduleParallel();
 
-        //franco: we do the same for parkSpots (only once)
+        //franco: we do the same for parkSpots and busStops (only once)
         if(isParkSpotMapValid == false){
             isParkSpotMapValid=true;
             Entities.WithAll<ParkSpotTag, Translation>().ForEach((Entity entity, in Translation translation) => {
@@ -210,23 +230,33 @@ public class QuadrantSystem : SystemBase
                     position = translation.Value
                 });
             }).ScheduleParallel();
+            Entities.WithAll<BusStopTag, Translation>().ForEach((Entity entity, in Translation translation) => {
+                quadrantParallelWriterBusStops.Add(GetPositionHashMapKey(translation.Value), new QuadrantData{
+                    entity = entity,
+                    type = VehicleTrafficLightType.BusStop,
+                    position = translation.Value
+                });
+            }).ScheduleParallel();
         }
 
         NativeMultiHashMap<int, QuadrantData> localQuadrant = nativeMultiHashMapQuadrant;
         NativeMultiHashMap<int, QuadrantData> localQuadrantParkSpots = nativeMultiHashMapQuadrantParkSpots;
+        NativeMultiHashMap<int, QuadrantData> localQuadrantBusStops = nativeMultiHashMapQuadrantBusStops;
         //Iterates through the VehicleMovementData having components and checks for a closer vehicle
         Entities.WithAll<VehicleMovementData>().WithReadOnly(localQuadrantParkSpots).ForEach((Entity entity, ref Translation translation, ref VehicleMovementData vehicleMovementData) => { 
-
+            
 
             //the car is parked, non need to compute the stop variable as it doesn't move
             if(vehicleMovementData.state==2) return;
 
-            //the car is parked and wants to get into the road: we just check if it can (road tile is free) and if so we change its translation component
+            //the car/bus is parked and wants to get into the road: we just check if it can (road tile is free) and if so we change its translation component
             if(vehicleMovementData.state == 3){
                 QuadrantData dummy;
+  
                 //if the parked car doesn't have a car on its left it can get into the road
                 if(!QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction, 3, VehicleTrafficLightType.VehicleType, out dummy,1, tileSize/2)){
                     //move the car on the roadTile
+ 
                     translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 3, 1);
                     vehicleMovementData.state = 4;
                 }
@@ -274,7 +304,16 @@ public class QuadrantSystem : SystemBase
                     }
                 }
             }
-
+            //state reserved to buses: the bus knows there's a busStop in the current node
+            if(vehicleMovementData.state==5){
+                QuadrantData busStop;
+                if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrantBusStops, translation.Value, vehicleMovementData.direction,1, VehicleTrafficLightType.BusStop,out busStop,1, tileSize*3/5)){
+                        //ParkSpot found: change the state and translation component of the car
+                        vehicleMovementData.state = 6;
+                        translation.Value = busStop.position;
+                        vehicleMovementData.parkingTimer = 0;
+                    }
+            }
 
             //vehicleMovementData.stop = QuadrantUtils.GetStop(localQuadrant, translation.Value, vehicleMovementData.direction);
             
@@ -295,10 +334,10 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop = true;
                 }*/
             }
-            else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
+            /*else if(closestNativeArray[0].type == VehicleTrafficLightType.TrafficLight && !closestNativeArray[0].trafficLightData.isRed && closestNativeArray[0].distance < minimumStopDistance){
                 vehicleMovementData.stop = false;
                 //if you have a green traffic light in front, you also check if there are cars blocking your way inside. If yes you stay out of the intersection
-                /*QuadrantData foundEntity;
+                QuadrantData foundEntity;
                 bool intrsectionBusy = QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, closestNativeArray[0].position,vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out foundEntity,2, tileSize*8/10);
                 
                 if(intrsectionBusy){ //&& foundEntity.vehicleData.direction != vehicleMovementData.direction){
@@ -306,14 +345,14 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop=true;
                 } else{
                     vehicleMovementData.stop=false;
-                }*/
-            }
+                }
+            }*/
             else{
                 vehicleMovementData.stop = false;
             }
 
             closestNativeArray.Dispose();
-        }).WithReadOnly(localQuadrant).ScheduleParallel();//WithoutBurst().Run();//ScheduleParallel();
+        }).WithReadOnly(localQuadrant).WithReadOnly(localQuadrantBusStops).ScheduleParallel();//WithoutBurst().Run();//ScheduleParallel();
         // }).WithoutBurst().Run();
 
         // DebugDrawQuadrant(Camera.main.ScreenToWorldPoint(Input.mousePosition));
