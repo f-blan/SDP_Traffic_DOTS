@@ -359,8 +359,11 @@ public class QuadrantSystem : SystemBase
             
             QuadrantData obstacle;
             
-            if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out obstacle,.8f,tileSize/2)){
-                vehicleMovementData.stop = true;
+            if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,0,VehicleTrafficLightType.VehicleType,out obstacle,.9f,tileSize/2)){
+                if(obstacle.vehicleData.direction == vehicleMovementData.direction){ 
+                    vehicleMovementData.stop = true;
+                    return;
+                }
                 /*float3 frontTile = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value, vehicleMovementData.direction, 0, 1f);
                 if((vehicleMovementData.direction+1)%4 == obstacle.vehicleData.direction && !QuadrantUtils.isWithinTarget2(frontTile, obstacle.position, tileSize*3/10)){
                     //Debug.Log("car stop");
@@ -369,7 +372,6 @@ public class QuadrantSystem : SystemBase
                     vehicleMovementData.stop = true;
                     return;
                 }*/
-                return;
             }
             if(QuadrantUtils.GetHasEntityToRelativeDirection(localQuadrant, translation.Value, vehicleMovementData.direction,0,VehicleTrafficLightType.TrafficLight,out obstacle,.9f,tileSize/2)){
                 vehicleMovementData.trafficLightintersection = true;

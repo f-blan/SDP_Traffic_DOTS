@@ -16,7 +16,7 @@ This section serves as a general description of the project and its features, fo
 
 ### 1.2 Objectives
 
-<br>The goal of the project is to explore the potential of the Unity DOTS technology and get familiar with the ECS programming pattern by developing a simulation that takes full advantage of their related optimizations as well as using the Unity Jobs System to create highly optimized multithreaded C# code.
+<br>The goal of the project is to explore the potential of the Unity DOTS technology and get familiar with the ECS programming pattern by developing a simulation that takes full advantage of their related optimizations as well as using the Unity Jobs System to create highly optimized multithreaded C# code. More information about the DOTS technology can be found [in this page](https://unity.com/dots).
 <br>For this purpose, the authors have created a simulated environment of a city using Unity, as suggested by the project tutors.
 <br>The simulation is meant to be run from the Unity editor and after having imported the packages listed [in this page](https://docs.unity3d.com/Packages/com.unity.entities@0.17/manual/install_setup.html) under the "Recommended Packages" section.
 
@@ -41,7 +41,7 @@ This section serves as a general description of the project and its features, fo
 - ECS. This folder contains two subfolders ("DataComponents" and "Systems") that contain all the code related to ECS. Also a "Utils" folder is present where some more C# files are stored that contain functions used by the application's systems
 - Scenes. This is where the only scene developed by the team is stored. The scene is composed of three GameObjects that handle the generation and visualization of the map (Map_Setup and Map_Visual) while setting up the most important systems, as well as a Main Camera and a UI object that displays on screen some information about the simulation at run time.
 - Visuals. The scripts used by the scene's GameObjects are all inside its "Scripts" subfolder, which additionally contains also the classes used to represent the map internally. This folder also contains the "Textures" folders where all textures and materials used in the simulation are stored.
-<br>All parameters of the application (see section 2.2) can be set from the *insert the file name here* in the root folder of the project
+<br>All parameters of the application (see section 2.2) can be set from the "config.xml" file in the "Assets/Configuration" folder.
 
 ### 2.2 The parameters
 <br> The parameters of the simulation can be set both by the config.xml file (Assets/Configuration) or by the Unity editor (enable "Override Reading Config File" in Map_Setup GameObject). This section presents the table of parameters along with their description.
@@ -51,7 +51,7 @@ This section serves as a general description of the project and its features, fo
 |map_n_district_x|Map_Setup|defines the map width (in terms of districts)|
 |map_n_district_y|Map_Setup|defines the map height (in terms of districts)|
 |n_entities|Map_Setup|the number of cars that will run in the simulation. Warning: a map of a given size can spawn up to a maximum amount of cars; if n_entities exceeds such number, the maximum number of cars will be spawned instead.
-|n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; additionally the map doesn't allow to spawn more than one bus line per district.
+|n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; the map doesn't allow to spawn more than one bus line per district; bus lines paths are computed in the first fram for all bus lines, setting this value too high with big maps may delay the start of the simulation.
 |frequency_district_X|Map_Setup|This is a group of parameters (X goes from 0 to 3). They define the frequency the corresponding district type will be chosen during map creation (choosing a higher frequency with respect to other will generate a map comprised of mostly the respective district type). To disable a given district type set its frequency parameter to 0.|
 |maxCarSpeed|Map_Spawner|sets the maximum speed of cars|
 |maxBusSpeed|Map_Spawner|sets the maximum speed of buses|
@@ -136,28 +136,43 @@ This section serves as a general description of the project and its features, fo
 - Vehicles can detect if entities of a given type are present in a position they are interested in (e.g. right in front of them or to their side) by cycling through all the entities located within the Quadrant of the aforementioned position. They can do so by hashing the position into an integer and using the HashMap of the given type(s).
 - Depending on the state of the vehicle, one or more positions will be probed: when the vehicle is inside a road the system will probe only the position right in front of the vehicle (the position on the right side may also be probed if the vehicle has to park/stop); if instead the vehicle is at an intersection the system will probe several different positions depending on where the vehicle has to turn (generally the vehicles are meant to stop if the Italian Road System requires them to)
 
-Since these operations require populating hashMaps and cycling through entities, and since (differently from pathFinding) this is done once every frame and for every vehicle, the QuadrantSystem is the most critical part of the simulation when it comes to performances. Its implementation has been made considering a tradeoff between performances, congestion avoidance and correctness.
+Since these operations require populating hashMaps and cycling through entities, and since (differently from pathFinding) this is done once every frame and for every vehicle, the QuadrantSystem is the most critical part of the simulation when it comes to performances. Its implementation has been made considering a tradeoff between performances, traffic jam avoidance and correctness.
 
 ## 3. Results
 
 <br>In this section several runs of the simulation with varying parameters along with some additional information are reported
 
 ### 3.1 Simulations
-<br>DISCLAIMER: 
-<br>Average fps is the value measured after the spawning phase has ended 
+<br>DISCLAIMERS: 
+<br>Average fps is the value measured after the spawning phase has ended. Lowest fps is usually reached during the final stages of car spawning.
+<br>The following simulations were run by setting all the frequency parameters for districts to 1
 <br>The following simulations were run on a System with the following specifics:
-- *insert specifics here (i would say RAM, processor and graphics card is enough)*
+- Processor: Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz   2.81 GHz
+- RAM installed = 16,0 GB
+- Graphics Card = NVIDIA GeForce GTX 1060
 
-|Id|Number of running entities|Total number of entities|Map Size (in districts)|Graph size (in nodes)|Peak fps|Lowest fps|Average fps| 
-|--|--------------------------|------------------------|-----------------------|---------------------|--------|----------|-----------|
-|0 | *insert info here* | | | | | |
+|Id|Number of running entities|Number of bus lines|Total number of entities|Map Size (in districts)|Graph size (in nodes)|Peak fps|Lowest fps|Average fps| 
+|--|--------------------------|-----------|------------------------|-----------------------|---------------------|--------|----------|-----------|
+| 0 | 15 | 0 |94 | 1 | 12 | 450 | 390 | 400 |
+| 1 | 275| 0 |615| 4 | 48 | 415 | 370 | 390 |
+| 2 | 18 | 9 | 763 | 762 | 9 | 108 | 450 | 390 | 400|
+| 3 | 35200| 100 | 138308| 1225 | 14700 | 130 | 55 | 120 |
+| 4 | 100600| 300 | 541254 | 4900 | 58800 | 55 | 25 | 45 |
+| 5 | 150000| 0 | 878000 | 8100 | 97200 | 40 | 15 | 30 |
+| 6 | 250000| 0 | 930000 | 8100 | 97200 | 30 | 7 | 22 |
 
 ### 3.2 Comments and Observations
-<br> *after filling the table write comments here*
+- 0. A simple simulation to test the behavior of cars. The number of cars is very low as well as the map size, so performance are very good. No bus lines were spawned since the map is too small. Note: path randomicity for each car is actually pseudo randomic based on car position, time delay between frames etc. so the cars that spawn close to each other may have similar paths during their first cycles. Pseudo randomicity could not be avoided since the class Unity.Random was used in order to generate random numbers inside Jobs.
+- 1. A simulation of an overcrowded small city. Performances are still not an issue, however the city is overcrowded and since (for the sake of performances) cars don't make dynamic pathing decisions based on traffic it may happen that traffic jams are formed (e.g. an intersection is too crowded and doesn't allow any car to move or loops of cars spanning more than one intersection are formed). To avoid these situations as much as possible cars are allowed to overlap briefly in some occasions, but in order to guarantee fair traffic rules the team decided to reach a compromise between collision avoidance, probability of traffic jams and performances. As a general it is suggested not to spawn more than 25 cars per district.
+- 2. Bus-only simulation in a small city. Performances are very good since there are not many running entities, the purpose of this simulation is to show bus behavior and the bus drawing feature.
+- 3. A simulation of a medium sized city with both cars and bus lines.
+- 4. A very big city with > 100k running entities. Since there were 300 bus lines with such a big map the simulation takes a bit more time than usual to start, however once the spawning of the entities is finished the simulation holds at 45 fps.
+- 5. A test to see how many cars can be handled by the application considering a map big enough to not become overcrowded. Buses were not spawned because, considering the amount that can be spawned with such a big map without taking too long at the first frame, they don't weigh on performance nearly the same way as cars after being spawned. The spawning + pathfinding of cars takes the framerate as low as 15 fps in the last stages of the simulation, however once this phase is finished the framerate stabilizes at around 30 fps.
+- 6. Another stress test, similar to n.5 but with more cars. The spawning phase weighs a lot on performance and the city is a bit overcrowded, but the final and stable framerate stays at around 22 fps.
 
 ## 4 Additional Features and Usage
 <br>The simulation is meant to be run on the Unity editor after importing all the related packages. 
-<br>All parameters can be set on an external file named *insert name* in the root folder of the project and are described in section 2.2. 
+<br>All parameters can be set on an external file named "config.xml" in the "Assets/Configuration" folder and are described in section 2.2. 
 <br>Also the simulation contains the following additional features that can be accessed from the game scene:
 - Camera functionalities. The main camera of the simulation allows to zoom in and out (by using the mouse wheel) and to move its position by dragging the mouse. Also it features a vehicle follow mode: by left clicking on a vehicle the camera will position so that the selected car is at its center and will keep following its movements (right click anywhere to exit vehicle follow mode),
 - UI. There are some text fields in the top left and bottom left corners of the main camera. They display the time elapsed since the start of the application and the number of running entities currently running in the simulation (the number may differ from the real one by a few units) 

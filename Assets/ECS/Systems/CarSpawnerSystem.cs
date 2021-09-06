@@ -80,20 +80,17 @@ public class CarSpawnerSystem : SystemBase
             }
 
             
-            
+            NativeList<int2> goodSpots = new NativeList<int2>(Allocator.Temp);
             //the 2 and minus 2 is to avoid spawning a car close to the end of its district, which may lead to cars spawning in already busy tiles
             for(int r_x = 2; r_x < districtSize.x-2; ++r_x){
                 for(int r_y = 3; r_y< districtSize.y-2; ++r_y){
                     
-                    if(carSpawnerComponent.n_cars <= 0){
-                        //we spawned all cars we had to spawn
-                        break;
-                    }
                     int index = SpawnerUtils.CalculateIndex(carSpawnerComponent.d_x, carSpawnerComponent.d_y, r_x, r_y, districtSize,mapSize);
                     
                     if(localMapArray[index].type == 0){
-                        Vector3 wp = SpawnerUtils.GetWorldPosition(localMapArray[index].x, localMapArray[index].y, originPosition);
                         
+                        goodSpots.Add(new int2(r_x,r_y));
+                        /*
                         Entity car = ecb.Instantiate(entityInQueryIndex, carSpawnerComponent.entityToSpawn);
                         int seed = entityInQueryIndex + index;
                         Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
@@ -101,12 +98,40 @@ public class CarSpawnerSystem : SystemBase
                         ecb.AddComponent(entityInQueryIndex, car, new ChangeColorTag()); 
 
                         SpawnerUtils.SetUpPathFind(carSpawnerComponent.d_x,carSpawnerComponent.d_y,r_x, r_y, car, graphSize,districtSize,mapSize,localMapArray,ecb,entityInQueryIndex,maxCarSpeed, r);
-                        carSpawnerComponent.n_cars--;
+                        carSpawnerComponent.n_cars--;*/
                     }
                     
                 }
             }
-            
+            //changed: now car spawning position within the district is no longer deterministic
+            for(int t=0; t<goodSpots.Length; ++t){
+                if(carSpawnerComponent.n_cars <= 0){
+                    //we spawned all cars we had to spawn
+                    break;
+                }
+                
+                int seed = entityInQueryIndex + t +1 + goodSpots.Length*100 + (int) carSpawnerComponent.delay*1000;
+                Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint) seed);
+                int spotIndex = r.NextInt(0, goodSpots.Length);
+                if(t%2==0){
+                    spotIndex = goodSpots.Length -1 - spotIndex;
+                }
+                //Debug.Log(spotIndex);
+                int r_x = goodSpots[spotIndex].x;
+                int r_y = goodSpots[spotIndex].y;
+                goodSpots.RemoveAt(spotIndex);
+
+                int index = SpawnerUtils.CalculateIndex(carSpawnerComponent.d_x, carSpawnerComponent.d_y, r_x, r_y, districtSize,mapSize);
+                Vector3 wp = SpawnerUtils.GetWorldPosition(localMapArray[index].x, localMapArray[index].y, originPosition);
+
+                Entity car = ecb.Instantiate(entityInQueryIndex, carSpawnerComponent.entityToSpawn);
+                ecb.AddComponent(entityInQueryIndex,car, new Translation{Value = new float3(wp[0], wp[1], -1)}); 
+                ecb.AddComponent(entityInQueryIndex, car, new ChangeColorTag()); 
+
+                SpawnerUtils.SetUpPathFind(carSpawnerComponent.d_x,carSpawnerComponent.d_y,r_x, r_y, car, graphSize,districtSize,mapSize,localMapArray,ecb,entityInQueryIndex,maxCarSpeed, r);
+                carSpawnerComponent.n_cars--;
+            }
+            goodSpots.Dispose();
             ecb.RemoveComponent<CarSpawnerComponent>(entityInQueryIndex, e);
         }).ScheduleParallel(); 
         

@@ -129,6 +129,8 @@ public static class SpawnerUtils
         ecb.AddComponent(eqi,entity, new CarPathParams{init_cost = cost, direction = direction, startPosition = startPos, endPosition = endPos});
         //Debug.Log(endPos.x + " " + endPos.y);
         InitializeCarData(ecb, entity, direction, eqi, maxCarSpeed);
+        //Debug.Log(PathUtils.CalculateIndex(endPos.x,endPos.y, graphSize.x));
+        
 
         walkOffset.Dispose();
         walkableDirections.Dispose();
