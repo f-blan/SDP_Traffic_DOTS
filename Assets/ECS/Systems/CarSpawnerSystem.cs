@@ -30,7 +30,10 @@ public class CarSpawnerSystem : SystemBase
         base.OnStartRunning();
         //get the graph in a format usable by jobs (a native map of struct PathNode, and do it only once per runtime: Allocator.Persistent used)
         //Debug.Log("creating map");
-        map = SpawnerUtils.GetMapArray();
+        SpawnerUtils.GetMapArray(out map);
+        if(map.Length != 0){
+            isMapValid = true;
+        }
 
         //Get amount of different types of vehicles there should be 
         carVariants = GameObject.Find("Map_Visual").GetComponent<Map_Visual>().differentTypeOfVehicles;

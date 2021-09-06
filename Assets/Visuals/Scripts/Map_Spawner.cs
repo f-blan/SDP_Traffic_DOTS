@@ -10,7 +10,6 @@ using System;
 public class Map_Spawner : MonoBehaviour
 {
         public static Map_Spawner instance {private set; get; }
-        [SerializeField] private Material carMaterial;
         [SerializeField] private Material busMaterial;
         [SerializeField] public float maxCarSpeed;
         [SerializeField] public float maxBusSpeed;
@@ -159,51 +158,48 @@ public class Map_Spawner : MonoBehaviour
             em.SetComponentData(entity, new BusPathParams{pos1 = pos1, pos2 = pos2, pos3 = pos3, entityToSpawn = defaultBusEntity, pos1DistrictType = pos1DistrictType});
 
         }
-        public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
+        // public void SpawnCarEntities(Map<MapTile> CityMap, PathFindGraph CityGraph, List<MapTile> roadTiles, int n_entities){
 
-            if(roadTiles.Count < n_entities){
-                Debug.Log("Too many entities for the map to handle!");
-                return;
-            }        
-            EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-            EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation), typeof(VehicleMovementData));
+        //     if(roadTiles.Count < n_entities){
+        //         Debug.Log("Too many entities for the map to handle!");
+        //         return;
+        //     }        
+        //     EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        //     EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(RenderMesh), 
+        //                         typeof(LocalToWorld), typeof(RenderBounds), typeof(CarPathParams), typeof(Rotation), typeof(VehicleMovementData));
 
-            NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
+        //     NativeArray<Entity> cars = new NativeArray<Entity>(n_entities, Allocator.Temp);
 
-            em.CreateEntity(arch, cars);
+        //     em.CreateEntity(arch, cars);
 
-            Mesh carMesh = CreateMesh(0.47f, 1f);
+        //     Mesh carMesh = CreateMesh(0.47f, 1f);
 
-            //Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
-            for(int t=0; t<n_entities; ++t){
+        //     //Unity.Mathematics.Random r = new Unity.Mathematics.Random(0x6E624EB7u);
+        //     for(int t=0; t<n_entities; ++t){
                
-                int index = UnityEngine.Random.Range(0, roadTiles.Count);
+        //         int index = UnityEngine.Random.Range(0, roadTiles.Count);
                 
-                MapTile tile = roadTiles[index];
+        //         MapTile tile = roadTiles[index];
 
-                Entity e = cars[t];
-                roadTiles.RemoveAt(index);
+        //         Entity e = cars[t];
+        //         roadTiles.RemoveAt(index);
 
-                Vector3 wp = CityMap.GetWorldPosition(tile.GetX(), tile.GetY());
+        //         Vector3 wp = CityMap.GetWorldPosition(tile.GetX(), tile.GetY());
 
-                em.SetName(e, "Vehicle "+t);
+        //         em.SetName(e, "Vehicle "+t);
 
-                em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], -1)});
+        //         em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], -1)});
 
-                carMaterial.color = new Color(UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),UnityEngine.Random.Range(0.0f, 1f),1f);
-                Debug.Log(carMaterial.color);
+        //         em.SetSharedComponentData(e, new RenderMesh{
+        //             mesh = carMesh,
+        //             material = carMaterial,
+        //             layer = 1
+        //         });
 
-                em.SetSharedComponentData(e, new RenderMesh{
-                    mesh = carMesh,
-                    material = carMaterial,
-                    layer = 1
-                });
-
-                SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em);
-            }
-            cars.Dispose();
-        }
+        //         SetUpPathFind(tile.GetX(), tile.GetY(), e, CityGraph.GetWidth(), CityGraph.GetHeight(), CityMap, em);
+        //     }
+        //     cars.Dispose();
+        // }
     
         private void SetUpPathFind(int x, int y, Entity entity, int graph_width, int graph_height, Map<MapTile> CityMap, EntityManager em){
             int direction=0;

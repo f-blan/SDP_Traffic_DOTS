@@ -7,13 +7,13 @@ using Unity.Collections;
 using Unity.Transforms;
 public static class SpawnerUtils 
 {
-    public static NativeArray<TileStruct> GetMapArray(){
+    public static void GetMapArray(out NativeArray<TileStruct> mapArray){
 
         Map<MapTile> CityMap = Map_Setup.Instance.CityMap;
         int2 mapSize = new int2 (CityMap.GetWidth(), CityMap.GetHeight());
         int2 districtSize = new int2(CityMap.GetDistrictWidth(),CityMap.GetDistrictHeight());
 
-        NativeArray<TileStruct> mapArray = new NativeArray<TileStruct>(mapSize.x * mapSize.y, Allocator.Persistent);
+        mapArray = new NativeArray<TileStruct>(mapSize.x * mapSize.y, Allocator.Persistent);
         int i;
         for(int d_x=0; d_x<CityMap.GetNDistrictsX(); ++d_x){
             for(int d_y =0; d_y<CityMap.GetNDistrictsY(); ++d_y){
@@ -49,8 +49,8 @@ public static class SpawnerUtils
                 
             }
         }
-        
-        return mapArray;
+
+        return;
     }
 
     public static int CalculateIndex(int d_x, int d_y, int r_x, int r_y, int2 districtSize, int2 mapSize){
