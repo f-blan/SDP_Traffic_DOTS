@@ -10,19 +10,19 @@ This section serves as a general description of the project and its features, fo
 
 |Surname | Name | Student number |
 |--------|------|----------------|
-|*Sam insert your info here*|
+|Abreu | Samuel Oreste | s281568|
 |Blangiardi| Francesco  |s288265|
 <br>
 ### 1.2 Objectives
 
-<br>The goal of the project is to explore the potentiality of the Unity DOTS technology and get familiar with the ECS programming pattern by developing a simulation that takes full advantage of their related optimizations as well as using the Unity Jobs System to create highly optimized multithreaded C# code.
+<br>The goal of the project is to explore the potential of the Unity DOTS technology and get familiar with the ECS programming pattern by developing a simulation that takes full advantage of their related optimizations as well as using the Unity Jobs System to create highly optimized multithreaded C# code.
 <br>For this purpose, the authors have created a simulated environment of a city using Unity, as suggested by the project tutors.
 <br>The simulation is meant to be run from the Unity editor and after having imported the packages listed [in this page](https://docs.unity3d.com/Packages/com.unity.entities@0.17/manual/install_setup.html) under the "Recommended Packages" section.
 
 ### 1.3 Features
 
 <br>The city features streets and intersections, where different type of vehicles (implemented as entities) are allowed to move.
-<br>Vehicles are divided into cars and buses, whith each cathegory featuring a different behavioral pattern, while their motion is regulated and limited by:
+<br>Vehicles are divided into cars and buses, with each category featuring a different behavioral pattern, while their motion is regulated and limited by:
 - Streets
 - Intersections
 - Traffic lights
@@ -33,12 +33,12 @@ This section serves as a general description of the project and its features, fo
 
 ## 2. Implementation Details
 
-<br>Here are listed the mosti important implementation details of the simulation, as well as an overview of file organization
+<br>Here are listed the most important implementation details of the simulation, as well as an overview of file organization
 <br><br>
 ### 2.1 File Organization
 <br>All the code developed by the team is contained in the Assets folder. The most important folders are:
 - ECS. This folder contains two subfolders ("DataComponents" and "Systems") that contain all the code related to ECS. Also a "Utils" folder is present where some more C# files are stored that contain functions used by the application's systems
-- Scenes. This is where the only scene developed by the team is stored. The scene is composed of three GameObjects that handle the generation and visualization of the map (Map_Setup and Map_Visual) while setting up the most important systems, as well as a Main Camera and a UI object that displays on screen a few informations about the simulation at run time.
+- Scenes. This is where the only scene developed by the team is stored. The scene is composed of three GameObjects that handle the generation and visualization of the map (Map_Setup and Map_Visual) while setting up the most important systems, as well as a Main Camera and a UI object that displays on screen some information about the simulation at run time.
 - Visuals. The scripts used by the scene's GameObjects are all inside its "Scripts" subfolder, which additionally contains also the classes used to represent the map internally. This folder also contains the "Textures" folders where all textures and materials used in the simulation are stored.
 <br>All parameters of the application (see section 2.2) can be set from the *insert the file name here* in the root folder of the project
 
@@ -47,10 +47,10 @@ This section serves as a general description of the project and its features, fo
 
 ### 2.3 The map
 <br>The map is generated entirely through script and is divided in several "districts" (the number of districts the map is composed of can be set through parameters). Each district is chosen randomly (according to the "frequency" parameters) from a set of 4 different district types:
-<br>all of them are defined by a unique structure and contain several intersections (12, of which one features bus stops) but all have (for simplicity) the same dimension and are compatible with each other (e.g stacking any number of district in any combination of district types and in any direction gives shape to a street network wher any road can be accessed from any position). Additionally every district is divided into tiles, where a tile is equivalent to the space occupied by a single car, which can be of several different types (road, building, traffic light etc.).
-<br>The map is stored internally into two different classes, both contained in the Visuals/Scripts subfolder, that are instantiated only once each in Map_Setup:
-- Map (instantiated as CityMap). It contains informations related to each tile as well as some general informations on the map (number of districts, dimension of each district etc.). It is used (in a read-only representation) in CarSpawnerSystem(see section 2.5).
-- PathFindGraph (instantiated as CityGraph). As the name suggests this class is used for computing the path each vehicle has to take. As such, it is a much more compact data structure compared to CityMap since it only needs to store informations on intersections (their coordinates, where they allow to go and with which cost, defined as number of tiles) together with a matrix (usually small) that stores the type of each district present in the map. Intersections can only allow to go to up to 4 directions (up, right, down and left), and is treated by the algorithms as a node of the graph, with each node being identified by an x and y coordinate (the graph is organized as a matrix).
+<br>all of them are defined by a unique structure and contain several intersections (12, of which one features bus stops) but all have (for simplicity's sake) the same dimension and are compatible with each other (e.g stacking any number of district in any combination of district types and in any direction gives shape to a street network where any road can be accessed from any position). Additionally every district is divided into tiles, where a tile is equivalent to the space occupied by a single car, which can be of several different types (road, building, traffic light, etc.).
+<br>The map is stored internally in two different classes, both of which are contained in the Visuals/Scripts subfolder; they follow a singleton architectural pattern, and thus, are instantiated only once in Map_Setup:
+- Map (instantiated as CityMap). It contains information related to each tile as well as some general information on the map (number of districts, dimension of each district etc.). It is used (in a read-only representation) in CarSpawnerSystem(see section 2.5).
+- PathFindGraph (instantiated as CityGraph). As the name suggests this class is used for computing the path each vehicle has to take. As such, it is a much more compact data structure compared to CityMap since it only needs to store information on intersections (their coordinates, where they allow to go and with which cost, defined as number of tiles) together with a matrix (usually small) that stores the type of each district present in the map. Intersections can only allow to go to up to 4 directions (up, right, down and left), and is treated by the algorithms as a node of the graph, with each node being identified by an x and y coordinate (the graph is organized as a matrix).
 
 ### 2.4 The Entities
 
@@ -64,17 +64,17 @@ This section serves as a general description of the project and its features, fo
 <br> ParkSpot entities are only identified by the ParkSpotTag (a Tag is a Component without data associated to it), they are not tasked with any rendering (parking spot visuals is dealt with by the district entities, whose textures feature several light blue tiles) and are only used in the QuadrantSystem to notify cars looking for a parking spot of their presence. They are spawned by Map_Setup using a dedicated function in Map_Spawner<br>
 
 #### 2.4.3 BusStops
-<br> These type of entities are very similar to ParkSpot entities, the only difference being that there is a fixed amount of them (4 per district) and that they are reserved for buses when they reach the corresponding Bus Stop Intersection. Likewise the entities themselves do not render any visual component but their position is represented in the district texture by the orange areas.<br>
+<br> These type of entities are very similar to ParkSpot entities, the only difference being that there is a fixed amount of them (4 per district) and that they are reserved for buses when they reach the corresponding Bus Stop Intersection. Likewise the entities themselves do not render any visual component but their position; it is represented in the district texture by the orange areas.<br>
 
 #### 2.4.4 TrafficLights
-<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem and the QuadrantSystem. They are divided into two types (vertical and horizontal) and are rendered by their own RenderMesh component, which renders a different material depending on the traffic light type. Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup.<br>
+<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem and the QuadrantSystem. They are divided in two types (vertical and horizontal) and are rendered by their own RenderMesh component, which renders a different material depending on the traffic light type. Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup.<br>
 
 #### 2.4.5 Cars
 <br> Cars are the most important entity of the simulation and can contain different types of components at different points in time. As mentioned in 2.4.1 they are spawned by the CarSpawnerSystem, which initializes most of their components. Their movement is regulated by the QuadrantSystem, which makes them avoid colliding with other cars along with some other functionalities.
 <br> Their behavioral cycle is the following:
 
 - PathFinding: the cars have a CarPathParams component and are therefore processed by the CarPathSystem. In this phase a random intersection in the whole map is selected and a path is computed within one frame, at the end of which the CarPathParams component is removed and the path is stored into a DynamicBuffer<CarPathBuffer> attached to the entity.
-- PathFollowing: all cars that contain the VehicleMovementData (initialized in CarSpawnerSystem) are processed by the VehicleMovementSystem, which in this phase moves the cars according to the informations contained in the dynamic buffer.
+- PathFollowing: all cars that contain the VehicleMovementData (initialized in CarSpawnerSystem) are processed by the VehicleMovementSystem, which in this phase moves the cars according to the information contained in the dynamic buffer.
 - Parking: after reaching the last node in the path the cars start moving in random directions (still through the VehicleMovementSystem) looking for a free parking spot (mimicking human behavior) until the QuadrantSystem notifies them that there's one available in their immediate right. After that the car parks into the parking spots and waits a fixed amount of time, after which the VehicleMovementSystem will attach the CarPathParams component to it in order to start a new cycle.
 
 
@@ -86,15 +86,15 @@ This section serves as a general description of the project and its features, fo
 
 ### 2.5 Components
 
-<br> In this subsection are listed some general informations about the custom component used in the simulation
+<br> In this subsection some general information about the custom component used in the simulation are listed
 <br><br>
 
 | name | related entities | related systems | description |
 |------|------------------|-----------------|-------------|
-| BusPathComponent | Buses | BusMovementSystem | contains a reference to the related bus line's path, as well as some other informations |
-| BusPathParams | BusLines | BusPathSystem | contains some setup informations to compute the path that will be used by bus entities |
+| BusPathComponent | Buses | BusMovementSystem | contains a reference to the related bus line's path, as well as some other information |
+| BusPathParams | BusLines | BusPathSystem | contains some setup information to compute the path that will be used by bus entities |
 | BusStopTag | BusStops | QuadrantSystem | a tag that identifies bus stop entities|
-| CarPathParams | Cars | CarPathSystem | setup informations to compute the path for cars |
+| CarPathParams | Cars | CarPathSystem | setup information to compute the path for cars |
 | CarSpawnerComponent | Districts | CarSpawnerSystem | data related to the district and the number of cars to spawn |
 | ParkSpotTag | ParkSpots | QuadrantSystem | a tag that identifies bus stop entities |
 | TrafficLightComponent | TrafficLights | TrafficLightSystem, QuadrantSystem | stores the state of the traffic light (can be traversed or not)|
@@ -102,7 +102,7 @@ This section serves as a general description of the project and its features, fo
 
 ### 2.6 Systems
 
-<br> Here are described the most important details of the main custom systems used by the application. All the most critical operations are designed to be executed in parallel on multiple cores.
+<br> Here are described the most important details of the main custom systems used by the application. All the most critical operations are designed to be executed in parallel on multiple cores through the usage of worker threads.
 
 #### 2.6.1 TrafficLightSystem
 <br> This simple system processes TrafficLight entities: at fixed time intervals the system changes the state and the color of all traffic light entities depending on their type (vertical or horizontal). Changing the color is achieved by modifying the material all the entities of the given type are using for rendering.
@@ -111,7 +111,7 @@ This section serves as a general description of the project and its features, fo
 <br> This system processes District entities containing the CarSpawnerComponent, and generates a number of car entities contained in the component inside of the related district. It also initializes the CarPathComponent needed by cars to compute the path they're going to follow. This means that all spawned cars will be processed by the CarPathSystem in the next frame: this is an expensive operation and requires allocating an amount of memory that scales with the size of the graph for each car, so each CarSpawnerComponent also contains a "delay" field that allows the System to deal with each districts at different points in time (thus preventing the simulation from crashing when run with a high number of entities in a big map) 
 
 #### 2.6.3 CarPathSystem and BusPathSystem
-<br> Both of these system have the purpose of computing a path. They work on a representation of CityGraph that can be used in read-only mode by parallel Jobs (a native array of structs). The computation is done using the [A* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm) which guarantees optimality with reasonable performances; the downside is that each Job needs to work on its own copy of the graph, which was limited to only the relevant nodes in the graph in order to allocate (and therefore free) as least memory as possible for each computation. The differences between the two systems is that BusPathSystem follows a more complex procedure due to the fact that its path has to be circular: it receives through BusPathParams the coordinates of 3 districts and computes a path for each combination of two of those districts on a graph representing only the districts of the map; then for each edge of this path the system computes the path on the actual graph going from the bus stop Intersection of the starting district to the one of the destination district (with some additional constraints to adjust the overall bus path); finally, after joining all these smaller paths, it stores the complete circular path into a blobArray for the bus entities to read. Additionally BusPathSystem takes care of spawning the bus entities.<br>
+<br> Both of these systems have the purpose of computing a path. They work on a representation of CityGraph that can be used in read-only mode by parallel Jobs (a native array of structs). The computation is done using the [A\* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm) which guarantees optimality with reasonable performances; the downside is that each Job needs to work on its own copy of the graph, which was limited to only the relevant nodes in the graph in order to allocate (and therefore free) as least memory as possible for each computation. The differences between the two systems is that BusPathSystem follows a more complex procedure due to the fact that its path has to be circular: it receives through BusPathParams the coordinates of 3 districts and computes a path for each combination of two of those districts on a graph representing only the districts of the map; then for each edge of this path the system computes the path on the actual graph going from the bus stop Intersection of the starting district to the one of the destination district (with some additional constraints to adjust the overall bus path); finally, after joining all these smaller paths, it stores the complete circular path into a blobArray for the bus entities to read. Additionally BusPathSystem takes care of spawning the bus entities.<br>
 
 #### 2.6.4 BusMovementSystem and CarMovementSystem
 <br> These systems handle the path following of their respective entities together with their other possible states: CarMovementSystem deals with the parking phase of cars, while BusMovementSystem regulates the stopping procedure buses have to do whenever they reach a bus stop intersection. Both of these system work together with the QuadrantSystem to prevent vehicles from colliding, from taking illegal turns at intersections and to allow them to detect traffic lights and free ParkSpots/BusStops.<br>
@@ -120,15 +120,15 @@ This section serves as a general description of the project and its features, fo
 <br> As stated in section 2.6.4, this System basically works as a "Nearby entity detection" System: it computes whether a given vehicle can move according to its pathing decisions or if it has to stop for any reason (e.g. there are other vehicles in front of it, it can't cross an intersection because of a red semaphore or if it has to give precedence to other cars) and it detects nearby free ParkSpots/BusStops. The system works as follows:
 - A few NativeMultiHashMap are allocated as private variables, each one representing one or more type of entities and all of them using as key an integer computed by hashing a Translation value. 
 - Each key represents a "Quadrant" (a small area of the map, set to be a 5x5 tile square), the idea being that every tile of the CityMap is identified by only one Quadrant (and therefore a key in the hashMap). 
-- The hashMaps representing immovable, unchanging entities (ParkSpots and BusStops) are filled with the respective entities only once by hashing their Translation component, while the rest (TrafficLights and veichles) are filled once every frame since they may change the quadrant they are in through movement (vehicles) or they need to refresh their related informations inside the hashmap (traffic lights).
-- Vehicles can detect if entities of a given type are present in a position they are interested in (e.g. right in front of them or to their side) by cycling through all the entities located within the Quadrant of the aformentioned position. They can do so by hashing the position into an integer and using the HashMap of the given type(s).
-- Depending on the state of the vehicle, one or more position will be probed: when the vehicle is inside a road the system will probe only the position right in front of the vehicle (the position on the right side may also be probed if the vehicle has to park/stop); if instead the vehicle is at an intersection the system will probe several different positions depending on where the vehicle has to turn (generally the vehicles are meant to stop if the Italian Road System requires them to)
+- The hashMaps representing immovable, unchanging entities (ParkSpots and BusStops) are filled with the respective entities only once by hashing their Translation component, while the rest (TrafficLights and vehicles) are filled once every frame since they may change the quadrant they are in due to movement (vehicles) or they need to refresh their related information inside the hashmap (traffic lights).
+- Vehicles can detect if entities of a given type are present in a position they are interested in (e.g. right in front of them or to their side) by cycling through all the entities located within the Quadrant of the aforementioned position. They can do so by hashing the position into an integer and using the HashMap of the given type(s).
+- Depending on the state of the vehicle, one or more positions will be probed: when the vehicle is inside a road the system will probe only the position right in front of the vehicle (the position on the right side may also be probed if the vehicle has to park/stop); if instead the vehicle is at an intersection the system will probe several different positions depending on where the vehicle has to turn (generally the vehicles are meant to stop if the Italian Road System requires them to)
 
 Since these operations require populating hashMaps and cycling through entities, and since (differently from pathFinding) this is done once every frame and for every vehicle, the QuadrantSystem is the most critical part of the simulation when it comes to performances. Its implementation has been made considering a tradeoff between performances, congestion avoidance and correctness.
 
 ## 3. Results
 
-<br>In this section are reported several runs of the simulation with varying parameters along with some additional informations
+<br>In this section several runs of the simulation with varying parameters along with some additional information are reported
 
 ### 3.1 Simulations
 <br>DISCLAIMER: 
@@ -147,7 +147,7 @@ Since these operations require populating hashMaps and cycling through entities,
 <br>The simulation is meant to be run on the Unity editor after importing all the related packages. 
 <br>All parameters can be set on an external file named *insert name* in the root folder of the project and are described in section 2.2. 
 <br>Also the simulation contains the following additional features that can be accessed from the game scene:
-- Camera functionalities. The main camera of the simulation allows to zoom in and out (by using the mouse wheel) and to move its position by dragging the mouse. Also it features a vehicle follow mode: by left clicking on a vehicle the camera will position so that the selcted car is at its center and will keep following its movements (right click anywhere to exit vehicle follow mode),
+- Camera functionalities. The main camera of the simulation allows to zoom in and out (by using the mouse wheel) and to move its position by dragging the mouse. Also it features a vehicle follow mode: by left clicking on a vehicle the camera will position so that the selected car is at its center and will keep following its movements (right click anywhere to exit vehicle follow mode),
 - UI. There are some text fields in the top left and bottom left corners of the main camera. They display the time elapsed since the start of the application and the number of running entities currently running in the simulation (the number may differ from the real one by a few units) 
 - Path drawing. Left clicking on a bus entity will (other than entering vehicle mode) draw a line in the screen that joins all the intersection traversed by the related bus line (right click to clear the screen)
  

@@ -28,18 +28,20 @@ public class Map_Setup : MonoBehaviour
     //this number defines the two above properties as well as the shape of the district
 
     //number of district in the map along the x and y axis
-    [SerializeField] private int map_n_districts_x;
-    [SerializeField] int map_n_districts_y;
+    [SerializeField] public int map_n_districts_x; 
+    [SerializeField] public int map_n_districts_y;
 
     [SerializeField] public int n_entities;
-    [SerializeField] int n_bus_lines;
+    [SerializeField] public int n_bus_lines;
     //[SerializeField] int districtTypeIndex;
-    [SerializeField] int Frequency_District_0;
-    [SerializeField] int Frequency_District_1;
-    [SerializeField] int Frequency_District_2;
-    [SerializeField] int Frequency_District_3;
+    [SerializeField] public int Frequency_District_0;
+    [SerializeField] public int Frequency_District_1;
+    [SerializeField] public int Frequency_District_2;
+    [SerializeField] public int Frequency_District_3;
+    [SerializeField] public Boolean overrideReadingConfigFile;
 
     private void Awake(){
+
         Instance = this;
         map_Visual = GameObject.Find("Map_Visual").GetComponent<Map_Visual> ();
         map_Spawner = GameObject.Find("Map_Spawner").GetComponent<Map_Spawner>();
@@ -51,6 +53,8 @@ public class Map_Setup : MonoBehaviour
         GraphDistrict_width = districtData[2];
         GraphDistrict_height=districtData[3];
         spawnTilesPerDistrict = districtData[4];
+
+        ConfigFileUtils.ReadFile();
 
         runningEntities=0;
     }

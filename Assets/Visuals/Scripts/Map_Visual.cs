@@ -10,6 +10,7 @@ using Unity.Mathematics;
 public class Map_Visual : MonoBehaviour
 {
 
+    public static Map_Visual instance {private set; get;}
     private Map<MapTile> map;
     [SerializeField] private Mesh mesh;
     [SerializeField] private Material Road;
@@ -25,6 +26,10 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material DistrictMaterial3;
     
     [SerializeField] private float delayAddition;
+
+    private void Awake(){
+        instance = this;
+    }
 
     public void SetMap(Map<MapTile> map,PathFindGraph CityGraph,int n_cars){
         this.map = map;
