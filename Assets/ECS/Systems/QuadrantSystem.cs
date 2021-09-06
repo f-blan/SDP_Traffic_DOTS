@@ -64,6 +64,7 @@ public class QuadrantSystem : SystemBase
         public float2 unitaryVector;
         public bool isBus;
         public bool stop;
+        public int turnState;
     }
 
     public struct TrafficLightData{
@@ -213,7 +214,9 @@ public class QuadrantSystem : SystemBase
                         direction = vehicleMovementData.direction,
                         unitaryVector = math.sign(vehicleMovementData.offset),
                         isBus = isBus,
-                        targetDirection = vehicleMovementData.targetDirection
+                        targetDirection = vehicleMovementData.targetDirection,
+                        turnState = vehicleMovementData.turningState,
+                        stop = vehicleMovementData.stop,
                     },
                     type = VehicleTrafficLightType.VehicleType
                 });

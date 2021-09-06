@@ -13,6 +13,7 @@ This section serves as a general description of the project and its features, fo
 |Abreu | Samuel Oreste | s281568|
 |Blangiardi| Francesco  |s288265|
 <br>
+
 ### 1.2 Objectives
 
 <br>The goal of the project is to explore the potential of the Unity DOTS technology and get familiar with the ECS programming pattern by developing a simulation that takes full advantage of their related optimizations as well as using the Unity Jobs System to create highly optimized multithreaded C# code.
@@ -43,7 +44,18 @@ This section serves as a general description of the project and its features, fo
 <br>All parameters of the application (see section 2.2) can be set from the *insert the file name here* in the root folder of the project
 
 ### 2.2 The parameters
-*ToDo*
+<br> The parameters of the simulation can be set both by the config.xml file (Assets/Configuration) or by the Unity editor (enable "Override Reading Config File" in Map_Setup GameObject). This section presents the table of parameters along with their description.
+
+|Parameter name|Related GameObject|Description|
+|--------------|------------------|-----------|
+|map_n_district_x|Map_Setup|defines the map width (in terms of districts)|
+|map_n_district_y|Map_Setup|defines the map height (in terms of districts)|
+|n_entities|Map_Setup|the number of cars that will run in the simulation. Warning: a map of a given size can spawn up to a maximum amount of cars; if n_entities exceeds such number, the maximum number of cars will be spawned instead.
+|n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; additionally the map doesn't allow to spawn more than one bus line per district.
+|frequency_district_X|Map_Setup|This is a group of parameters (X goes from 0 to 3). They define the frequency the corresponding district type will be chosen during map creation (choosing a higher frequency with respect to other will generate a map comprised of mostly the respective district type). To disable a given district type set its frequency parameter to 0.|
+|maxCarSpeed|Map_Spawner|sets the maximum speed of cars|
+|maxBusSpeed|Map_Spawner|sets the maximum speed of buses|
+|differentTypeOfVehicles|Map_Visual|the number of different colors spawned cars may have|
 
 ### 2.3 The map
 <br>The map is generated entirely through script and is divided in several "districts" (the number of districts the map is composed of can be set through parameters). Each district is chosen randomly (according to the "frequency" parameters) from a set of 4 different district types:

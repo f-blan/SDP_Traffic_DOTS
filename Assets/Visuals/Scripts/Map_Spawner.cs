@@ -92,7 +92,7 @@ public class Map_Spawner : MonoBehaviour
                 Debug.Log("Too many buses for the map to handle!");
                 return;   
             }
-            if(CityMap.GetNDistrictsX()<=1 && CityMap.GetNDistrictsY()<=1){
+            if(CityMap.GetNDistrictsX()<=1 || CityMap.GetNDistrictsY()<=1){
                 Debug.Log("map is too small to allow buses to run!");
                 return;
             }
