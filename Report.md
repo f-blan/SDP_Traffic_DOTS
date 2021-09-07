@@ -51,7 +51,7 @@ This section serves as a general description of the project and its features, fo
 |map_n_district_x|Map_Setup|defines the map width (in terms of districts)|
 |map_n_district_y|Map_Setup|defines the map height (in terms of districts)|
 |n_entities|Map_Setup|the number of cars that will run in the simulation. Warning: a map of a given size can spawn up to a maximum amount of cars; if n_entities exceeds such number, the maximum number of cars will be spawned instead.
-|n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; the map doesn't allow to spawn more than one bus line per district; bus lines paths are computed in the first fram for all bus lines, setting this value too high with big maps may delay the start of the simulation.
+|n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; the map doesn't allow to spawn more than one bus line per district; bus lines paths are computed in the first frame for all bus lines, setting this value too high with big maps may delay the start of the simulation.
 |frequency_district_X|Map_Setup|This is a group of parameters (X goes from 0 to 3). They define the frequency the corresponding district type will be chosen during map creation (choosing a higher frequency with respect to other will generate a map comprised of mostly the respective district type). To disable a given district type set its frequency parameter to 0.|
 |maxCarSpeed|Map_Spawner|sets the maximum speed of cars|
 |maxBusSpeed|Map_Spawner|sets the maximum speed of buses|
@@ -98,7 +98,7 @@ This section serves as a general description of the project and its features, fo
 
 ### 2.5 Components
 
-<br> In this subsection some general information about the custom component used in the simulation are listed
+<br> In this subsection some general information about the custom components used in the simulation are listed
 <br><br>
 
 | name | related entities | related systems | description |
@@ -162,7 +162,7 @@ Since these operations require populating hashMaps and cycling through entities,
 | 6 | 250000| 0 | 930000 | 8100 | 97200 | 30 | 7 | 22 |
 
 ### 3.2 Comments and Observations
-- 0. A simple simulation to test the behavior of cars. The number of cars is very low as well as the map size, so performance are very good. No bus lines were spawned since the map is too small. Note: path randomicity for each car is actually pseudo randomic based on car position, time delay between frames etc. so the cars that spawn close to each other may have similar paths during their first cycles. Pseudo randomicity could not be avoided since the class Unity.Random was used in order to generate random numbers inside Jobs.
+- 0. A simple simulation to test the behavior of cars. The number of cars is very low as well as the map size, so performance is very good. No bus lines were spawned since the map is too small. Note: path randomicity for each car is actually pseudorandom based on car position, time delay between frames etc. So the cars that spawn close to each other may have similar paths during their first cycles. Pseudo-randomicity could not be avoided since the class Unity.Random was used in order to generate random numbers inside Jobs.
 - 1. A simulation of an overcrowded small city. Performances are still not an issue, however the city is overcrowded and since (for the sake of performances) cars don't make dynamic pathing decisions based on traffic it may happen that traffic jams are formed (e.g. an intersection is too crowded and doesn't allow any car to move or loops of cars spanning more than one intersection are formed). To avoid these situations as much as possible cars are allowed to overlap briefly in some occasions, but in order to guarantee fair traffic rules the team decided to reach a compromise between collision avoidance, probability of traffic jams and performances. As a general it is suggested not to spawn more than 25 cars per district.
 - 2. Bus-only simulation in a small city. Performances are very good since there are not many running entities, the purpose of this simulation is to show bus behavior and the bus drawing feature.
 - 3. A simulation of a medium sized city with both cars and bus lines.
