@@ -28,6 +28,8 @@ public class QuadrantSystem : SystemBase
 
     private bool isParkSpotMapValid;
 
+    private const float lookingTime = 1f;
+
     private EntityQueryDesc entityQueryDescVehicles = new EntityQueryDesc{
         Any = new ComponentType[]{
             ComponentType.ReadOnly<VehicleMovementData>()
@@ -179,7 +181,7 @@ public class QuadrantSystem : SystemBase
         //Deletes all elements currently inside of the hash map
         nativeMultiHashMapQuadrant.Clear();
         //franco: reset operation is not needed for parkSpot hashmap: They don't move and spawn all together. 
-        
+        float dt = UnityEngine.Time.deltaTime;
         
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
             EntityQuery queryVehicles = GetEntityQuery(entityQueryDescVehicles);
@@ -348,7 +350,10 @@ public class QuadrantSystem : SystemBase
             
             //--------------------------------- NEW COLLISION AVOIDANCE BEHAVIOR --------------------------
             if(vehicleMovementData.turningState != -1){
-                vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, vehicleMovementData, translation.Value);
+                vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, ref vehicleMovementData, translation.Value, dt);
+                if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop && vehicleMovementData.turningState == 3){
+                    vehicleMovementData.stopTime = 0;
+                }
                 return;
             }
             /*

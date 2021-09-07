@@ -71,6 +71,7 @@ public class BusMovementSystem : SystemBase
                 PathElement nextPathElement = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)];
                 vehicleMovementData.targetDirection = nextPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
                 vehicleMovementData.turningState = -1;
+                vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
             }
 
@@ -89,8 +90,9 @@ public class BusMovementSystem : SystemBase
                 PathElement nextPathElement = busPathComponent.pathArrayReference.Value.pathArray[GetNextPathIndex(ref busPathComponent)];
                 vehicleMovementData.targetDirection = nextPathElement.withDirection[busPathComponent.verse == -1 ? 0 : 1];
                 vehicleMovementData.turningState = -1;
+                vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
-                vehicleMovementData.stopTime = -MAX_STOP_TIME;
+                //vehicleMovementData.stopTime = -MAX_STOP_TIME;
 
             }
 

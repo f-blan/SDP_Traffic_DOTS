@@ -106,6 +106,7 @@ public class VehicleMovementSystem : SystemBase
                 vehicleMovementData.stop = false;
                 vehicleMovementData.targetDirection = carPathBuffer[carPathBuffer.Length-2].withDirection;
                 vehicleMovementData.turningState = -1;
+                vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
             }
             if(vehicleMovementData.stop == true){
@@ -120,6 +121,7 @@ public class VehicleMovementSystem : SystemBase
             if(checker){
                 //Removing last element from the buffer
                 vehicleMovementData.turningState = -1;
+                vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection=false;
                 int index = PathUtils.CalculateIndex(lastCarPathBuffer.x, lastCarPathBuffer.y, graphWidth);
                 vehicleMovementData.curGraphIndex = index;
@@ -261,6 +263,7 @@ public class VehicleMovementSystem : SystemBase
         if(checker){
             int seedHelp = (int) math.floor(dt*100000f);
             vehicleMovementData.turningState = -1;
+            vehicleMovementData.stopTime=0;
             vehicleMovementData.trafficLightintersection = false;
             ParkingTurn(ref vehicleMovementData, ref translation,ref rotation, graphArray, vehicleMovementData.curGraphIndex, graphWidth, (int) math.floor(dt*10000000));
             return;

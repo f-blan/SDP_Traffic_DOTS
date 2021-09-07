@@ -9,6 +9,7 @@ public static class QuadrantUtils
     private const float minimumStopDistance = 2.5f;
     private const float tileSize = 1f;
 
+    private const float lookingTime = 1f;
     private const float epsilonDistance = 0.5f;
     //checks if the position identified by carPosition has an entity of the given type to its relative direction specified by the parameter
     //if true it returns the exact translation component of the found entity inside of foundPosition
@@ -129,7 +130,7 @@ public static class QuadrantUtils
         return false;
     }
 
-    public static bool TurningHandler(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap,int turnState, VehicleMovementData vehicleMovementData, float3 curPosition){
+    public static bool TurningHandler(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap,int turnState,ref VehicleMovementData vehicleMovementData, float3 curPosition, float dt){
         float3 reference = new float3(vehicleMovementData.intersectionOffset.x, vehicleMovementData.intersectionOffset.y, 0);
         float3 tile1, tile2, tile3, tile4, tile5;
         int hashMapKey;
@@ -171,11 +172,17 @@ public static class QuadrantUtils
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,1f);
                 tile2 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,1,1f);
                 tile3 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,1,2f);
-                //hashMapKey = GetPositionHashMapKey(tile3);
-                //if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)) return true;
+                hashMapKey = GetPositionHashMapKey(tile3);
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)) return true;
                 hashMapKey = GetPositionHashMapKey(tile2);
                 return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*3/5);
             case 3:
+                //cars turning left can create some problem, it's better to make them wait for a while after they check the road
+                //Debug.Log(dt);
+                vehicleMovementData.stopTime += dt;
+                if(vehicleMovementData.stopTime <= lookingTime){
+                    return true;
+                }
                 //give precedence to cars on the right and coming in front, get into the intersection only if you can turn left immediately and there's space after turning
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,2f);
                 tile2 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,3,1f);
@@ -221,7 +228,7 @@ public static class QuadrantUtils
                         
                         
                         tile3 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1f);
-                        if(dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
+                        if(!dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
                             return true;
                         }else if(!isWithinTarget2(curPosition, tile3, 0.5f)){
                             return true;
@@ -233,7 +240,7 @@ public static class QuadrantUtils
                     if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
                         
                         tile3 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1f);
-                        if(dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
+                        if(!dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
                             return true;
                         }else if(!isWithinTarget2(curPosition, tile3, 0.5f)){
                             return true;
