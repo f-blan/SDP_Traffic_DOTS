@@ -10,5 +10,8 @@ public struct BusPathParams : IComponentData
     //the district type of the starting node
     public int pos1DistrictType;
     public Entity entityToSpawn;
+
+    public float delay;
+    public float timer;
 }
 

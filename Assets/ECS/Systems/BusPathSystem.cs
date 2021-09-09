@@ -72,11 +72,14 @@ public class BusPathSystem : SystemBase
         localPathNodeArray= PathNodeArray; //because if it's not local the compiler complains
         NativeArray<PathUtils.PathNode> localDistrictNodeArray; 
         localDistrictNodeArray= DistrictNodeArray;
-
+        float deltaTime = UnityEngine.Time.deltaTime;
         //Debug.Log(busStopRelativeCoords.x + " coords " + busStopRelativeCoords.y + " " + busStopRelativePosition.x + " pos " + busStopRelativePosition.y);
         //compute path
         Entities.WithReadOnly(localDistrictNodeArray).ForEach(( Entity entity, int entityInQueryIndex, ref BusPathParams busPathParams)=>{
-            
+            busPathParams.timer+=deltaTime;
+            if(busPathParams.timer<= busPathParams.delay){
+                return;
+            }
             //compute the busStop path
             NativeList<int3> DistrictPathIndexes = ComputeDistrictPath(localDistrictNodeArray, graphSizeDistrict, busPathParams.pos1, busPathParams.pos2, busPathParams.pos3);
             NativeHashMap<int, PathUtils.PathNode> tmpPathNodeMap=new NativeHashMap<int, PathUtils.PathNode>(10, Allocator.Temp);
