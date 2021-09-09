@@ -25,7 +25,7 @@ public class Map_Visual : MonoBehaviour
     [SerializeField] private Material DistrictMaterial2;
     [SerializeField] private Material DistrictMaterial3;
     
-    [SerializeField] private float delayAddition;
+    [SerializeField] public float delayAddition;
 
     private void Awake(){
         instance = this;
@@ -122,7 +122,7 @@ public class Map_Visual : MonoBehaviour
         if(n_cars_each==0 && n_cars!=0){
             n_cars_each=1;
         }
-        float curDelay = 0.05f;
+        float curDelay = delayAddition;
        
 
         for(int d_x=0; d_x<map.GetNDistrictsX(); ++d_x){
@@ -147,6 +147,7 @@ public class Map_Visual : MonoBehaviour
                     break;
                 }
                 int index = d_x*map.GetNDistrictsY()+d_y;
+                
                 Entity e = districts[index];
                 Vector3 wp = map.GetDistrictWorldPosition(d_x, d_y);
                 
