@@ -699,7 +699,7 @@ MonoBehaviour:
   runningEntities: 0
   map_n_districts_x: 2
   map_n_districts_y: 2
-  n_entities: 100
+  n_entities: 80
   n_bus_lines: 0
   Frequency_District_0: 1
   Frequency_District_1: 1
