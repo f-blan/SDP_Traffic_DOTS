@@ -135,6 +135,10 @@ public static class QuadrantUtils
         float3 tile1, tile2, tile3, tile4, tile5;
         int hashMapKey;
         QuadrantSystem.QuadrantData dummy;
+        vehicleMovementData.stopTime += dt;
+        if(vehicleMovementData.stopTime <= lookingTime){
+            return true;
+        }
         switch(turnState){
             case 0:
                 //give precedence to cars coming from your right and don't get into intersection if there's no space for you
@@ -166,7 +170,7 @@ public static class QuadrantUtils
                     }
                 }
                 hashMapKey = GetPositionHashMapKey(tile3);
-                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2);
+                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*3/5);
             case 1:
                 //don't get into the intersection if there's no space for you after turning (ez)
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,1f);
@@ -179,10 +183,7 @@ public static class QuadrantUtils
             case 3:
                 //cars turning left can create some problem, it's better to make them wait for a while after they check the road
                 //Debug.Log(dt);
-                vehicleMovementData.stopTime += dt;
-                if(vehicleMovementData.stopTime <= lookingTime){
-                    return true;
-                }
+                
                 //give precedence to cars on the right and coming in front, get into the intersection only if you can turn left immediately and there's space after turning
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,2f);
                 tile2 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,3,1f);

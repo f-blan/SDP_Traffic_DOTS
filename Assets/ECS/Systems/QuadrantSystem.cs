@@ -351,7 +351,7 @@ public class QuadrantSystem : SystemBase
             //--------------------------------- NEW COLLISION AVOIDANCE BEHAVIOR --------------------------
             if(vehicleMovementData.turningState != -1){
                 vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, ref vehicleMovementData, translation.Value, dt);
-                if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop && vehicleMovementData.turningState == 3){
+                if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop){
                     vehicleMovementData.stopTime = 0;
                 }
                 return;
