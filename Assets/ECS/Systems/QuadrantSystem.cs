@@ -354,12 +354,19 @@ public class QuadrantSystem : SystemBase
             if(vehicleMovementData.turningState != -1){
                 int hashMapKey = GetPositionHashMapKey(translation.Value);
                 QuadrantData foundEntity;
-                //if the current car is not in the surpassable state and there's a surpassable car that goes in your same direction in your current tile
-                if(!vehicleMovementData.isSurpassable && QuadrantUtils.IsEntityInTargetPosition(localQuadrant,hashMapKey,translation.Value, vehicleMovementData.direction, VehicleTrafficLightType.VehicleType,out foundEntity,tileSize/2,true,vehicleMovementData.turningState)){
-                    //you don't move, wait for the surpassable car to move so that you can enter surpassable state
-                    vehicleMovementData.stop = true;
-                    return;
+                //if you have to turn either left or right (and you're not in surpassable state)
+                if(!vehicleMovementData.isSurpassable && vehicleMovementData.turningState%2!=0){
+                    //if there's already a surpassable car in your same tile
+                    if(QuadrantUtils.IsEntityInTargetPosition(localQuadrant,hashMapKey,translation.Value, vehicleMovementData.direction, VehicleTrafficLightType.VehicleType,out foundEntity,tileSize/2,true,vehicleMovementData.turningState)){
+                        //and it's going to your same direction
+                        if(foundEntity.vehicleData.direction == vehicleMovementData.direction){
+                            //you stop until your tile can host a surpassable car again
+                            vehicleMovementData.stop = true;
+                            return;
+                        }
+                    }
                 }
+                
                 vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, ref vehicleMovementData, translation.Value, dt);
                 if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop){
                     vehicleMovementData.stopTime = 0;
