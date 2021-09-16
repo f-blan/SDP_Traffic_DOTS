@@ -155,6 +155,7 @@ MonoBehaviour:
   busMaterial: {fileID: 2100000, guid: c85d2ab9e3aeeb9ba9aa7222c3f0b72c, type: 2}
   maxCarSpeed: 4
   maxBusSpeed: 4
+  maxTrafficLightTime: 2
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
   Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
@@ -566,6 +567,7 @@ MonoBehaviour:
   Obstacle: {fileID: 2100000, guid: ebad6eabd1171c046865c72449dce896, type: 2}
   ParkSpot: {fileID: 2100000, guid: 2b6e3a70fdc7cb64b86b879cb30ddfa0, type: 2}
   TrafficLight: {fileID: 2100000, guid: d9f3ee9f6a53b36409a5477920951fb5, type: 2}
+  trafficLightSpriteSheet: {fileID: 2100000, guid: 18df9419d70801a4eb36dc40934b9e88, type: 2}
   CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
   differentTypeOfVehicles: 1
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}

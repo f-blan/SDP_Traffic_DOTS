@@ -13,6 +13,9 @@ public class Map_Spawner : MonoBehaviour
         [SerializeField] private Material busMaterial;
         [SerializeField] public float maxCarSpeed;
         [SerializeField] public float maxBusSpeed;
+
+        [SerializeField] public float minTrafficLightTime;
+        [SerializeField] public float maxTrafficLightTime;
         
         [SerializeField] private Material VerticalTrafficLightMaterial;
 
@@ -339,13 +342,12 @@ public class Map_Spawner : MonoBehaviour
 
     public void SpawnTrafficLights(Map<MapTile> CityMap, List<Tuple<bool,MapTile>> trafficLightTiles){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds));
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent), typeof(SpriteSheetAnimationComponent));
 
         NativeArray<Entity> tiles = new NativeArray<Entity>(trafficLightTiles.Count, Allocator.Temp);
 
         em.CreateEntity(arch, tiles);
-
+        /*
         for(int t=0; t<trafficLightTiles.Count; ++t){
             Material material;
             bool isVertical;
@@ -366,14 +368,40 @@ public class Map_Spawner : MonoBehaviour
 
             em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = isVertical});
 
-            em.SetSharedComponentData(e, new RenderMesh{
-                mesh = Quad,
-                material = material,
-                layer = 1
+            em.SetComponentData(e, new SpriteSheetAnimationComponent{
+                currentFrame = 0,
+                frameCount = 3,
+                frameTimer = 0f,
+                frameTimerMax = UnityEngine.Random.Range(0f, 0.5f)
             });
+        }*/
 
-            
+        float randomTime = .5f;
+
+        for(int t=0; t<trafficLightTiles.Count; ++t){
+
+            if(t % 4 == 0){
+                randomTime = UnityEngine.Random.Range(minTrafficLightTime, maxTrafficLightTime);
+            }
+
+            MapTile curTile = trafficLightTiles[t].Item2; 
+            Entity e = tiles[t];
+            Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
+
+            em.SetName(e, "Traffic Light " + t);
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+
+            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = trafficLightTiles[t].Item1, greenLightDuration = randomTime});
+
+            em.SetComponentData(e, new SpriteSheetAnimationComponent{
+                currentFrame = (trafficLightTiles[t].Item1 ? 2 : 0),
+                frameCount = 3,
+                frameTimer = 0f
+            });
         }
+
+
+
         tiles.Dispose();
     }
 

@@ -12,11 +12,12 @@ public class Map_Visual : MonoBehaviour
 
     public static Map_Visual instance {private set; get;}
     private Map<MapTile> map;
-    [SerializeField] private Mesh mesh;
+    [SerializeField] public Mesh mesh;
     [SerializeField] private Material Road;
     [SerializeField] private Material Obstacle;
     [SerializeField] private Material ParkSpot;
     [SerializeField] private Material TrafficLight;
+    [SerializeField] public Material trafficLightSpriteSheet;
     [SerializeField] public Material CarMaterial;
     [SerializeField] public int differentTypeOfVehicles; 
     [SerializeField] private Material BusStop;
