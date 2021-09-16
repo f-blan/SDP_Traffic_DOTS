@@ -108,6 +108,7 @@ public class VehicleMovementSystem : SystemBase
                 vehicleMovementData.turningState = -1;
                 vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
+                vehicleMovementData.isSurpassable = false;
             }
             if(vehicleMovementData.stop == true){
                 return;
@@ -123,6 +124,7 @@ public class VehicleMovementSystem : SystemBase
                 vehicleMovementData.turningState = -1;
                 vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection=false;
+                vehicleMovementData.isSurpassable = false;
                 int index = PathUtils.CalculateIndex(lastCarPathBuffer.x, lastCarPathBuffer.y, graphWidth);
                 vehicleMovementData.curGraphIndex = index;
 
@@ -265,6 +267,7 @@ public class VehicleMovementSystem : SystemBase
             vehicleMovementData.turningState = -1;
             vehicleMovementData.stopTime=0;
             vehicleMovementData.trafficLightintersection = false;
+            vehicleMovementData.isSurpassable = false;
             ParkingTurn(ref vehicleMovementData, ref translation,ref rotation, graphArray, vehicleMovementData.curGraphIndex, graphWidth, (int) math.floor(dt*10000000));
             return;
         }

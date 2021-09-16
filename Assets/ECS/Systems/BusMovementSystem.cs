@@ -73,6 +73,7 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.turningState = -1;
                 vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
+                vehicleMovementData.isSurpassable = false;
             }
 
             translation.Value.x += vehicleMovementData.velocity.x * dt;
@@ -92,6 +93,7 @@ public class BusMovementSystem : SystemBase
                 vehicleMovementData.turningState = -1;
                 vehicleMovementData.stopTime = 0;
                 vehicleMovementData.trafficLightintersection = false;
+                vehicleMovementData.isSurpassable=false;
                 //vehicleMovementData.stopTime = -MAX_STOP_TIME;
 
             }
