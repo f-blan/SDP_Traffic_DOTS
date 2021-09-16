@@ -173,7 +173,7 @@ public static class QuadrantUtils
                 }
                 hashMapKey = GetPositionHashMapKey(tile1);
                 if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
-                    if(!isWithinTarget2(tile1, curPosition, tileSize*3/5)){
+                    if(!isWithinTarget2(tile1, curPosition, tileSize*3/5) && dummy.vehicleData.direction==vehicleMovementData.direction){
                         return true;
                     }
                 }
@@ -250,8 +250,6 @@ public static class QuadrantUtils
                         
                         tile3 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1f);
                         if(!dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
-                            return true;
-                        }else if(!isWithinTarget2(curPosition, tile3, 0.5f)){
                             return true;
                         }
                     }

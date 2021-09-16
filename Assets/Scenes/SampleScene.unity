@@ -567,7 +567,7 @@ MonoBehaviour:
   ParkSpot: {fileID: 2100000, guid: 2b6e3a70fdc7cb64b86b879cb30ddfa0, type: 2}
   TrafficLight: {fileID: 2100000, guid: d9f3ee9f6a53b36409a5477920951fb5, type: 2}
   CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
-  differentTypeOfVehicles: 5
+  differentTypeOfVehicles: 1
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}
   DistrictMaterial0: {fileID: 2100000, guid: cc8e559b3d504c0488cb354db98b715e, type: 2}
   DistrictMaterial1: {fileID: 2100000, guid: a5b4dead00ee4564ab857e51a1206899, type: 2}
@@ -697,10 +697,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runningEntities: 0
-  map_n_districts_x: 70
-  map_n_districts_y: 70
-  n_entities: 100000
-  n_bus_lines: 300
+  map_n_districts_x: 2
+  map_n_districts_y: 2
+  n_entities: 125
+  n_bus_lines: 0
   Frequency_District_0: 1
   Frequency_District_1: 1
   Frequency_District_2: 1
