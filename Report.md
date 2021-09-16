@@ -55,6 +55,8 @@ This section serves as a general description of the project and its features, fo
 |frequency_district_X|Map_Setup|This is a group of parameters (X goes from 0 to 3). They define the frequency the corresponding district type will be chosen during map creation (choosing a higher frequency with respect to other will generate a map comprised of mostly the respective district type). To disable a given district type set its frequency parameter to 0.|
 |maxCarSpeed|Map_Spawner|sets the maximum speed of cars|
 |maxBusSpeed|Map_Spawner|sets the maximum speed of buses|
+|minimumTrafficLightTime|Map_Spawner|describes the minimum amount of time a traffic light will be green|
+|maximumTrafficLightTime|Map_Spawner|describes the maximum amount of time a traffic light will be green|
 |differentTypeOfVehicles|Map_Visual|the number of different colors spawned cars may have|
 
 ### 2.3 The map
@@ -79,7 +81,7 @@ This section serves as a general description of the project and its features, fo
 <br> These type of entities are very similar to ParkSpot entities, the only difference being that there is a fixed amount of them (4 per district) and that they are reserved for buses when they reach the corresponding Bus Stop Intersection. Likewise the entities themselves do not render any visual component but their position; it is represented in the district texture by the orange areas.<br>
 
 #### 2.4.4 TrafficLights
-<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem and the QuadrantSystem. They are divided in two types (vertical and horizontal) and are rendered by their own RenderMesh component, which renders a different material depending on the traffic light type. Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup.<br>
+<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem, QuadrantSystem and visually managed by the SpriteSheetRendererSystem. Each traffic light contains information about its state (Whether or not is it red or vertical) and the amount of time the traffic light is set to green (This number is obtained by randomly selecting a number between minTrafficLightTime and maxTrafficLightTime). Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup.<br>
 
 #### 2.4.5 Cars
 <br> Cars are the most important entity of the simulation and can contain different types of components at different points in time. As mentioned in 2.4.1 they are spawned by the CarSpawnerSystem, which initializes most of their components. Their movement is regulated by the QuadrantSystem, which makes them avoid colliding with other cars along with some other functionalities.
@@ -117,7 +119,7 @@ This section serves as a general description of the project and its features, fo
 <br> Here are described the most important details of the main custom systems used by the application. All the most critical operations are designed to be executed in parallel on multiple cores through the usage of worker threads.
 
 #### 2.6.1 TrafficLightSystem
-<br> This simple system processes TrafficLight entities: at fixed time intervals the system changes the state and the color of all traffic light entities depending on their type (vertical or horizontal). Changing the color is achieved by modifying the material all the entities of the given type are using for rendering.
+<br> This is a simple system that sets the animation frame and the next state of a given traffic light depending on the elapsed amount of time and its current state. 
 
 #### 2.6.2 CarSpawnerSystem
 <br> This system processes District entities containing the CarSpawnerComponent, and generates a number of car entities contained in the component inside of the related district. It also initializes the CarPathComponent needed by cars to compute the path they're going to follow. This means that all spawned cars will be processed by the CarPathSystem in the next frame: this is an expensive operation and requires allocating an amount of memory that scales with the size of the graph for each car, so each CarSpawnerComponent also contains a "delay" field that allows the System to deal with each districts at different points in time (thus preventing the simulation from crashing when run with a high number of entities in a big map) 
@@ -137,6 +139,9 @@ This section serves as a general description of the project and its features, fo
 - Depending on the state of the vehicle, one or more positions will be probed: when the vehicle is inside a road the system will probe only the position right in front of the vehicle (the position on the right side may also be probed if the vehicle has to park/stop); if instead the vehicle is at an intersection the system will probe several different positions depending on where the vehicle has to turn (generally the vehicles are meant to stop if the Italian Road System requires them to)
 
 Since these operations require populating hashMaps and cycling through entities, and since (differently from pathFinding) this is done once every frame and for every vehicle, the QuadrantSystem is the most critical part of the simulation when it comes to performances. Its implementation has been made considering a tradeoff between performances, traffic jam avoidance and correctness.
+
+#### 2.6.6 SpriteSheetRendererSystem
+<br> This system is set to manually manage animation of sprite sheets by using a custom shader. This solution was preferred due to the fact that the setting of materials are not possible outside of the main thread (Which is very slow considering the amount of managed entities), and this method allows to draw a set of entities efficiently by batching them.
 
 ## 3. Results
 
