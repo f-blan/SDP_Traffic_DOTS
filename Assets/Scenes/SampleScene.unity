@@ -572,10 +572,10 @@ MonoBehaviour:
   CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
   differentTypeOfVehicles: 1
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}
-  DistrictMaterial0: {fileID: 2100000, guid: cc8e559b3d504c0488cb354db98b715e, type: 2}
-  DistrictMaterial1: {fileID: 2100000, guid: a5b4dead00ee4564ab857e51a1206899, type: 2}
-  DistrictMaterial2: {fileID: 2100000, guid: 54dda37333dfe164f93062f28268ce1b, type: 2}
-  DistrictMaterial3: {fileID: 2100000, guid: 3dae35b112dac5341b9e3d5fa770a301, type: 2}
+  DistrictMaterial0: {fileID: 2100000, guid: 71fcc020fb68a21479826ce2f8de46da, type: 2}
+  DistrictMaterial1: {fileID: 2100000, guid: 05835c41032bd93438f166e60e4824bd, type: 2}
+  DistrictMaterial2: {fileID: 2100000, guid: e2006a1ccfe189641b4968d680341921, type: 2}
+  DistrictMaterial3: {fileID: 2100000, guid: 152662c34c6e9d34aa456a6d26afa59d, type: 2}
   delayAddition: 0.01
 --- !u!4 &1175394636
 Transform:
@@ -700,9 +700,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runningEntities: 0
-  map_n_districts_x: 100
-  map_n_districts_y: 100
-  n_entities: 200000
+  map_n_districts_x: 70
+  map_n_districts_y: 70
+  n_entities: 0
   n_bus_lines: 0
   Frequency_District_0: 1
   Frequency_District_1: 1
