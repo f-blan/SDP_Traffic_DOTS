@@ -28,6 +28,8 @@ public class ConfigFileUtils
                 writer.WriteStartElement("MapSpawner");
                 writer.WriteElementString("maxCarSpeed", Map_Spawner.instance.maxCarSpeed.ToString());
                 writer.WriteElementString("maxBusSpeed", Map_Spawner.instance.maxBusSpeed.ToString());
+                writer.WriteElementString("minimumTrafficLightTime", Map_Spawner.instance.minTrafficLightTime.ToString());
+                writer.WriteElementString("maximumTrafficLightTime", Map_Spawner.instance.maxTrafficLightTime.ToString());
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("MapVisual");
@@ -55,15 +57,12 @@ public class ConfigFileUtils
                 reader.ReadToFollowing("maxCarSpeed");
                 Map_Spawner.instance.maxCarSpeed = reader.ReadElementContentAsInt();
                 Map_Spawner.instance.maxBusSpeed = reader.ReadElementContentAsInt();
-
+                Map_Spawner.instance.minTrafficLightTime = reader.ReadElementContentAsFloat();
+                Map_Spawner.instance.maxTrafficLightTime = reader.ReadElementContentAsFloat();
                 reader.ReadToFollowing("differentTypeOfVehicles");
                 Map_Visual.instance.differentTypeOfVehicles = reader.ReadElementContentAsInt();
             }
         }
         return;
-    }
-
-    public static void Write(){
-
     }
 }

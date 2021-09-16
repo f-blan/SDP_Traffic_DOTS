@@ -155,7 +155,8 @@ MonoBehaviour:
   busMaterial: {fileID: 2100000, guid: c85d2ab9e3aeeb9ba9aa7222c3f0b72c, type: 2}
   maxCarSpeed: 4
   maxBusSpeed: 4
-  maxTrafficLightTime: 2
+  minTrafficLightTime: 2
+  maxTrafficLightTime: 4
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
   Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
@@ -699,9 +700,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runningEntities: 0
-  map_n_districts_x: 2
-  map_n_districts_y: 2
-  n_entities: 80
+  map_n_districts_x: 100
+  map_n_districts_y: 100
+  n_entities: 200000
   n_bus_lines: 0
   Frequency_District_0: 1
   Frequency_District_1: 1
