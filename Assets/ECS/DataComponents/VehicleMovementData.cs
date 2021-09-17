@@ -23,4 +23,6 @@ public struct VehicleMovementData : IComponentData
     public int curGraphIndex;
     public int targetDirection;
     public float parkingTimer;
+    public bool isSurpassable;
+    public float StarvationTimer;
 }

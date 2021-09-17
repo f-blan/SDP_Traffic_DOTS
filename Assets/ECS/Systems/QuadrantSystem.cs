@@ -67,6 +67,7 @@ public class QuadrantSystem : SystemBase
         public bool isBus;
         public bool stop;
         public int turnState;
+        public bool isSurpassable;
     }
 
     public struct TrafficLightData{
@@ -182,7 +183,7 @@ public class QuadrantSystem : SystemBase
         nativeMultiHashMapQuadrant.Clear();
         //franco: reset operation is not needed for parkSpot hashmap: They don't move and spawn all together. 
         float dt = UnityEngine.Time.deltaTime;
-        
+        float maxStarvationTimer = Map_Setup.Instance.Max_Starvation_Time;
         if(query.CalculateEntityCount() > nativeMultiHashMapQuadrant.Capacity){
             EntityQuery queryVehicles = GetEntityQuery(entityQueryDescVehicles);
             nativeMultiHashMapQuadrant.Capacity = query.CalculateEntityCount();
@@ -219,6 +220,7 @@ public class QuadrantSystem : SystemBase
                         targetDirection = vehicleMovementData.targetDirection,
                         turnState = vehicleMovementData.turningState,
                         stop = vehicleMovementData.stop,
+                        isSurpassable = vehicleMovementData.isSurpassable,
                     },
                     type = VehicleTrafficLightType.VehicleType
                 });
@@ -329,7 +331,7 @@ public class QuadrantSystem : SystemBase
                 float3 topRightSquare = QuadrantUtils.GetNearTranslationInRelativeDirection(rightSquare,vehicleMovementData.direction,0,1f);
                 int hashMapKey = GetPositionHashMapKey(topRightSquare);
                 QuadrantData qData;
-                bool expr = QuadrantUtils.IsEntityInTargetPosition(localQuadrant, hashMapKey,topRightSquare,vehicleMovementData.direction, VehicleTrafficLightType.VehicleType, out qData, tileSize/2);
+                bool expr = QuadrantUtils.IsEntityInTargetPosition(localQuadrant, hashMapKey,topRightSquare,vehicleMovementData.direction, VehicleTrafficLightType.VehicleType, out qData, tileSize/2, false, -1);
                 
                 
                 if(expr && qData.vehicleData.isBus){
@@ -350,9 +352,33 @@ public class QuadrantSystem : SystemBase
             
             //--------------------------------- NEW COLLISION AVOIDANCE BEHAVIOR --------------------------
             if(vehicleMovementData.turningState != -1){
-                vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, ref vehicleMovementData, translation.Value, dt);
-                if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop && vehicleMovementData.turningState == 3){
+                int hashMapKey = GetPositionHashMapKey(translation.Value);
+                QuadrantData foundEntity;
+                //if you have to turn either left or right (and you're not in surpassable state)
+                if(!vehicleMovementData.isSurpassable && vehicleMovementData.turningState%2!=0){
+                    //if there's already a surpassable car in your same tile
+                    if(QuadrantUtils.IsEntityInTargetPosition(localQuadrant,hashMapKey,translation.Value, vehicleMovementData.direction, VehicleTrafficLightType.VehicleType,out foundEntity,tileSize/2,true,vehicleMovementData.turningState)){
+                        //and it's going to your same direction
+                        if(foundEntity.vehicleData.direction == vehicleMovementData.direction){
+                            //you stop until your tile can host a surpassable car again
+                            vehicleMovementData.stop = true;
+                            return;
+                        }
+                    }
+                }
+                
+                vehicleMovementData.stop = QuadrantUtils.TurningHandler(localQuadrant,vehicleMovementData.turningState, ref vehicleMovementData, translation.Value, dt, maxStarvationTimer);
+                if(vehicleMovementData.stopTime >= lookingTime && vehicleMovementData.stop){
                     vehicleMovementData.stopTime = 0;
+                    
+                    //if the current car is not already in the surpassable state (and it has to turn)
+                    if(!vehicleMovementData.isSurpassable && vehicleMovementData.turningState%2 != 0){
+                        
+                        vehicleMovementData.StarvationTimer = 0f;
+                        vehicleMovementData.isSurpassable = true;
+                        translation.Value = QuadrantUtils.GetNearTranslationInRelativeDirection(translation.Value,vehicleMovementData.direction, vehicleMovementData.turningState, tileSize*3/8);
+                        
+                    }
                 }
                 return;
             }

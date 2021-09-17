@@ -53,6 +53,7 @@ public class ConfigFileUtils
                 Map_Setup.Instance.Frequency_District_1 = reader.ReadElementContentAsInt();
                 Map_Setup.Instance.Frequency_District_2 = reader.ReadElementContentAsInt();
                 Map_Setup.Instance.Frequency_District_3 = reader.ReadElementContentAsInt();
+                Map_Setup.Instance.Max_Starvation_Time = reader.ReadElementContentAsFloat();
 
                 reader.ReadToFollowing("maxCarSpeed");
                 Map_Spawner.instance.maxCarSpeed = reader.ReadElementContentAsInt();
