@@ -21,6 +21,7 @@ public class Map_Spawner : MonoBehaviour
 
         [SerializeField] private Material HorizontalTrafficLightMaterial;
         [SerializeField] private Mesh Quad;
+        [SerializeField] private Material CircleMaterial;
 
         //used by BusPathSystem
 
@@ -342,7 +343,8 @@ public class Map_Spawner : MonoBehaviour
 
     public void SpawnTrafficLights(Map<MapTile> CityMap, List<Tuple<bool,MapTile>> trafficLightTiles){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent), typeof(SpriteSheetAnimationComponent));
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent),
+            typeof(LocalToWorld), typeof(RenderMesh), typeof(RenderBounds), typeof(NonUniformScale));
 
         NativeArray<Entity> tiles = new NativeArray<Entity>(trafficLightTiles.Count, Allocator.Temp);
 
@@ -389,14 +391,27 @@ public class Map_Spawner : MonoBehaviour
             Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
 
             em.SetName(e, "Traffic Light " + t);
-            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1], 0)});
+            float offset = -0.3f;
+            int state = 2;
+            if(trafficLightTiles[t].Item1){
+                state = 0;
+                offset = -offset;
+            }
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1]+offset, 0)});
 
-            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = trafficLightTiles[t].Item1, greenLightDuration = randomTime});
+            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = trafficLightTiles[t].Item1, 
+                greenLightDuration = randomTime, baseTranslation=new float3(wp[0], wp[1], 0), timer = 0f, state = state,
+            });
+            em.SetSharedComponentData(e, new RenderMesh{
+                mesh = Quad,
+                material = CircleMaterial,
+                layer = 1
+            });
 
-            em.SetComponentData(e, new SpriteSheetAnimationComponent{
-                currentFrame = (trafficLightTiles[t].Item1 ? 2 : 0),
-                frameCount = 3,
-                frameTimer = 0f
+            em.SetComponentData(e, new NonUniformScale{ Value = {
+                x = 0.4f,
+                y = 0.4f,
+                z = 0}
             });
         }
 

@@ -8,25 +8,32 @@ using Unity.Rendering;
 public class TrafficLightSystem : SystemBase
 {
     private const float YELLOW_INTERVAL = 1f; //Always constant since yellow light should last pretty much the same time
-
+    private const float offset = 0.3f;
     // Update is called once per frame
+
+    
     protected override void OnUpdate(){
+        float deltaTime = Time.DeltaTime;
+        Entities.WithAll<TrafficLightComponent>().ForEach(( ref TrafficLightComponent trafficLightComponent, ref Translation translation) => {
+            
+            trafficLightComponent.timer += deltaTime;
 
-        Entities.WithAll<TrafficLightComponent>().ForEach((ref SpriteSheetAnimationComponent spriteSheetAnimationComponent, ref TrafficLightComponent trafficLightComponent, in Translation translation) => {
-
-            if(spriteSheetAnimationComponent.frameTimer > trafficLightComponent.greenLightDuration && !trafficLightComponent.isRed){
+            if(trafficLightComponent.timer > trafficLightComponent.greenLightDuration && trafficLightComponent.state ==2){
                 trafficLightComponent.isRed = true;
-                spriteSheetAnimationComponent.frameTimer = 0;
-                spriteSheetAnimationComponent.currentFrame = 1;
+                trafficLightComponent.timer = 0;
+                trafficLightComponent.state = 1;
+                translation.Value = trafficLightComponent.baseTranslation;
             }
-            else if(spriteSheetAnimationComponent.frameTimer >= YELLOW_INTERVAL && spriteSheetAnimationComponent.currentFrame == 1){
-                spriteSheetAnimationComponent.frameTimer = 0;
-                spriteSheetAnimationComponent.currentFrame = 2;
+            else if(trafficLightComponent.timer >= YELLOW_INTERVAL && trafficLightComponent.state == 1){
+                trafficLightComponent.timer = 0;
+                trafficLightComponent.state = 0;
+                translation.Value.y = trafficLightComponent.baseTranslation.y + offset;
             }
-            else if(spriteSheetAnimationComponent.frameTimer >= trafficLightComponent.greenLightDuration + YELLOW_INTERVAL){
-                spriteSheetAnimationComponent.currentFrame = 0;
-                spriteSheetAnimationComponent.frameTimer = 0;
+            else if(trafficLightComponent.timer >= trafficLightComponent.greenLightDuration + YELLOW_INTERVAL && trafficLightComponent.state == 0){
+                trafficLightComponent.timer = 0;
                 trafficLightComponent.isRed = false;
+                translation.Value.y = trafficLightComponent.baseTranslation.y-offset;
+                trafficLightComponent.state = 2;
                 return;
             }
             return;

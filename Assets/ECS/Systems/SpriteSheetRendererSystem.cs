@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-
+/*
 public class SpriteSheetRendererSystem : SystemBase
 {
     protected override void OnUpdate(){
@@ -51,4 +51,4 @@ public class SpriteSheetRendererSystem : SystemBase
             Graphics.DrawMeshInstanced(quadMesh, 0, material, matrixList, materialPropertyBlock); 
         }
     }
-}
+}*/
