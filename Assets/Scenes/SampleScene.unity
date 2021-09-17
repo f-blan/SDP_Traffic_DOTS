@@ -160,6 +160,7 @@ MonoBehaviour:
   VerticalTrafficLightMaterial: {fileID: 2100000, guid: 1f864defed36e7648aad41c64595137d, type: 2}
   HorizontalTrafficLightMaterial: {fileID: 2100000, guid: 1e703cd965a9ed9438e09bc3e05e711d, type: 2}
   Quad: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  CircleMaterial: {fileID: 2100000, guid: db9dd91531eaff3458f6956a27ce5740, type: 2}
 --- !u!4 &98288714
 Transform:
   m_ObjectHideFlags: 0
@@ -572,10 +573,10 @@ MonoBehaviour:
   CarMaterial: {fileID: 2100000, guid: 14715248ab455790cb23053e94f908d9, type: 2}
   differentTypeOfVehicles: 1
   BusStop: {fileID: 2100000, guid: abcb672629b7d3e44a910b28d9acd928, type: 2}
-  DistrictMaterial0: {fileID: 2100000, guid: 71fcc020fb68a21479826ce2f8de46da, type: 2}
-  DistrictMaterial1: {fileID: 2100000, guid: 05835c41032bd93438f166e60e4824bd, type: 2}
-  DistrictMaterial2: {fileID: 2100000, guid: e2006a1ccfe189641b4968d680341921, type: 2}
-  DistrictMaterial3: {fileID: 2100000, guid: 152662c34c6e9d34aa456a6d26afa59d, type: 2}
+  DistrictMaterial0: {fileID: 2100000, guid: 6310446e1e6f65a409c31a74507b0ad8, type: 2}
+  DistrictMaterial1: {fileID: 2100000, guid: 18271952fabb1e84787976625c126f2b, type: 2}
+  DistrictMaterial2: {fileID: 2100000, guid: c86cfc1074a6d7244822bb4201c33a11, type: 2}
+  DistrictMaterial3: {fileID: 2100000, guid: 4550499867f1cd3429655847ff737713, type: 2}
   delayAddition: 0.01
 --- !u!4 &1175394636
 Transform:
