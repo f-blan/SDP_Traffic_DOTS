@@ -16,10 +16,6 @@ public class Map_Spawner : MonoBehaviour
 
         [SerializeField] public float minTrafficLightTime;
         [SerializeField] public float maxTrafficLightTime;
-        
-        [SerializeField] private Material VerticalTrafficLightMaterial;
-
-        [SerializeField] private Material HorizontalTrafficLightMaterial;
         [SerializeField] private Mesh Quad;
         [SerializeField] private Material CircleMaterial;
 
