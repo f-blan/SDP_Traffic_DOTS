@@ -53,6 +53,7 @@ This section serves as a general description of the project and its features, fo
 |n_entities|Map_Setup|the number of cars that will run in the simulation. Warning: a map of a given size can spawn up to a maximum amount of cars; if n_entities exceeds such number, the maximum number of cars will be spawned instead.
 |n_bus_lines|Map_Setup|the number of bus lines that will be spawned in the simulation. Warning: spawning bus lines requires a map with at least 2 districts both in the x and y directions; the map doesn't allow to spawn more than one bus line per district|
 |frequency_district_X|Map_Setup|This is a group of parameters (X goes from 0 to 3). They define the frequency the corresponding district type will be chosen during map creation (choosing a higher frequency with respect to other will generate a map comprised of mostly the respective district type). To disable a given district type set its frequency parameter to 0.|
+|max_starvation_time|Map_Setup|it represents the maximum time in seconds a vehicle will follow traffic rules while at an intersection. After this time has elapsed, the vehicle will get into the intersection as if it was completely free (it can still be detected by other vehicles). Warning: this can lead to vehicles overlapping, however it should be set to a reasonably low value (suggested: 2-3 times vehicle speed) to prevent excessive starvation for vehicles that are not favored by traffic rules (e.g. vehicles turning left at intersections)|
 |maxCarSpeed|Map_Spawner|sets the maximum speed of cars|
 |maxBusSpeed|Map_Spawner|sets the maximum speed of buses|
 |minimumTrafficLightTime|Map_Spawner|describes the minimum amount of time a traffic light will be green|
@@ -65,6 +66,8 @@ This section serves as a general description of the project and its features, fo
 <br>The map is stored internally in two different classes, both of which are contained in the Visuals/Scripts subfolder; they follow a singleton architectural pattern, and thus, are instantiated only once in Map_Setup:
 - Map (instantiated as CityMap). It contains information related to each tile as well as some general information on the map (number of districts, dimension of each district etc.). It is used (in a read-only representation) in CarSpawnerSystem(see section 2.5).
 - PathFindGraph (instantiated as CityGraph). As the name suggests this class is used for computing the path each vehicle has to take. As such, it is a much more compact data structure compared to CityMap since it only needs to store information on intersections (their coordinates, where they allow to go and with which cost, defined as number of tiles) together with a matrix (usually small) that stores the type of each district present in the map. Intersections can only allow to go to up to 4 directions (up, right, down and left), and is treated by the algorithms as a node of the graph, with each node being identified by an x and y coordinate (the graph is organized as a matrix).
+
+<br>Note: since the PathFindGraph is structured as a matrix, some parts of road are considered as intersections (and therefore graph nodes) even if they actually don't allow to turn left or right (vehicles may still perform U turns in these kind of intersections)
 
 ### 2.4 The Entities
 
@@ -81,7 +84,7 @@ This section serves as a general description of the project and its features, fo
 <br> These type of entities are very similar to ParkSpot entities, the only difference being that there is a fixed amount of them (4 per district) and that they are reserved for buses when they reach the corresponding Bus Stop Intersection. Likewise the entities themselves do not render any visual component but their position; it is represented in the district texture by the orange areas.<br>
 
 #### 2.4.4 TrafficLights
-<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem, QuadrantSystem and visually managed by the SpriteSheetRendererSystem. Each traffic light contains information about its state (Whether or not is it red or vertical) and the amount of time the traffic light is set to green (This number is obtained by randomly selecting a number between minTrafficLightTime and maxTrafficLightTime). Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup.<br>
+<br> TrafficLight entities are identified by the TrafficLightComponent and are processed by the TrafficLightSystem and the QuadrantSystem. Each traffic light contains information about its state (Whether or not is it red or vertical) and the amount of time the traffic light is set to green (This number is obtained by randomly selecting a number between minTrafficLightTime and maxTrafficLightTime). Just like ParkSpots and BusStops they are spawned in the first frame by Map_Setup. They are rendered as a small white circle (its positioning with respect to the tile of the map determines the state of the traffic light)<br>
 
 #### 2.4.5 Cars
 <br> Cars are the most important entity of the simulation and can contain different types of components at different points in time. As mentioned in 2.4.1 they are spawned by the CarSpawnerSystem, which initializes most of their components. Their movement is regulated by the QuadrantSystem, which makes them avoid colliding with other cars along with some other functionalities.
@@ -119,7 +122,7 @@ This section serves as a general description of the project and its features, fo
 <br> Here are described the most important details of the main custom systems used by the application. All the most critical operations are designed to be executed in parallel on multiple cores through the usage of worker threads.
 
 #### 2.6.1 TrafficLightSystem
-<br> This is a simple system that sets the animation frame and the next state of a given traffic light depending on the elapsed amount of time and its current state. 
+<br> This is a simple system that updates the state of a given traffic light entity (and its translation component) depending on the elapsed amount of time and its previous state. 
 
 #### 2.6.2 CarSpawnerSystem
 <br> This system processes District entities containing the CarSpawnerComponent, and generates a number of car entities contained in the component inside of the related district. It also initializes the CarPathComponent needed by cars to compute the path they're going to follow. This means that all spawned cars will be processed by the CarPathSystem in the next frame: this is an expensive operation and requires allocating an amount of memory that scales with the size of the graph for each car, so each CarSpawnerComponent also contains a "delay" field that allows the System to deal with each districts at different points in time (thus preventing the simulation from crashing when run with a high number of entities in a big map) 
@@ -140,8 +143,22 @@ This section serves as a general description of the project and its features, fo
 
 Since these operations require populating hashMaps and cycling through entities, and since (differently from pathFinding) this is done once every frame and for every vehicle, the QuadrantSystem is the most critical part of the simulation when it comes to performances. Its implementation has been made considering a tradeoff between performances, traffic jam avoidance and correctness.
 
-#### 2.6.6 SpriteSheetRendererSystem
-<br> This system is set to manually manage animation of sprite sheets by using a custom shader. This solution was preferred due to the fact that the setting of materials are not possible outside of the main thread (Which is very slow considering the amount of managed entities), and this method allows to draw a set of entities efficiently by batching them.
+
+### 2.7 Notable behaviors
+<br> in this subsection we highlight and explain some details about the behavior of the entities running in the simulation
+
+#### 2.7.1 Vehicles
+<br>Vehicle motion is a critical part of the simulation and as stated before its rules were defined considering a tradeoff between performances, collision avoidance and traffic jam avoidance.
+<br>While the motion outside of intersections is straightforward (vehicles will stop moving if they detect obstacles in front of them), managing traffic at intersection by strictly following the Italian traffic rules would lead to several problems in crowded cities, like frequent traffic jams or starvation for vehicles that are not favored by traffic rules.
+<br>Therefore the team has implemented some non-standard behaviors at intersections in order to limit such problems:
+
+- Surpassing. When a vehicle is not allowed to turn (either right or left) at an intersection because of traffic rules it will enter in the "surpassable" state: the vehicle will move slightly to the side (towards the center of the street if turning left, towards the wall if turning right) and will allow other cars to move next to it. Then the surpassable vehicle will exit the intersection as soon as it is allowed, while the vehicle that moves next to it may have different behaviors: if it's not going in the same direction as the supassable vehicle and is allowed to cross the intersection it will effectively surpass the vehicle and continue with its motion; if it's not going in the same direction as the surpassable vehicle but it's not allowed to cross the intersection then it will either behave normally (it will stop and block other vehicles behind it) or, if it's turning in the opposite direction as the surpassable car, it will enter the surpassable state for its direction; finally, if the vehicle has to turn in the direction where the surpassable vehicle is trying to turn, it will stop and will enter the surpassable state only after the surpassable vehicle is no longer to its side. Through this procedure a car not being able to turn doesn't necessarily block all the cars behind it, thus limiting the problem of traffic moving too slowly. Also this partially increases the walkable area of the city (in certain situation the tile right before the intersection can host up to three vehicles).
+
+- Starvation limit. Even if an intersection is not overcrowded and allows cars to move inside of it, it may happen that vehicles turning in a certain direction will have to wait for an undefined amount of time before being able to cross the intersection. An example may be the case of a "T" intersection: vehicles that want to enter the main road by turning left have to give precedence to cars coming from the right, which means that they won't be able to cross the intersection as long as there are vehicles entering from the main road. Since this can create traffic jams rather frequently the team has given the possibility to limit the maximum amount of time a vehicle can wait at an intersection (see section 2.2, parameter max_starvation_time), after which the vehicle will enter the intersection as if it was completely free. Note that this is valid only for vehicles at intersections (this behavior will be turned off as soon as the vehicle changes its orientation). It is also suggested to set the related parameter at a reasonable value (this behavior is meant to be an exception and should not be triggered frequently, but setting it to a high value can cause frequent traffic jams), it is suggested to set it as 2-3 times the speed of cars.
+
+#### 2.7.2 TrafficLights
+<br> In order to minimize the problems mentioned in the previous subsection (and as suggested by the project tutor), the team has developed traffic lights so that each intersection has a random period. See section 2.2 (parameters minimum and maximum trafficLight time) for more details
+
 
 ## 3. Results
 

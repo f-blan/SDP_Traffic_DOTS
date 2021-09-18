@@ -184,7 +184,7 @@ public static class QuadrantUtils
                 }
                 hashMapKey = GetPositionHashMapKey(tile1);
                 if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
-                    if(!isWithinTarget2(tile1, curPosition, tileSize*3/5) && dummy.vehicleData.direction==vehicleMovementData.direction){
+                    if(!isWithinTarget2(tile1, curPosition, tileSize*3/5)){
                         return true;
                     }
                 }
