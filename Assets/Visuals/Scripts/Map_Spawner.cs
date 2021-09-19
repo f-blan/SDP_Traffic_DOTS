@@ -90,11 +90,13 @@ public class Map_Spawner : MonoBehaviour
             ecb.AddComponent<Rotation>(eqi, busVerseB, new Rotation{Value = Quaternion.Euler(0,0,CarUtils.ComputeRotation(pathList[pathList.Length-1].withDirection.y))});
 
         }
-        public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
-            
-            if(busStopNodes.Count < n_buses){
-                Debug.Log("Too many buses for the map to handle!");
-                return;   
+        public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses_attempt){
+            int n_buses;
+            if(busStopNodes.Count < n_buses_attempt){
+                Debug.Log("Too many bus lines for the map to handle! Max number will be spawned instead");
+                n_buses = busStopNodes.Count;   
+            }else{
+                n_buses=n_buses_attempt;
             }
             if(CityMap.GetNDistrictsX()<=1 || CityMap.GetNDistrictsY()<=1){
                 Debug.Log("map is too small to allow buses to run!");

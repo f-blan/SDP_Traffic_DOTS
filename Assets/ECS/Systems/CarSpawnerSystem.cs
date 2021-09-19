@@ -78,7 +78,7 @@ public class CarSpawnerSystem : SystemBase
             if(carSpawnerComponent.timer < carSpawnerComponent.delay){
                 return;
             }
-
+            
             
             NativeList<int2> goodSpots = new NativeList<int2>(Allocator.Temp);
             //the 2 and minus 2 is to avoid spawning a car close to the end of its district, which may lead to cars spawning in already busy tiles
@@ -103,10 +103,13 @@ public class CarSpawnerSystem : SystemBase
                     
                 }
             }
+            
+            int maxL = goodSpots.Length;
             //changed: now car spawning position within the district is no longer deterministic
-            for(int t=0; t<goodSpots.Length; ++t){
+            for(int t=0; t<maxL; ++t){
                 if(carSpawnerComponent.n_cars <= 0){
                     //we spawned all cars we had to spawn
+                    
                     break;
                 }
                 
