@@ -38,6 +38,7 @@ public class Map_Setup : MonoBehaviour
     [SerializeField] public int Frequency_District_1;
     [SerializeField] public int Frequency_District_2;
     [SerializeField] public int Frequency_District_3;
+    [SerializeField] public float Max_Starvation_Time;
     [SerializeField] public Boolean overrideReadingConfigFile;
 
     private void Awake(){

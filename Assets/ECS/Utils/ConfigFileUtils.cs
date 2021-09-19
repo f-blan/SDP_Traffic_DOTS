@@ -28,6 +28,8 @@ public class ConfigFileUtils
                 writer.WriteStartElement("MapSpawner");
                 writer.WriteElementString("maxCarSpeed", Map_Spawner.instance.maxCarSpeed.ToString());
                 writer.WriteElementString("maxBusSpeed", Map_Spawner.instance.maxBusSpeed.ToString());
+                writer.WriteElementString("minimumTrafficLightTime", Map_Spawner.instance.minTrafficLightTime.ToString());
+                writer.WriteElementString("maximumTrafficLightTime", Map_Spawner.instance.maxTrafficLightTime.ToString());
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("MapVisual");
@@ -51,19 +53,17 @@ public class ConfigFileUtils
                 Map_Setup.Instance.Frequency_District_1 = reader.ReadElementContentAsInt();
                 Map_Setup.Instance.Frequency_District_2 = reader.ReadElementContentAsInt();
                 Map_Setup.Instance.Frequency_District_3 = reader.ReadElementContentAsInt();
+                Map_Setup.Instance.Max_Starvation_Time = reader.ReadElementContentAsFloat();
 
                 reader.ReadToFollowing("maxCarSpeed");
                 Map_Spawner.instance.maxCarSpeed = reader.ReadElementContentAsInt();
                 Map_Spawner.instance.maxBusSpeed = reader.ReadElementContentAsInt();
-
+                Map_Spawner.instance.minTrafficLightTime = reader.ReadElementContentAsFloat();
+                Map_Spawner.instance.maxTrafficLightTime = reader.ReadElementContentAsFloat();
                 reader.ReadToFollowing("differentTypeOfVehicles");
                 Map_Visual.instance.differentTypeOfVehicles = reader.ReadElementContentAsInt();
             }
         }
         return;
-    }
-
-    public static void Write(){
-
     }
 }

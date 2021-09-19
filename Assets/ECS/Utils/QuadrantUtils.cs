@@ -11,6 +11,11 @@ public static class QuadrantUtils
 
     private const float lookingTime = 1f;
     private const float epsilonDistance = 0.5f;
+
+    
+
+    
+
     //checks if the position identified by carPosition has an entity of the given type to its relative direction specified by the parameter
     //if true it returns the exact translation component of the found entity inside of foundPosition
     //this function deals automatically with the quadrant conversion of the positions
@@ -41,7 +46,7 @@ public static class QuadrantUtils
             return true;
         */
 
-        return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundEntity, range);
+        return IsEntityInTargetPosition(nativeMultiHashMap, hashMapKey, targetPosition, carDirection, vehicleTrafficLightType, out foundEntity, range, false, -1);
     }
     
     //experiment for computing the stop variable in vehicleMovement data
@@ -92,7 +97,7 @@ public static class QuadrantUtils
     }
     
     public static bool IsEntityInTargetPosition(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap, int hashMapKey, 
-                    float3 targetPosition, int carDirection, QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out QuadrantSystem.QuadrantData foundEntity, float range){
+                    float3 targetPosition, int carDirection, QuadrantSystem.VehicleTrafficLightType vehicleTrafficLightType, out QuadrantSystem.QuadrantData foundEntity, float range, bool isSurpassable, int turnState){
     
     NativeMultiHashMapIterator<int> nativeMultiHashMapIterator;
         QuadrantSystem.QuadrantData quadrantData;
@@ -102,8 +107,16 @@ public static class QuadrantUtils
 
                 //if this elemenet (a parkSpot since this is the parkSpot hashmap) is in the position to the relative right of the car, return true
                 if(quadrantData.type == vehicleTrafficLightType && isWithinTarget2(targetPosition, quadrantData.position, range)){
-                    foundEntity = quadrantData;
-                    return true;
+                    if(!quadrantData.vehicleData.isSurpassable && !isSurpassable){
+                        foundEntity = quadrantData;
+                        return true;
+                    }else if(quadrantData.vehicleData.isSurpassable != isSurpassable && quadrantData.vehicleData.direction !=carDirection){
+                        foundEntity = quadrantData;
+                        return true;
+                    }else if(quadrantData.vehicleData.isSurpassable && isSurpassable && turnState == quadrantData.vehicleData.turnState){
+                        foundEntity = quadrantData;
+                        return true;
+                    }
                 }
 
             }while(nativeMultiHashMap.TryGetNextValue(out quadrantData, ref nativeMultiHashMapIterator));
@@ -130,11 +143,20 @@ public static class QuadrantUtils
         return false;
     }
 
-    public static bool TurningHandler(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap,int turnState,ref VehicleMovementData vehicleMovementData, float3 curPosition, float dt){
+    public static bool TurningHandler(NativeMultiHashMap<int, QuadrantSystem.QuadrantData> nativeMultiHashMap,int turnState,ref VehicleMovementData vehicleMovementData, float3 curPosition, float dt, float MAX_STARVATION_TIMER){
         float3 reference = new float3(vehicleMovementData.intersectionOffset.x, vehicleMovementData.intersectionOffset.y, 0);
         float3 tile1, tile2, tile3, tile4, tile5;
         int hashMapKey;
         QuadrantSystem.QuadrantData dummy;
+        vehicleMovementData.stopTime += dt;
+        vehicleMovementData.StarvationTimer += dt;
+        
+        if(vehicleMovementData.StarvationTimer >= MAX_STARVATION_TIMER){
+            return false;
+        }
+        if(vehicleMovementData.stopTime <= lookingTime){
+            return true;
+        }
         switch(turnState){
             case 0:
                 //give precedence to cars coming from your right and don't get into intersection if there's no space for you
@@ -146,43 +168,41 @@ public static class QuadrantUtils
                 
                 //precedence rule is valid only if intersection is not regulated by semamphores
                 if(!vehicleMovementData.trafficLightintersection){
-                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){ 
+                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2, vehicleMovementData.isSurpassable, turnState)){ 
                         //we don't stop if we're already in front of the car that we're supposed to give precedence to
                         tile2 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1.2f);
 
                         if(!dummy.vehicleData.stop) return !isWithinTarget2(curPosition, tile2, 0.5f);
+                        if(dummy.vehicleData.stop && dummy.vehicleData.turnState == 1) return !isWithinTarget2(curPosition,tile2,0.5f);
                     }
                     hashMapKey = GetPositionHashMapKey(tile4);
-                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile4,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){ 
+                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile4,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){ 
                         //we don't stop if we're already in front of the car that we're supposed to give precedence to
                         tile4 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1.2f);
                         if(!dummy.vehicleData.stop) return !isWithinTarget2(curPosition, tile4, 0.5f);
                     }
                 }
                 hashMapKey = GetPositionHashMapKey(tile1);
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                     if(!isWithinTarget2(tile1, curPosition, tileSize*3/5)){
                         return true;
                     }
                 }
                 hashMapKey = GetPositionHashMapKey(tile3);
-                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2);
+                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState);
             case 1:
                 //don't get into the intersection if there's no space for you after turning (ez)
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,1f);
                 tile2 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,1,1f);
                 tile3 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,1,2f);
                 hashMapKey = GetPositionHashMapKey(tile3);
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)) return true;
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)) return true;
                 hashMapKey = GetPositionHashMapKey(tile2);
-                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*3/5);
+                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*3/5,vehicleMovementData.isSurpassable, turnState);
             case 3:
                 //cars turning left can create some problem, it's better to make them wait for a while after they check the road
                 //Debug.Log(dt);
-                vehicleMovementData.stopTime += dt;
-                if(vehicleMovementData.stopTime <= lookingTime){
-                    return true;
-                }
+                
                 //give precedence to cars on the right and coming in front, get into the intersection only if you can turn left immediately and there's space after turning
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,2f);
                 tile2 = QuadrantUtils.GetNearTranslationInRelativeDirection(tile1,vehicleMovementData.direction,3,1f);
@@ -191,7 +211,7 @@ public static class QuadrantUtils
                 tile5 = QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,1f);
                 
                 hashMapKey = GetPositionHashMapKey(tile1);
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile1,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                     if(!isWithinTarget2(curPosition, tile1, 0.5f)){
                         return true;
                     }
@@ -211,7 +231,7 @@ public static class QuadrantUtils
                 }*/
                 
                 hashMapKey = GetPositionHashMapKey(tile2);
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                     if(dummy.vehicleData.direction == (vehicleMovementData.direction+3)%4 && dummy.vehicleData.stop){
                         //traffic congestion tradeoff (we stop only if a car is in the square, is in stop mode and is not going the same way as our car)
                         return true;
@@ -224,39 +244,35 @@ public static class QuadrantUtils
                     
                     hashMapKey = GetPositionHashMapKey(tile3);
                     
-                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                         
                         
                         tile3 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1f);
                         if(!dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
-                            return true;
-                        }else if(!isWithinTarget2(curPosition, tile3, 0.5f)){
                             return true;
                         }
                     }
                     tile3 = GetNearTranslationInRelativeDirection(tile1, vehicleMovementData.direction,1,2f);
                     
                     hashMapKey = GetPositionHashMapKey(tile3);
-                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                    if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                         
                         tile3 = GetNearTranslationInRelativeDirection(dummy.position, dummy.vehicleData.direction,0,1f);
                         if(!dummy.vehicleData.stop && !isWithinTarget2(curPosition, tile3, 1.25f)){
-                            return true;
-                        }else if(!isWithinTarget2(curPosition, tile3, 0.5f)){
                             return true;
                         }
                     }
                 }
                 tile3 = GetNearTranslationInRelativeDirection(tile2, vehicleMovementData.direction,0,1f);
                 hashMapKey = GetPositionHashMapKey(tile3);
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2)){
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile3,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState)){
                     if(dummy.vehicleData.direction == (vehicleMovementData.direction+3)%4 && !isWithinTarget2(tile3, curPosition, tileSize/2)){
                         return true;
                     }
                 }
                 
                 hashMapKey = GetPositionHashMapKey(tile4);
-                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile4,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2);
+                return IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile4,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize/2,vehicleMovementData.isSurpassable, turnState);
             case 2:
                 //perform U turn only if there's space for you
                 tile1= QuadrantUtils.GetNearTranslationInRelativeDirection(reference, vehicleMovementData.direction,0,1f);
@@ -265,7 +281,7 @@ public static class QuadrantUtils
 
                 hashMapKey = GetPositionHashMapKey(tile2);
                 
-                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*4/10)){
+                if(IsEntityInTargetPosition(nativeMultiHashMap,hashMapKey,tile2,vehicleMovementData.direction,QuadrantSystem.VehicleTrafficLightType.VehicleType, out dummy, tileSize*4/10,vehicleMovementData.isSurpassable, turnState)){
                     if(dummy.vehicleData.direction == (vehicleMovementData.direction+2)%4 && dummy.vehicleData.stop){
                         return true;
                     }

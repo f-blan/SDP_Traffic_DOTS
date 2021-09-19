@@ -7,71 +7,38 @@ using Unity.Rendering;
 
 public class TrafficLightSystem : SystemBase
 {
-    private const float GREEN_INTERVAL = 5f;
-    private const float YELLOW_INTERVAL = 4f;
-    //private const float RED_INTERVAL = 2f;
-    private Material HorizontalMaterial;
-    private Material VerticalMaterial;
-    private float timer;
-
-    private bool yellow_switched;
-
-    private bool horizontalIsGreen;
-    // Start is called before the first frame update
-    protected override void OnCreate()
-    {
-        HorizontalMaterial = Resources.Load<Material>("TrafficLightHorizontal");
-        VerticalMaterial = Resources.Load<Material>("TrafficLightVertical");
-        
-        HorizontalMaterial.color=UnityEngine.Color.green;
-        VerticalMaterial.color=UnityEngine.Color.red;
-        timer = 0;
-        horizontalIsGreen = true;
-        yellow_switched = false;
-    }
-
+    private const float YELLOW_INTERVAL = 1f; //Always constant since yellow light should last pretty much the same time
+    private const float offset = 0.3f;
     // Update is called once per frame
+
+    
     protected override void OnUpdate(){
-        
-        bool localHorizontalIsGreen = horizontalIsGreen;
-        timer += UnityEngine.Time.deltaTime;
-        if(timer < GREEN_INTERVAL){
-            return;
-        }
+        float deltaTime = Time.DeltaTime;
+        Entities.WithAll<TrafficLightComponent>().ForEach(( ref TrafficLightComponent trafficLightComponent, ref Translation translation) => {
+            
+            trafficLightComponent.timer += deltaTime;
 
-        if(timer >= GREEN_INTERVAL && timer <= GREEN_INTERVAL+YELLOW_INTERVAL){
-            if(yellow_switched) return;
-
-            yellow_switched = true;
-            if(horizontalIsGreen){
-                HorizontalMaterial.color = UnityEngine.Color.yellow;
-            }else{
-                VerticalMaterial.color = UnityEngine.Color.yellow;
+            if(trafficLightComponent.timer > trafficLightComponent.greenLightDuration && trafficLightComponent.state ==2){
+                trafficLightComponent.isRed = true;
+                trafficLightComponent.timer = 0;
+                trafficLightComponent.state = 1;
+                translation.Value = trafficLightComponent.baseTranslation;
             }
-            Entities.ForEach(( Entity entity, ref TrafficLightComponent trafficLightComponent)=>{
-                if(trafficLightComponent.isVertical != localHorizontalIsGreen)
-                    trafficLightComponent.isRed= true;
-            }).ScheduleParallel();
+            else if(trafficLightComponent.timer >= YELLOW_INTERVAL && trafficLightComponent.state == 1){
+                trafficLightComponent.timer = 0;
+                trafficLightComponent.state = 0;
+                translation.Value.y = trafficLightComponent.baseTranslation.y + offset;
+            }
+            else if(trafficLightComponent.timer >= trafficLightComponent.greenLightDuration + YELLOW_INTERVAL && trafficLightComponent.state == 0){
+                trafficLightComponent.timer = 0;
+                trafficLightComponent.isRed = false;
+                translation.Value.y = trafficLightComponent.baseTranslation.y-offset;
+                trafficLightComponent.state = 2;
+                return;
+            }
             return;
-        }
-        
-        timer = 0;
-        yellow_switched = false;
-        if(horizontalIsGreen){
-            HorizontalMaterial.color = UnityEngine.Color.red;
-            VerticalMaterial.color = UnityEngine.Color.green;
-        }else{
-            HorizontalMaterial.color = UnityEngine.Color.green;
-            VerticalMaterial.color = UnityEngine.Color.red;
-        }
 
-        Entities.ForEach(( Entity entity, ref TrafficLightComponent trafficLightComponent)=>{
-            if(trafficLightComponent.isVertical == localHorizontalIsGreen)
-            trafficLightComponent.isRed= false;
         }).ScheduleParallel();
-
-        horizontalIsGreen = !horizontalIsGreen;
-        
     }
 
 }

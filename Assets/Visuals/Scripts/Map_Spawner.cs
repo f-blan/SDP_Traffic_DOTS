@@ -13,11 +13,11 @@ public class Map_Spawner : MonoBehaviour
         [SerializeField] private Material busMaterial;
         [SerializeField] public float maxCarSpeed;
         [SerializeField] public float maxBusSpeed;
-        
-        [SerializeField] private Material VerticalTrafficLightMaterial;
 
-        [SerializeField] private Material HorizontalTrafficLightMaterial;
+        [SerializeField] public float minTrafficLightTime;
+        [SerializeField] public float maxTrafficLightTime;
         [SerializeField] private Mesh Quad;
+        [SerializeField] private Material CircleMaterial;
 
         //used by BusPathSystem
 
@@ -86,11 +86,13 @@ public class Map_Spawner : MonoBehaviour
             ecb.AddComponent<Rotation>(eqi, busVerseB, new Rotation{Value = Quaternion.Euler(0,0,CarUtils.ComputeRotation(pathList[pathList.Length-1].withDirection.y))});
 
         }
-        public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses){
-            
-            if(busStopNodes.Count < n_buses){
-                Debug.Log("Too many buses for the map to handle!");
-                return;   
+        public void SpawnBusLine(Map<MapTile> CityMap, PathFindGraph CityGraph, List<GraphNode> busStopNodes, int n_buses_attempt){
+            int n_buses;
+            if(busStopNodes.Count < n_buses_attempt){
+                Debug.Log("Too many bus lines for the map to handle! Max number will be spawned instead");
+                n_buses = busStopNodes.Count;   
+            }else{
+                n_buses=n_buses_attempt;
             }
             if(CityMap.GetNDistrictsX()<=1 || CityMap.GetNDistrictsY()<=1){
                 Debug.Log("map is too small to allow buses to run!");
@@ -339,13 +341,13 @@ public class Map_Spawner : MonoBehaviour
 
     public void SpawnTrafficLights(Map<MapTile> CityMap, List<Tuple<bool,MapTile>> trafficLightTiles){
         EntityManager em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent), typeof(RenderMesh), 
-                                typeof(LocalToWorld), typeof(RenderBounds));
+        EntityArchetype arch = em.CreateArchetype(typeof(Translation), typeof(TrafficLightComponent),
+            typeof(LocalToWorld), typeof(RenderMesh), typeof(RenderBounds), typeof(NonUniformScale));
 
         NativeArray<Entity> tiles = new NativeArray<Entity>(trafficLightTiles.Count, Allocator.Temp);
 
         em.CreateEntity(arch, tiles);
-
+        /*
         for(int t=0; t<trafficLightTiles.Count; ++t){
             Material material;
             bool isVertical;
@@ -366,14 +368,53 @@ public class Map_Spawner : MonoBehaviour
 
             em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = isVertical});
 
+            em.SetComponentData(e, new SpriteSheetAnimationComponent{
+                currentFrame = 0,
+                frameCount = 3,
+                frameTimer = 0f,
+                frameTimerMax = UnityEngine.Random.Range(0f, 0.5f)
+            });
+        }*/
+
+        float randomTime = .5f;
+
+        for(int t=0; t<trafficLightTiles.Count; ++t){
+
+            if(t % 4 == 0){
+                randomTime = UnityEngine.Random.Range(minTrafficLightTime, maxTrafficLightTime);
+            }
+
+            MapTile curTile = trafficLightTiles[t].Item2; 
+            Entity e = tiles[t];
+            Vector3 wp = CityMap.GetWorldPosition(curTile.GetX(), curTile.GetY());
+
+            em.SetName(e, "Traffic Light " + t);
+            float offset = -0.3f;
+            int state = 2;
+            if(trafficLightTiles[t].Item1){
+                state = 0;
+                offset = -offset;
+            }
+            em.SetComponentData(e, new Translation{Value = new float3(wp[0], wp[1]+offset, 0)});
+
+            em.SetComponentData(e, new TrafficLightComponent{isRed = trafficLightTiles[t].Item1, isVertical = trafficLightTiles[t].Item1, 
+                greenLightDuration = randomTime, baseTranslation=new float3(wp[0], wp[1], 0), timer = 0f, state = state,
+            });
             em.SetSharedComponentData(e, new RenderMesh{
                 mesh = Quad,
-                material = material,
+                material = CircleMaterial,
                 layer = 1
             });
 
-            
+            em.SetComponentData(e, new NonUniformScale{ Value = {
+                x = 0.4f,
+                y = 0.4f,
+                z = 0}
+            });
         }
+
+
+
         tiles.Dispose();
     }
 
