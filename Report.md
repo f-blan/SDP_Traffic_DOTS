@@ -235,7 +235,7 @@ Since these operations require populating hashMaps and cycling through entities,
 
 ![90x90_300k_ps](./ScreenShots/90x90_300k_ps.PNG)
 
-<br>A possible way to minimize the impact on framerate of the spawning phase would be to increase the dealy with which every district is processed (although this would increase the duration of the spawning phase). However the team decided to keep such value to 0.01 s in order to avoid vehicles from reaching districts where spawning still didn't occur (thus leading to possible overlapping of vehicles).
+<br>A possible way to minimize the impact on framerate of the spawning phase would be to increase the delay with which every district is processed (although this would increase the duration of the spawning phase). However the team decided to keep such value to 0.01 s in order to avoid vehicles from reaching districts where spawning still didn't occur (thus leading to possible overlapping of vehicles).
 
 #### 3.2.3 The total number of vehicles
 <br>Once the spawning phase is over the framerate tends to remain stable around a certain value. This value mostly depends on the total number of vehicles, while increasing the map size leads to minor changes as it only affects pathfinding computations (which are now done only for cars and only once per behavioral cycle i.e. once every several seconds depending on path length and crowdedness). The system which is responsible for this is the QuadrantSystem, whose two main lambda jobs, Job 0 (that populates the NativeMultiHashMap with entities) and Job 3 (that is responsible for obstacle detection), are executed every frame and once per vehicle.
